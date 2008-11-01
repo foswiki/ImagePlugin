@@ -1,0 +1,202 @@
+%META:TOPICINFO{author="TWikiContributor" date="1185796960" format="1.1" reprev="1.3" version="$Rev$"}%
+<!--
+
+   PLEASE DO NOT EDIT THIS TOPIC
+
+   It is automatically generated from the subversion repository, and any
+   changes you make will simply be overwritten the next time a release is
+   generated.
+
+   Instead, you could check your fix in, raise a bug in the Bugs web, or mail
+   the authors.
+-->
+---+!! <nop>%TOPIC%
+%TOC%
+
+Use this plugin to control the display and alignment of images using an easy
+syntax and support for server-side resizing and thumbnailing. There are a set
+of pre-defined layout formats for images as well as a free layout configurability.
+
+Short example: %BR%
+*You type:* %BR%
+<verbatim>
+%IMAGE{"WestminstpalaceSample.png"
+  type="frame" 
+  align="none" 
+  caption="caption text"
+}%
+</verbatim>
+
+*You get*: %BR%
+
+<img src="%ATTACHURLPATH%/WestminstpalaceSample.png" alt="WestminstpalaceSample.png" width='416' height='339' />
+
+Images to be displayed can be located
+   * at the =topic= as specified,
+   * at the location specified in the IMAGEALBUM preference variable,
+   * at the current topic or
+   * at a remote URL.
+
+If you specify a remote url using =http://...= the image is downloaded (using CPAN:LWP::Simple)
+into a local cache and then processed as usual. WARNING: please be aware of any copyrights of
+the images you mirror this way.
+
+The =topic= and IMAGEALBUM parameters can be of the for =[&lt;web>.]&lt;topic>= .
+For example putting
+<verbatim>
+   * Set IMAGEALBUM = TWiki.ImagePlugin
+</verbatim>
+into the current topic will search all images at the given topic.
+
+---++ Syntax 
+=%<nop>IMAGE{"foo.gif" ...}%=
+
+There are four predefined format types (plain, simple, link, thumbnail, frame, float)
+that can be used by setting the =type= paramenter (see below).  In addition
+there is a free-form =format= parameter to specify any other possible html
+layout.  The Wikipedia format is also supported. See
+Wikipedia:Wikipedia:Extended_image_syntax.
+
+(hidden feature: =%<nop>IMAGE{"clear"}%= will create a proper clear for your floats ;)  )
+
+---+++ Arguments
+The image name is mandatory.  Further arguments are optional.
+
+| *Name* |  *Values*  |  *Default*  |
+| =align=  | left&#124;center&#124;right&#124;none  | right |
+| =alt= | alt text | image filename |
+| =caption=  | caption text  | empty  |
+| =class= | (see html specs) | imageFrame, imageFloat, ... depending on the type |
+| =desc= | description text | title text |
+| =footer= | text to be appended to the html output | empty |
+| =format= | image layout format string | set by type argument |
+| =header= | text to be prepended to the html output | empty |
+| =height= | integer value | image width |
+| =href= | hyperlink when clicking on the image | url of the source image |
+| =id= | (see html specs) | empty |
+| =mousein= | javascript executed if moving the mouse over the image | empty |
+| =mouseout= | javascript executed if moving the mouse off the image | empty |
+| =size=  | geometry specification | image geometry  |
+| =style= | (see html specs) | empty |
+| =title= | title text | *alt* value |
+| =topic= | valid TWiki topic name | topic part of IMGALBUM value or current topic |
+| =type=  |  simple&#124;link&#124;thumb[nail]&#124;frame&#124;float"  | plain  |
+| =web= | valid TWiki web name | web part of IMGALBUM value or current topic |
+| =width= | integer value | image width |
+| =warn= | on/off, surpress error warnings | on |
+
+---+++ Image geometry
+The image geometry in the =size= parameter can be specified in a format 
+=&lt;width>[px][x&lt;height>[px]]=,
+that is width and height can be given as integers with an optional =px=, where
+the height is optional, separated with a 'x' in between. Note, that the given
+width and height values are the _maximum width_ and _maximum height_ that the
+image will have keeping its aspect ratio. If you want to deform it to an extact
+measure use the =width= and =height= arguments.
+
+
+---+++ Format specification
+Format strings given in =header=, =footer= and =format= may contain the following
+pseudo variables:
+
+| *Name* | *Value* |
+| =$align= | value of =align= argumet |
+| =$alt= | value of =alt= argumet |
+| =$caption= | caption text |
+| =$class= | value of =class= argumet |
+| =$desc= | value of =desc= argument |
+| =$dollar= | replaced with dollar sign ($) |
+| =$height= | image height |
+| =$href= | hyperlink url when clicking on an image |
+| =$id= | value of =id= argumet |
+| =$magnifyIcon= | enlage-icon |
+| =$mousein= | value of =mousein= argument |
+| =$mouseout= | value of =mouseout= argument |
+| =$n= | replaced with a linefeed (\n) |
+| =$nop= | replaced with empty string |
+| =$origheight= | image height of the original image|
+| =$origsrc= | url of the original image (not the resized one) |
+| =$origwidth= | image width of the original image |
+| =$percnt= | replaced with percent sign (%) |
+| =$src= | image source url |
+| =$style= | value of =style= argumet |
+| =$text= | link text to be displayed in the "link" layout type |
+| =$title= | value of =title= argument |
+| =$width= | image width |
+
+After the layout has been formatted any further TWiki markup that might be
+contained is expanded afterwards. Note, that using =$percnt= and =$dollar=
+evaluation order of TWiki markup can be changed so that arguments are expanded
+_after_ the IMAGE tag has been computed, whereas TWiki's default evaluation
+order is left-to-right-inside-out.
+
+   
+---++ Examples
+
+   * =%<nop>IMAGE{"foo.gif" size="100" align="left" caption="This is my caption"}%=  (resize to 100 pixels, text flows right, with caption)
+   * =%<nop>IMAGE{"foo.gif" type="thumb" align="center"}%=  (Resize to %<nop>THUMBNAIL_SIZE% size, and center image)
+   
+
+---++ Plugin Installation Instructions
+
+   * Download the ZIP file
+   * Unzip ==%TOPIC%.zip== in your twiki installation directory. Content:
+     | *File:* | *Description:* |
+%$MANIFEST%
+   * Optionally, run ==%TOPIC%_installer== to automatically check and install
+     other TWiki modules that this module depends on. You can also do this step
+     manually.
+   * Alternatively, manually make sure the dependencies listed in the table below are resolved.
+     %$DEPENDENCIES%
+   * Configure the Plugin:
+      * TWiki 4.0 and up: Run the [[%SCRIPTURL%/configure%SCRIPTSUFFIX%][configure]] script to enable the Plugin
+      * Change the Plugin settings as needed
+   * Test if the installation was successful:
+      * For complete example see Sandbox.ImagePluginTest
+
+---++ Plugin Info
+<!--
+   * Set SHORTDESCRIPTION = Control the display and alignment of images using an easy syntax
+-->
+
+|  Plugin Author: | TWiki:Main.CraigMeyer |
+|  Copyright: | &copy; 2006, TWiki:Main.CraigMeyer, %BR% &copy; 2006-2008 Michael Daum http://michaeldaumconsulting.com |
+|  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
+|  Plugin Version: | 1.20 |
+|  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  03 Jul 2008: | fixed parsing the type parameter; \
+                  fixing docu about the default THUMBNAIL_SIZE; \
+                  added new default format =plain=; \
+                  plainify text to be used in a html attribute position, e.g. titles; \
+                  default to no img alignment; \
+                  refresh images on a =?refresh=on= url param; \
+                  using LWP::UserAgent instead of LWP::Simple to mirror images; \
+                  using =Resize= instead of =Scale= for higher quality thumbnails; \
+                  don't encrypt the href param |
+|  03 Mar 2008: | make implementation of image mage configurable, \
+                 defaulting to Graphics::Magick as Image::Magick has got issues \
+                 using perl accellerators like mod_perl, speedy-cgi |
+|  03 Jan 2008: | added processing of remote images |
+|  18 Dec 2006: | fixed image lookup order; fixed html formats; added <nop>I18N workaround |
+|  18 Aug 2006: | fixed html errors; \
+                  removed references to <nop>ImgPlugin thus not showing the magnify-clip; \
+		  some html and css fixes to resemble closer to the <nop>MediaWiki examples |
+|  17 Aug 2006: | width and height arguments had no effect; floating images not clearing proberly on IE |
+|  16 June 2006: | released into the public |
+|  10 May 2006: | Initial version by forking <nop>ImgPlugin |
+|  TWiki Dependency: | $TWiki::Plugins::VERSION 1.1 |
+|  CPAN Dependencies: | CPAN:Graphics::Magick; CPAN:LWP::UserAgent; CPAN:Digest::MD5 |
+|  Other Dependencies: |  |
+|  Perl Version: | 5.8 |
+|  [[TWiki:Plugins/Benchmark][Benchmarks]]: | %TWIKIWEB%.GoodStyle nn%, %TWIKIWEB%.FormattedSearch nn%, %TOPIC% nn% |
+|  Plugin Home: | TWiki:Plugins/%TOPIC% |
+|  Feedback: | TWiki:Plugins/%TOPIC%Dev |
+|  Appraisal: | TWiki:Plugins/%TOPIC%Appraisal |
+
+
+-- TWiki:Main.CraigMeyer %BR%
+-- TWiki:Main.MichaelDaum - 03 Jul 2008
+
+%META:FILEATTACHMENT{name="style.css" attr="" autoattached="1" comment="" date="1168442621" path="style.css" size="1423" user="TWikiContributor" version="1"}%
+%META:FILEATTACHMENT{name="magnify-clip.png" attr="" autoattached="1" comment="" date="1160383253" path="magnify-clip.png" size="267" user="TWikiContributor" version="1"}%
+%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="" autoattached="1" comment="" date="1185796830" path="WestminstpalaceSample.png" size="107728" user="TWikiContributor" version="1"}%

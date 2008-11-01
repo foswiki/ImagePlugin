@@ -1,0 +1,92 @@
+/* ImagePlugin css styles */
+.imageFrame,
+.imageFloat {
+  font-size:90%;
+  overflow: hidden;
+}
+.imageFrame {
+  padding: 3px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+}
+a.imageHref {
+  border:0px;
+  background-image:none !important;
+  text-decoration:none !important;
+}
+.imageFrame .imageHref {
+  border: 1px solid #ccc;
+  display:block;
+  overflow: hidden;
+}
+.imageFrame img {
+  border-right:1px solid transparent; /* safari + konqueror fix */
+}
+.imageSimple {
+  overflow:auto;
+}
+.imageSimple_right,
+.imageFrame_right,
+.imageFloat_right {
+  clear:right;
+  float:right;
+}
+.imageFrame_right {
+  margin:3px 0px 3px 10px;
+}
+.imageFloat_right {
+  margin:0px 0px 0px 10px;
+}
+.imageSimple_left,
+.imageFrame_left,
+.imageFloat_left {
+  clear:left;
+  float:left;
+}
+.imageFrame_left {
+  margin:3px 10px 3px 0px;
+}
+.imageFloat_left {
+  margin:0px 10px 0px 0px;
+}
+.imageSimple_center,
+.imageFrame_center,
+.imageFloat_center {
+  text-align:center;
+  clear:both;
+  margin:0px auto;
+}
+.imageFrame_center {
+  margin:10px auto;
+}
+.imageFrame_none {
+  margin:10px;
+}
+.imageCaption {
+  text-align: left;
+  color:#444;
+  line-height:140%;
+  padding:.3em 2px .1em 2px;
+}
+.imageMagnify {
+  float:right;
+  margin:.3em 0px .1em 0px;
+}
+.imageCaption .imageMagnify a {
+  text-decoration:none;
+}
+.imageMagnify img {
+  border:0px;
+  margin:0 1px;
+}
+
+/* debug 
+.imageFloat, .imageFrame, 
+.imageFloat_left, .imageFloat_right, .imageFloat_center, .imageFloat_none, 
+.imageFrame_left, .imageFrame_right, .imageFrame_center, .imageFrame_none, 
+.imageLink, .imageCaption, .imageMagnify, .imagePlain
+.imageFloat image, .imageMagnify image, .imageClear
+{
+  border:1px solid red;
+}
+*/

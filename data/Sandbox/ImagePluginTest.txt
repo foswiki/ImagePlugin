@@ -1,0 +1,100 @@
+%META:TOPICINFO{author="TWikiContributor" date="1147158405" format="1.0" version="$Rev$"}%
+---+!! Exhaustive Test Page for %TWIKIWEB%.ImagePlugin
+%TOC%
+
+See also: Wikipedia:Wikipedia:Extended_image_syntax
+
+---++ Syntax to use an image in uploaded size, with a caption
+
+To use an image as uploaded with a caption use <code>%<nop>IMAGE{"Westminstpalace.jpg" type="frame" align="none" caption="caption text"}%</code>. This is the syntax you should use to update images that used the original image markup of the form <code>%<nop>IMAGE{"Westminsterpalace.jpg|caption"}%</code>.
+
+%IMAGE{"Westminstpalace.jpg" type="frame" align="none" caption="caption text"}%
+
+---++ Syntax for images with no automatic caption or formatting
+
+The old syntax for images without captions is =%<nop>IMAGE{"Westminstpalace.jpg|alt text"}%=. This is rendered inline, and the specified text is used as the image's ''alt'' attribute (alternate text for programs which cannot display images, such as screen readers) and as the ''title'' attribute (supplementary text, often displayed as a tool tip when the mouse is over the image).
+
+%IMAGE{"Westminstpalace.jpg|alt text"}%
+
+---++ New syntax for images
+
+%IMAGE{"Westminstpalace.jpg" type="thumb" size="100" align="left" caption="The Palace of Westminster"}%
+In the syntax =%<nop>IMAGE{"Westminstpalace.jpg" type="thumb" size="100" align="left" caption="The Palace of Westminster"}%= shown in the left), several options can be set when including an image. Those affect the placing of the image, its size or the way the image will be presented. The options are =right=, =left=, =center=, =none=, =_size_px=, =thumbnail= (=thumb=), =frame=, and =_alternate (caption) text_=.
+%IMAGE{"clear"}%
+
+%IMAGE{"Westminstpalace.jpg" type="thumb" size="200" align="right" caption="From the Thames"}%
+The options can be combined, and spaces ("") are used to separate options from each other.  The options can be put in any order.
+=%<nop>IMAGE{"Westminstpalace.jpg" type="thumb" size="200" align="right" caption="From the Thames"}%= (shown on the right).
+%IMAGE{"clear"}%
+
+Here is the description of the options other than the caption text   (shown on the right). %IMAGE{"clear"}%
+
+   $ *right* : %IMAGE{"Westminstpalace.jpg" align="right" size="70"}%The image is right-aligned, and text floats to the left of the image =%<nop>IMAGE{"Westminstpalace.jpg" align="right" size="70"}%= (shown on the right). %IMAGE{"clear"}%
+   $ *left* : %IMAGE{"Westminstpalace.jpg" align="left" size="70"}%The image is left aligned, and text floats to the right of the image =%<nop>IMAGE{"Westminstpalace.jpg" align="left" size="70"}%= (shown on the left). %IMAGE{"clear"}%
+   $ *center* : The image is centered, and...%IMAGE{"Westminstpalace.jpg" align="center" size="70"}%the text following the image starts below it =%<nop>IMAGE{"Westminstpalace.jpg" align="center" size="70"}%= (shown above). %IMAGE{"clear"}%
+   $ *none* : The image is put at the left, and...%IMAGE{"Westminstpalace.jpg" align="none" size="70"}%the text following does not float to the right (or to the left, obviously), and starts below it =%<nop>IMAGE{"Westminstpalace.jpg" align="none" size="70"}%= (shown above). %IMAGE{"clear"}%
+
+   $ *size* px : %IMAGE{"Westminstpalace.jpg" align="right" size="50"}% This option renders a version of the image that's *[size]* pixels wide (e.g. =%<nop>IMAGE{"Westminstpalace.jpg|right|50px|"}%= shown on the right). Height is computed to keep aspect ratio (image)|aspect ratio (i.e. the shape of the image).%IMAGE{"clear"}%
+
+      $ __Notes__ : Specifying a size does not just change the apparent image size using HTML; it actually generates a resized version of the image on the fly and links to it appropriately.  This happens whether or not you use *size* in conjunction with *thumb*.%BR%
+       If you specify a "frame" option the image will not be scaled, and no size specifiers will be in the HTML.  The image will be rendered at full size%IMAGE{"clear"}%
+
+   $ *thumbnail*, *thumb* : %IMAGE{"Westminstpalace.jpg" type="thumbnail" align="left" size="100"}%
+   %IMAGE{"Westminstpalace.jpg" type="thumb" caption="The Palace of Westminster"}% The *thumbnail* (*thumb*) option generates a thumbnail|thumbnail image. It is automatically resized when the "size" attribute is not specified. Without the options *left*, *center*, and *none*, the image is  normally on the right.  If the image has a caption text, it is displayed in the lower margin. E.g. =%<nop>IMAGE{"Westminstpalace.jpg" type="thumbnail" align="left" size="100"}%= (shown on the left) and =%<nop>IMAGE{"Westminstpalace.jpg" type="thumb" caption="The Palace of Westminster"}%= (shown on the right).%IMAGE{"clear"}%
+
+%IMAGE{"Tst.png" align="right" type="thumb" size="100" caption="This is a globe, and take a look at it in nested"}% An "enlarge"-icon is put also in the lower margin of the thumbnail. Both the image itself and the icon link to the image description page with the image in its actual size. The icon shows the link title "Enlarge" in its hoverbox, even in cases where this term does not apply, because it leads from the enlarged image to the one with the actual size. E.g. =%<nop>IMAGE{"Tst.png" align="right" type="thumb" size="100" caption="This is a globe, and take a look at it in nested"}%= (shown on the right).
+%IMAGE{"clear"}%
+
+   $  *frame* : %IMAGE{"Westminstpalace.jpg" type="frame" size="50" caption="The Palace of Westminster"}% With this option, the embedded image is shown with its actual size enclosed by a frame, regardless of the "thumb" or "size" attribute, and the caption, if any, is visible in the frame. Without the options =left=, =center=, and =none=, the image is  normally on the right  =%<nop>IMAGE{"Westminstpalace.jpg" type="frame" size="50" caption="The Palace of Westminster"}%=.
+%IMAGE{"clear"}%
+
+With none of the options other than __size__ *px* and __alternate (caption)
+text__, an embedded image is rendered inline.
+
+<pre>
+text text text text text text
+=%<nop>IMAGE{"Westminstpalace.jpg" size="150" caption="The Palace of Westminster"}%=
+text text text text text
+=%<nop>IMAGE{"Tst.png" size="100" caption="This is a globe."}%=
+text text text text
+</pre>
+
+gives
+
+text text text text text text
+%IMAGE{"Westminstpalace.jpg" size="150" caption="The Palace of Westminster"}%
+text text text text text
+%IMAGE{"Tst.png" size="100" caption="This is a globe."}%
+text text text text
+%IMAGE{"clear"}%
+
+---++ Cancelling floating-around-image mode
+
+After having had an image floating next to text, putting further text below it
+and again using the full width can be done with the following markup.  This
+blocks an image from appearing next to the material following this markup,
+possibly due to aesthetic reasons or a change in topics.
+
+   *<verbatim><br style="clear:both" /></verbatim>*
+
+For legacy =align="right"= (etc.) floating this
+isn't good enough, legacy browsers would ignore inline
+CSS. To cancel floating under all conditions the 
+following markup (valid XHTML 1.0 transitional) works   
+
+   *<verbatim><br clear="all" /></verbatim>*
+
+The same code can be issued by using template *%<nop>IMAGE{"clear"}%*
+
+---++ Linking to the image description page
+
+If you want to make a link to the description page for an image, use a leading
+colon before "image" in an intra-wiki link, like this
+=%<nop>IMAGE{":STS-32_crew.jpg|STS-32 crew"}%=  which yields
+%IMAGE{":STS-32_crew.jpg|STS-32 crew"}%
+
+
+
+%META:FILEATTACHMENT{name="Westminstpalace.jpg" attr="h" autoattached="1" comment="" date="1144761714" path="Westminstpalace.jpg" size="19790" user="TWikiContributor" version="1"}%
+%META:FILEATTACHMENT{name="Tst.png" attr="h" autoattached="1" comment="" date="1144761728" path="Tst.png" size="499" user="TWikiContributor" version="1"}%
+%META:FILEATTACHMENT{name="STS-32_crew.jpg" attr="h" autoattached="1" comment="" date="1144681150" path="STS-32_crew.jpg" size="49583" user="TWikiContributor" version="1"}%
