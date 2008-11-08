@@ -1,5 +1,5 @@
 %META:TOPICINFO{author="TWikiContributor" date="1147158405" format="1.0" version="$Rev$"}%
----+!! Exhaustive Test Page for %TWIKIWEB%.ImagePlugin
+---+!! Exhaustive Test Page for %SYSTEMWEB%.ImagePlugin
 %TOC%
 
 See also: Wikipedia:Wikipedia:Extended_image_syntax

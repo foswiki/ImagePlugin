@@ -45,7 +45,7 @@ sub initPlugin {
   $doneHeader = 0;
   $imgStyle = 
     '<link rel="stylesheet" '.
-    'href="%PUBURL%/%TWIKIWEB%/ImagePlugin/style.css" '.
+    'href="%PUBURL%/%SYSTEMWEB%/ImagePlugin/style.css" '.
     'type="text/css" media="all" />';
 
 
