@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="TWikiContributor" date="1147158405" format="1.0" version="$Rev$"}%
+%META:TOPICINFO{author="ProjectContributor" date="1147158405" format="1.0" version="$Rev$"}%
 ---+!! Exhaustive Test Page for %SYSTEMWEB%.ImagePlugin
 %TOC%
 
@@ -95,6 +95,6 @@ colon before "image" in an intra-wiki link, like this
 
 
 
-%META:FILEATTACHMENT{name="Westminstpalace.jpg" attr="h" autoattached="1" comment="" date="1144761714" path="Westminstpalace.jpg" size="19790" user="TWikiContributor" version="1"}%
-%META:FILEATTACHMENT{name="Tst.png" attr="h" autoattached="1" comment="" date="1144761728" path="Tst.png" size="499" user="TWikiContributor" version="1"}%
-%META:FILEATTACHMENT{name="STS-32_crew.jpg" attr="h" autoattached="1" comment="" date="1144681150" path="STS-32_crew.jpg" size="49583" user="TWikiContributor" version="1"}%
+%META:FILEATTACHMENT{name="Westminstpalace.jpg" attr="h" autoattached="1" comment="" date="1144761714" path="Westminstpalace.jpg" size="19790" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="Tst.png" attr="h" autoattached="1" comment="" date="1144761728" path="Tst.png" size="499" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="STS-32_crew.jpg" attr="h" autoattached="1" comment="" date="1144681150" path="STS-32_crew.jpg" size="49583" user="ProjectContributor" version="1"}%
