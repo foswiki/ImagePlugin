@@ -44,7 +44,7 @@ the images you mirror this way.
 The =topic= and IMAGEALBUM parameters can be of the for =[&lt;web>.]&lt;topic>= .
 For example putting
 <verbatim>
-   * Set IMAGEALBUM = TWiki.ImagePlugin
+   * Set IMAGEALBUM = %SYSTEMWEB%.ImagePlugin
 </verbatim>
 into the current topic will search all images at the given topic.
 
