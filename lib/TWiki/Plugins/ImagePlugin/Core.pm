@@ -508,7 +508,7 @@ sub inlineError {
   my ($this, $params) = @_;
 
   return '' if $params->{warn} eq 'off';
-  return "<span class=\"twikiAlert\">Error: $this->{errorMsg}</span>" unless $params->{warn};
+  return "<span class=\"foswikiAlert\">Error: $this->{errorMsg}</span>" unless $params->{warn};
   return $params->{warn};
 }
 
