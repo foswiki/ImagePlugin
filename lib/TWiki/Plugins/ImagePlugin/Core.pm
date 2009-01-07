@@ -29,11 +29,13 @@ use strict;
 BEGIN {
   # coppied over from TWiki.pm to cure Item3087
   # Image::Magick seems to override locale usage
-  if ( $TWiki::cfg{UseLocale} ) {
-    $ENV{LC_CTYPE} = $TWiki::cfg{Site}{Locale};
+  my $useLocale = $TWiki::cfg{UseLocale};
+  my $siteLocale = $TWiki::cfg{Site}{Locale};
+  if ( $useLocale ) {
+    $ENV{LC_CTYPE} = $siteLocale;
     require POSIX;
     import POSIX qw( locale_h LC_CTYPE );
-    setlocale(&LC_CTYPE, $TWiki::cfg{Site}{Locale});
+    setlocale(&LC_CTYPE, $siteLocale);
   }
 };
 
@@ -206,7 +208,8 @@ sub handleIMAGE {
       $ua->timeout(10);
       $ua->env_proxy;
       my $response = $ua->mirror($url, $imgPath);
-      unless ($response->is_success) {
+      my $code = $response->code;
+      unless ($response->is_success || $response->code == 304) {
         my $status = $response->status_line;
         $this->{errorMsg} = "can't fetch image from <nop>'$url': $status";
         return $this->inlineError($params);
@@ -303,7 +306,7 @@ sub handleIMAGE {
 
   # For compatibility with i18n-characters in file names, encode urls (as TWiki.pm/viewfile does for attachment names in general)
   my $thumbFileUrl = $pubUrl.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgInfo->{file};
-  $thumbFileUrl = TWiki::urlEncode($thumbFileUrl);
+  $thumbFileUrl = urlEncode($thumbFileUrl);
 
   # format result
   my $result = $params->{format} || '';
@@ -377,7 +380,7 @@ sub handleIMAGE {
   $result =~ s/\$nop//go;
 
   # recursive call for delayed TML expansion
-  $result = &TWiki::Func::expandCommonVariables($result, $theTopic, $theWeb);
+  $result = TWiki::Func::expandCommonVariables($result, $theTopic, $theWeb);
   return $result; 
 } 
 
@@ -514,4 +517,12 @@ sub inlineError {
 
 
 ###############################################################################
+# from TWiki.pm
+sub urlEncode {
+    my $text = shift;
+
+    $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/'%'.sprintf('%02x',ord($1))/ge;
+
+    return $text;
+}
 1;

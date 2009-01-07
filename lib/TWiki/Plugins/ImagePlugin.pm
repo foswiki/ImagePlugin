@@ -1,12 +1,12 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2008 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2009 Michael Daum http://michaeldaumconsulting.com
 #
 # Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
 #
-# and TWiki Contributors. All Rights Reserved. TWiki Contributors
+# and Foswiki Contributors. All Rights Reserved. Foswiki Contributors
 # are listed in the AUTHORS file in the root of this distribution.
 # NOTE: Please extend that file, not this notice.
 #
@@ -20,7 +20,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
-# For licensing info read LICENSE file in the TWiki root.
+# For licensing info read LICENSE file in the Foswiki root.
 
 package TWiki::Plugins::ImagePlugin;
 
@@ -28,7 +28,7 @@ use strict;
 use vars qw( $VERSION $RELEASE $doneHeader $imageCore $imgStyle $baseWeb $baseTopic);
 
 $VERSION = '$Rev$';
-$RELEASE = '1.20'; # please increase on every upload to twiki.org
+$RELEASE = '1.21'; # please increase on every upload to twiki.org
 
 ###############################################################################
 sub initPlugin {
@@ -71,11 +71,8 @@ sub commonTagsHandler {
 sub getCore {
   return $imageCore if $imageCore;
   
-  eval 'use TWiki::Plugins::ImagePlugin::Core;';
-  die $@ if $@;
-
-  $imageCore = new TWiki::Plugins::ImagePlugin::Core(@_);
-  return $imageCore;
+  require TWiki::Plugins::ImagePlugin::Core;
+  return new TWiki::Plugins::ImagePlugin::Core(@_);
 }
 
 ###############################################################################
