@@ -28,7 +28,7 @@ use strict;
 use vars qw( $VERSION $RELEASE $doneHeader $imageCore $imgStyle $baseWeb $baseTopic);
 
 $VERSION = '$Rev$';
-$RELEASE = '1.21'; # please increase on every upload to twiki.org
+$RELEASE = '1.22'; # please increase on every upload to twiki.org
 
 ###############################################################################
 sub initPlugin {
@@ -45,7 +45,7 @@ sub initPlugin {
   $doneHeader = 0;
   $imgStyle = 
     '<link rel="stylesheet" '.
-    'href="%PUBURL%/%SYSTEMWEB%/ImagePlugin/style.css" '.
+    'href="%PUBURL%/%TWIKIWEB%/ImagePlugin/style.css" '.
     'type="text/css" media="all" />';
 
 

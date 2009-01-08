@@ -138,19 +138,7 @@ order is left-to-right-inside-out.
    
 
 ---++ Plugin Installation Instructions
-
-   * Download the ZIP file
-   * Unzip ==%TOPIC%.zip== in your twiki installation directory. Content:
-     | *File:* | *Description:* |
-%$MANIFEST%
-   * Optionally, run ==%TOPIC%_installer== to automatically check and install
-     other extensions that this module depends on. You can also do this step
-     manually.
-   * Alternatively, manually make sure the dependencies listed in the table below are resolved.
-     %$DEPENDENCIES%
-   * run the [[%SCRIPTURL{"configure"}%][configure]] script to enable the plugin
-   * Test if the installation was successful:
-      * For complete example see Sandbox.ImagePluginTest
+%$INSTALL_INSTRUCTIONS%
 
 ---++ Plugin Info
 <!--
@@ -160,7 +148,7 @@ order is left-to-right-inside-out.
 |  Plugin Author: | Craig Meyer |
 |  Copyright: | &copy; 2006, Craig Meyer, %BR% &copy; 2006-2009 Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
-|  Plugin Version: | 1.21 |
+|  Plugin Version: | 1.22 |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
 |  07 Jan 2008: | certified for foswiki/compat |
 |  03 Jul 2008: | fixed parsing the type parameter; \
