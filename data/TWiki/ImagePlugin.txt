@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" date="1185796960" format="1.1" reprev="1.3" version="$Rev$"}%
+%META:TOPICINFO{author="ProjectContributor" date="1234376462" format="1.1" reprev="1.3" version="$Rev$"}%
 <!--
 
    PLEASE DO NOT EDIT THIS TOPIC
@@ -29,7 +29,8 @@ Short example: %BR%
 
 *You get*: %BR%
 
-<img src="%ATTACHURLPATH%/WestminstpalaceSample.png" alt="WestminstpalaceSample.png" width='416' height='339' />
+| *Example* | *If Installed* |
+| <img src="%ATTACHURLPATH%/WestminstpalaceSample.png" alt="WestminstpalaceSample.png" width='416' height='339' /> | %IMAGE{"WestminstpalaceSample.png" type="frame" align="none" caption="caption text" }% |
 
 Images to be displayed can be located
    * at the =topic= as specified,
@@ -133,9 +134,11 @@ order is left-to-right-inside-out.
    
 ---++ Examples
 
-   * =%<nop>IMAGE{"foo.gif" size="100" align="left" caption="This is my caption"}%=  (resize to 100 pixels, text flows right, with caption)
-   * =%<nop>IMAGE{"foo.gif" type="thumb" align="center"}%=  (Resize to %<nop>THUMBNAIL_SIZE% size, and center image)
-   
+   * See also [[Sandbox.ImagePluginTest]] for an exhaustive sample and test page
+   * =%<nop>IMAGE{"WestminstpalaceSample.png" size="100" align="left" caption="This is my caption"}%=  (resize to 100 pixels, text flows right, with caption)
+<div>%IMAGE{"WestminstpalaceSample.png" size="100" align="left" caption="This is my caption"}%</div>
+   * =%<nop>IMAGE{"WestminstpalaceSample.png" type="thumb" align="center"}%=  (Resize to %<nop>THUMBNAIL_SIZE% size, and center image)
+<div>%IMAGE{"WestminstpalaceSample.png" type="thumb" align="center"}%</div>
 
 ---++ Plugin Installation Instructions
 %$INSTALL_INSTRUCTIONS%
@@ -150,6 +153,7 @@ order is left-to-right-inside-out.
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Plugin Version: | 1.22 |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  11 Feb 2008: | updated documentation examples (Foswiki:Main.WillNorris) |
 |  07 Jan 2008: | certified for foswiki/compat |
 |  03 Jul 2008: | fixed parsing the type parameter; \
                   fixing docu about the default THUMBNAIL_SIZE; \
