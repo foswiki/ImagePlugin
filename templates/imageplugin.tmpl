@@ -1,0 +1,46 @@
+%{ format definitions for image types }%
+
+%TMPL:DEF{"image:link"}%<a id='$id' class='imageLink' href='$href' title='$title' style='$style'>$text</a>%%TMPL:END%
+
+%TMPL:DEF{"image:plain"}%<img class='imagePlain imagePlain_$align $class' border='0' src='$src' alt='$alt' title='$title' width='$width' height='$height' longdesc='$desc' $mousein $mouseout style='$style' align='$align' />%TMPL:END%
+
+%TMPL:DEF{"image:simple"}%<a href='$href' id='$id' class='imageHref imageSimple imageSimple_$align $class' title='$title' style='$style'><img border='0' src='$src' alt='$alt' width='$width' height='$height' longdesc='$desc' $mousein $mouseout/></a>%TMPL:END%
+  
+%TMPL:DEF{"image:frame"}%<div id='$id' class='imageFrame imageFrame_$align $class' style='_width:$framewidthpx;max-width:$framewidthpx;$style'><a href='$href' class='imageHref' title='$title'><img border='0' src='$src' alt='$alt' width='$width' height='$height' longdesc='$desc' $mousein $mouseout/></a>$captionFormat</div>%TMPL:END%
+
+%TMPL:DEF{"image:float"}%<div id='$id' class='imageFloat imageFloat_$align $class' style='$style'><a href='$href' class='imageHref' title='$title'><img border='0' src='$src' alt='$alt' width='$width' height='$height' longdesc='$desc' $mousein $mouseout/></a>$captionFormat</div>%TMPL:END%
+
+%{ helper snippets }%
+
+%TMPL:DEF{"image:clear"}%<br class='imageClear' clear='all' />%TMPL:END%
+ 
+%TMPL:DEF{"image:caption"}%<div class='imageCaption'> $caption </div>%TMPL:END%
+
+%TMPL:DEF{"image:magnify"}%<div class='imageMagnify'><a href='$href' title='Enlarge'><img border='0' src='$magnifyIcon' width='$magnifyWidth' height='$magnifyHeight' alt='Enlarge' /></a></div>%TMPL:END%
+
+%TMPL:DEF{"image:tooltip"}%
+<script type="text/javascript">
+$(function() {
+  $(".imageAddTooltip").each(function() {
+    var src = $(this).attr('href') || $(this).attr('src') || $(this).find("img").attr('src');
+    if (src.match(/jpe?g|gif|png|bmp/i)) {
+      var data = $(this).data();
+      $(this).tooltip({
+        delay:350,
+        track:true,
+        showURL:false,
+        bodyHandler: function() { 
+          src = twiki.scriptUrl+"/rest/ImagePlugin/resize?"+
+            "topic="+data.web+"."+data.topic+";"+
+            "file="+data.image+";"+
+            "width="+(data.width||300)+";"+
+            "height="+(data.height||300);
+          var img = $("<img/>").attr('src', src);
+          return $("<div class='imgTooltip'></div>").append(img);
+        }
+      });
+    }
+  });
+});
+</script>
+%TMPL:END%
