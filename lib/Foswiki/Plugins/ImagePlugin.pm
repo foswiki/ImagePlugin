@@ -31,7 +31,7 @@ use vars qw(
 );
 
 $VERSION = '$Rev$';
-$RELEASE = '2.00';
+$RELEASE = '2.10';
 
 use Foswiki::Plugins;
 use Foswiki::Render;
