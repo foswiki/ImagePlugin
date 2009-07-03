@@ -26,7 +26,7 @@ package Foswiki::Plugins::ImagePlugin;
 
 use strict;
 use vars qw( 
-  $VERSION $RELEASE $doneHeader $imageCore $imgStyle $baseWeb $baseTopic
+  $VERSION $RELEASE $doneHeader $imageCore $baseWeb $baseTopic
   $origRenderExternalLink
 );
 
@@ -48,12 +48,6 @@ sub initPlugin {
 
   # init plugin variables
   $imageCore = undef;
-  $doneHeader = 0;
-  $imgStyle = 
-    '<link rel="stylesheet" '.
-    'href="%PUBURL%/%SYSTEMWEB%/ImagePlugin/style.css" '.
-    'type="text/css" media="all" />';
-
 
   # register the tag handlers
   Foswiki::Func::registerTagHandler( 'IMAGE', \&handleIMAGE);
@@ -75,20 +69,14 @@ sub initPlugin {
 } 
 
 ###############################################################################
-# only used to insert the link style
-sub commonTagsHandler {
-  return if $doneHeader;
-
-  if ($_[0] =~ s/<head>(.*?[\r\n]+)/<head>$1$imgStyle\n/o) {
-    $doneHeader = 1;
-  }
-}
-
-###############################################################################
 # lazy initializer
 sub getCore {
   return $imageCore if $imageCore;
-  
+
+  Foswiki::Func::addToHEAD("IMAGEPLUGIN", <<'HERE');
+<link rel="stylesheet" href="%PUBURL%/%SYSTEMWEB%/ImagePlugin/style.css" type="text/css" media="all" />
+HERE
+
   require Foswiki::Plugins::ImagePlugin::Core;
   $imageCore = new Foswiki::Plugins::ImagePlugin::Core(@_);
   return $imageCore;

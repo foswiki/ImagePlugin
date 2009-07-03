@@ -128,7 +128,7 @@ sub handleIMAGE {
 
   #writeDebug("called handleIMAGE(params, $theTopic, $theWeb)");
 
-  if($params->{_DEFAULT} =~ m/clr|clear/i ){ # SMELL: non-documented feature
+  if($params->{_DEFAULT} =~ m/^(?:clr|clear)$/io ) { 
     return $this->getTemplate('clear');
   }
 
@@ -378,8 +378,10 @@ sub handleIMAGE {
           "height:\"$params->{tooltipheight}\" ".
         "}";
 
-      Foswiki::Func::addToHEAD("ImagePlugin::TooltipHelper", 
-        $this->getTemplate('tooltip'));
+      require Foswiki::Plugins::JQueryPlugin;
+      Foswiki::Plugins::JQueryPlugin::createPlugin('Tooltip');
+      Foswiki::Func::addToHEAD("IMAGEPLUGIN::TOOLTIPHELPER", 
+        $this->getTemplate('tooltip'), 'JQUERYPLUGIN::TOOLTIP');
     }
   }
 
@@ -640,7 +642,7 @@ sub getImageFile {
 sub updateAttachment {
   my ($this, $web, $topic, $filename, $params) = @_;
 
-  writeDebug("updateAttachment($web, $topic, $filename)\n");
+  writeDebug("updateAttachment($web, $topic, $filename)");
 
   try {
     my ($meta, $text) = Foswiki::Func::readTopic($web, $topic);

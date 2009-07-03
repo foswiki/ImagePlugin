@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="micha" date="1240582108" format="1.1" reprev="1.2" version="1.2"}%
+%META:TOPICINFO{author="ProjectContributor" date="1240582108" format="1.1" reprev="1.2" version="1.2"}%
 <!--
 
    PLEASE DO NOT EDIT THIS TOPIC
@@ -71,7 +71,7 @@ there is a free-form =format= parameter to specify any other possible html
 layout.  The Wikipedia format is also supported. See
 Wikipedia:Wikipedia:Extended_image_syntax.
 
-(hidden feature: =%<nop>IMAGE{"clear"}%= will create a proper clear for your floats ;)  )
+=%<nop>IMAGE{"clear"}%= will create a proper clear for floats elements.
 
 ---+++ Arguments
 The image name is mandatory.  Further arguments are optional.
@@ -232,11 +232,11 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 <!--
    * Set SHORTDESCRIPTION = Control the display and alignment of images using an easy syntax
 -->
-
 |  Plugin Author: | Craig Meyer, Foswiki:Main.MichaelDaum |
 |  Copyright: | &copy; 2006, Craig Meyer, %BR% &copy; 2006-2009 Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
-|  Plugin Version: | 2.00 |
+|  Release: | %$RELEASE% |
+|  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
 |  24 Apr 2009: | converted to foswiki plugin; \
                   added thumbnail REST handler; \
@@ -269,7 +269,7 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  CPAN Dependencies: | %$DEPENDENCIES% |
 |  Other Dependencies: |  |
 |  Perl Version: | 5.8 |
-|  Plugin Home: | Foswiki:Extensions/%TOPIC% |
+|  Home: | Foswiki:Extensions/%TOPIC% |
 |  Support: | Foswiki:Extensions/%TOPIC% |
 
 

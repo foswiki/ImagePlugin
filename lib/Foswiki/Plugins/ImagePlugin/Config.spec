@@ -1,4 +1,5 @@
-# ---+ ImagePlugin settings
+# ---+ Extensions
+# ---++ ImagePlugin
 # This is the configuration used by the <b>ImagePlugin</b>.
 
 # **BOOLEAN**
