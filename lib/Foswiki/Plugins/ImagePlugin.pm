@@ -31,7 +31,7 @@ use vars qw(
 );
 
 $VERSION = '$Rev$';
-$RELEASE = '2.11';
+$RELEASE = '2.12';
 
 use Foswiki::Plugins;
 use Foswiki::Render;
@@ -133,7 +133,7 @@ sub renderExternalLink {
 
       return getCore($baseWeb, $baseTopic)->handleIMAGE($params, $baseTopic, $baseWeb);
     } else {
-      print STDERR "normal handling of $url\n";
+      #print STDERR "normal handling of $url\n";
     }
   }
 

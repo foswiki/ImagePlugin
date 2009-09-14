@@ -238,6 +238,7 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  14 Sep 2009: | using Foswiki's proxy settings instead of ENV; diabled tooltip previews for Internet Explorers |
 |  18 Aug 2009: | removed bonus =%= in template (Foswiki:Main.AndreLichtsteiner, Foswiki:Main.WillNorris) |
 |  24 Apr 2009: | converted to foswiki plugin; \
                   added thumbnail REST handler; \
@@ -271,7 +272,7 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  Other Dependencies: |  |
 |  Perl Version: | 5.8 |
 |  Home: | Foswiki:Extensions/%TOPIC% |
-|  Support: | Foswiki:Extensions/%TOPIC% |
+|  Support: | Foswiki:Support/%TOPIC% |
 
 
 %META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" autoattached="1" comment="" date="1185796830" path="WestminstpalaceSample.png" size="107728" user="ProjectContributor" version="1"}%

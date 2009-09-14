@@ -196,7 +196,6 @@ sub handleIMAGE {
 
   # search image
   if ($origFile =~ /^https?:\/\/.*/) {
-    require LWP::UserAgent;
     my $url = $origFile;
     my $ext = '';
     if ($url =~ /^.*[\\\/](.*?(\.[a-zA-Z]+))$/) {
@@ -490,6 +489,8 @@ sub processImage {
 
     if (-f $newImgPath && !$doRefresh) { # cached
       ($imgInfo{width}, $imgInfo{height}) = $this->{mage}->Ping($newImgPath);
+      $imgInfo{width} ||= 0;
+      $imgInfo{height} ||= 0;
       writeDebug("found newImgFile=$newImgFile");
     } else { 
       
@@ -518,6 +519,8 @@ sub processImage {
 	return undef if $1 >= 400;
       }
       ($imgInfo{width}, $imgInfo{height}, $imgInfo{filesize}) = $this->{mage}->Get('width', 'height', 'filesize');
+      $imgInfo{width} ||= 0;
+      $imgInfo{height} ||= 0;
 
       $this->updateAttachment($imgWeb, $imgTopic, $newImgFile, {path => $imgFile, filesize=>$imgInfo{filesize}})
         if $this->{autoAttachThumbnails};
@@ -599,11 +602,28 @@ sub mirrorImage {
 
   #writeDebug("fetching $url into $fileName");
 
-  my $ua = LWP::UserAgent->new;
-  $ua->timeout(10);
-  $ua->env_proxy;
+  unless ($this->{ua}) {
+    require LWP::UserAgent;
+    my $ua = LWP::UserAgent->new;
+    $ua->timeout(10);
 
-  my $response = $ua->mirror($url, $fileName);
+    my $proxy = $Foswiki::cfg{PROXY}{HOST};
+    if ($proxy) {
+      my $port = $Foswiki::cfg{PROXY}{PORT};
+      $proxy .= ':' . $port if $port;
+      $ua->proxy([ 'http', 'https' ], $proxy);
+
+      my $proxySkip = $Foswiki::cfg{PROXY}{SkipProxyForDomains};
+      if ($proxySkip) {
+        my @skipDomains = split(/\s*,\s*/, $proxySkip);
+        $ua->no_proxy(@skipDomains);
+      }
+    }
+
+    $this->{ua} = $ua;
+  }
+
+  my $response = $this->{ua}->mirror($url, $fileName);
   my $code = $response->code;
 
   unless ($response->is_success || $response->code == 304) {
@@ -613,7 +633,7 @@ sub mirrorImage {
   }
 
   my $filesize = $response->header('content_length');
-  $this->updateAttachment($web, $topic, $fileName, {path => $url, filesize=>$filesize})
+  $this->updateAttachment($web, $topic, $fileName, { path => $url, filesize => $filesize })
     if $this->{autoAttachExternalImages};
 
   return 1;

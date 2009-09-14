@@ -1,5 +1,10 @@
 /* ImagePlugin css styles */
 .imageFrame,
+.imageFloat,
+.imageSimple {
+  line-height:120%;
+}
+.imageFrame,
 .imageFloat {
   font-size:90%;
   overflow: hidden;
@@ -35,6 +40,7 @@ a:hover.imageHref {
   clear:right;
   float:right;
 }
+.imageSimple_right,
 .imageFrame_right {
   margin:3px 0px 3px 10px;
 }
@@ -47,6 +53,7 @@ a:hover.imageHref {
   clear:left;
   float:left;
 }
+.imageSimple_left,
 .imageFrame_left {
   margin:3px 10px 3px 0px;
 }
