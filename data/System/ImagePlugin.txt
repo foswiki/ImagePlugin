@@ -238,7 +238,8 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
-|  14 Sep 2009: | using Foswiki's proxy settings instead of ENV; diabled tooltip previews for Internet Explorers |
+|  24 Sep 2009: | updated =imageplugin.template= to help XHTML validation (stop rendering empty id attribute) |
+|  14 Sep 2009: | using Foswiki's proxy settings instead of ENV; disabled tooltip previews for Internet Explorers |
 |  18 Aug 2009: | removed bonus =%= in template (Foswiki:Main.AndreLichtsteiner, Foswiki:Main.WillNorris) |
 |  24 Apr 2009: | converted to foswiki plugin; \
                   added thumbnail REST handler; \
