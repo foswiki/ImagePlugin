@@ -92,7 +92,7 @@ The image name is mandatory.  Further arguments are optional.
 | =mouseout= | javascript executed if moving the mouse off the image | empty |
 | =refresh= | on/off/img to trigger recomputing images | off |
 | =size=  | geometry specification | image geometry  |
-| =zoom=  | on/off | if set to "on" scaling up images is allowed, otherwise it downscales only | off |
+| =zoom=  | on/off to scale images, if set to "on" scaling up images is allowed, otherwise it downscales only | off |
 | =style= | (see html specs) | empty |
 | =title= | title text | *alt* value |
 | =tooltip= | on/off | off |
@@ -115,11 +115,11 @@ The image geometry in the =size= parameter can be specified in a format
 that is width and height can be given as integers with an optional =px=, where
 the height is optional, separated with a 'x' in between. Note, that the given
 width and height values are the _maximum width_ and _maximum height_ that the
-image will have keeping its aspect ratio. If you want to deform it to an extact
+image will have keeping its aspect ratio. If you want to deform it to an exact
 measure use the =width= and =height= arguments.
 
 Note, that you must set =zoom="on"= to scale images up. Otherwise images smaller
-than the given gemoentry will stay as hey are. For instance, when generating thumbnails
+than the given geometry will stay as they are. For instance, when generating thumbnails
 it is preferable to keep small icons as they are instead of bloating them up
 to a standard thumbnail size.
 
