@@ -92,6 +92,7 @@ The image name is mandatory.  Further arguments are optional.
 | =mouseout= | javascript executed if moving the mouse off the image | empty |
 | =refresh= | on/off/img to trigger recomputing images | off |
 | =size=  | geometry specification | image geometry  |
+| =zoom=  | on/off | if set to "on" scaling up images is allowed, otherwise it downscales only | off |
 | =style= | (see html specs) | empty |
 | =title= | title text | *alt* value |
 | =tooltip= | on/off | off |
@@ -117,6 +118,10 @@ width and height values are the _maximum width_ and _maximum height_ that the
 image will have keeping its aspect ratio. If you want to deform it to an extact
 measure use the =width= and =height= arguments.
 
+Note, that you must set =zoom="on"= to scale images up. Otherwise images smaller
+than the given gemoentry will stay as hey are. For instance, when generating thumbnails
+it is preferable to keep small icons as they are instead of bloating them up
+to a standard thumbnail size.
 
 ---+++ Format specification
 Format strings given in =header=, =footer= and =format= may contain the following
@@ -175,6 +180,7 @@ Arguments to the =resize= handlers are:
 | =width= | width of thumbnail  | |
 | =height= | height of thumbnail  | |
 | =size= | geometry of thumbnail  | |
+| =zoom= | switch on/off upscaling  | |
 | =refresh= | on/off/img to trigger recomputing images | off |
 
 ---++ Examples
@@ -238,6 +244,7 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  17 Nov 2009: | added =zoom= parameter; fixed manual refresh via url params |
 |  24 Sep 2009: | updated =imageplugin.template= to help XHTML validation (stop rendering empty id attribute) |
 |  14 Sep 2009: | using Foswiki's proxy settings instead of ENV; disabled tooltip previews for Internet Explorers |
 |  18 Aug 2009: | removed bonus =%= in template (Foswiki:Main.AndreLichtsteiner, Foswiki:Main.WillNorris) |
@@ -276,4 +283,4 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  Support: | Foswiki:Support/%TOPIC% |
 
 
-%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" autoattached="1" comment="" date="1185796830" path="WestminstpalaceSample.png" size="107728" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1185796830" path="WestminstpalaceSample.png" size="107728" user="ProjectContributor" version="1"}%

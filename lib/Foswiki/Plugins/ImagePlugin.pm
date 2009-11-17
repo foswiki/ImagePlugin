@@ -31,10 +31,10 @@ use vars qw(
 );
 
 $VERSION = '$Rev$';
-$RELEASE = '2.12';
+$RELEASE = '2.20';
 
-use Foswiki::Plugins;
-use Foswiki::Render;
+use Foswiki::Plugins ();
+use Foswiki::Render ();
 
 ###############################################################################
 sub initPlugin {

@@ -101,12 +101,13 @@ sub handleREST {
   my $width = $query->param('width') || '';
   my $height = $query->param('height') || '';
   my $size = $query->param('size') || '';
+  my $zoom = $query->param('zoom') || 'off';
   my $refresh = $query->param('refresh') || '';
   $refresh = ($refresh =~ /^(on|1|yes|img)$/g)?1:0;
 
   #writeDebug("processing image");
   my $imgInfo = $this->processImage($imgWeb, $imgTopic, $imgFile, 
-    $size, $width, $height, $refresh);
+    $size, $zoom, $width, $height, $refresh);
   unless ($imgInfo) {
     Foswiki::Func::writeWarning("ImagePlugin - $this->{errorMsg}");
     return '';
@@ -152,6 +153,7 @@ sub handleIMAGE {
   $params->{mousein} ||= '';
   $params->{mouseout} ||= '';
   $params->{style} ||= '';
+  $params->{zoom} ||= 'off';
   $params->{tooltip} ||= 'off';
   $params->{tooltipwidth} ||= '300';
   $params->{tooltipheight} ||= '300';
@@ -304,7 +306,7 @@ sub handleIMAGE {
   # compute image
   my $imgInfo = 
     $this->processImage($imgWeb, $imgTopic, $origFile, 
-      $params->{size}, $params->{width}, $params->{height}, $doRefresh);
+      $params->{size}, $params->{zoom}, $params->{width}, $params->{height}, $doRefresh);
 
   unless ($imgInfo) {
     #Foswiki::Func::writeWarning("ImagePlugin - $this->{errorMsg}");
@@ -441,9 +443,9 @@ sub plainify {
 #    * origHeight: height of the source image
 # returns undef on error
 sub processImage {
-  my ($this, $imgWeb, $imgTopic, $imgFile, $size, $width, $height, $doRefresh) = @_;
+  my ($this, $imgWeb, $imgTopic, $imgFile, $size, $zoom, $width, $height, $doRefresh) = @_;
 
-  writeDebug("called processImage($imgWeb, $imgTopic, $imgFile, $size, $width, $height, $doRefresh)");
+  writeDebug("called processImage($imgWeb, $imgTopic, $imgFile, $size, $zoom, $width, $height, $doRefresh)");
 
   $this->{errorMsg} = '';
 
@@ -459,26 +461,43 @@ sub processImage {
   $imgInfo{origWidth} ||= 0;
   $imgInfo{origHeight} ||= 0;
 
+  if ($size) {
+    if ($zoom ne 'on' && ($size > $imgInfo{origHeight} || $size > $imgInfo{origWidth})) {
+      writeDebug("not zooming to size $size");
+      $size = '';
+    }
+  }
+
   if ($size || $width || $height || $doRefresh) {
     # read orig width and height
     if ($width || $height) {
+
       # keep aspect ratio
       my $aspect = $imgInfo{origWidth} ? $imgInfo{origHeight} / $imgInfo{origWidth} : 0;
       my $newHeight = $imgInfo{origHeight};
       my $newWidth = $imgInfo{origWidth};
-      if ($width && $newWidth > $width) {
+
+      if ($width && $imgInfo{origWidth} > $width) { # scale down width
         $newHeight = $width * $aspect;
         $newWidth = $width;
       }
-      if ($height && $newHeight > $height) {
+
+      if ($height && $newHeight > $height) { # scale down height
         $newWidth = $aspect ? $height / $aspect : 0;
         $newHeight = $height;
       }
+
+      if ($zoom ne 'on' && ($newHeight > $imgInfo{origHeight} || $newWidth > $imgInfo{origWidth})) {
+        writeDebug("not zooming");
+        $newHeight = $imgInfo{origHeight};
+        $newWidth = $imgInfo{origWidth};
+      }
+
       $width = int($newWidth+0.5);
       $height = int($newHeight+0.5);
-      #writeDebug("origWidth=$imgInfo{origWidth} origHeight=$imgInfo{origHeight} aspect=$aspect width=$width height=$height");
+      writeDebug("origWidth=$imgInfo{origWidth} origHeight=$imgInfo{origHeight} aspect=$aspect width=$width height=$height");
     }
-      
+
     my $newImgFile = $this->getImageFile($width, $height, $size, $imgFile);
     my $newImgPath = $imgPath.'/'.$newImgFile;
     writeDebug("checking for $newImgFile");
@@ -679,7 +698,7 @@ sub updateAttachment {
     my $attachment = $meta->get('FILEATTACHMENT', $baseFilename);
     my $topicInfo = $meta->get('TOPICINFO');
     $attachment->{name} = $baseFilename;
-    $attachment->{attachment} = $filename;
+    $attachment->{attachment} = $baseFilename; # BTW: not documented in System.MetaData 
     $attachment->{date} = time();
     $attachment->{version} ||= 1;
     $attachment->{attr} = 'h';
