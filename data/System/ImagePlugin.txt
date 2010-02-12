@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" date="1240582108" format="1.1" reprev="1.2" version="1.2"}%
+%META:TOPICINFO{author="ProjectContributor" date="1266012866" format="1.1" version="1.2"}%
 <!--
 
    PLEASE DO NOT EDIT THIS TOPIC
@@ -285,3 +285,4 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 
 
 %META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1185796830" path="WestminstpalaceSample.png" size="107728" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1266012865" path="http://www.google.com/intl/en_ALL/images/logo.gif" size="8558" user="ProjectContributor" version="1"}%
