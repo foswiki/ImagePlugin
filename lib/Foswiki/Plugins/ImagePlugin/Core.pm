@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2009 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2010 Michael Daum http://michaeldaumconsulting.com
 #
 # Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -157,6 +157,8 @@ sub handleIMAGE {
   $params->{tooltip} ||= 'off';
   $params->{tooltipwidth} ||= '300';
   $params->{tooltipheight} ||= '300';
+
+  $params->{class} =~ s/'/"/g;
 
   unless ($params->{size}) {
     $params->{size} = Foswiki::Func::getPreferencesValue("IMAGESIZE");
@@ -368,22 +370,16 @@ sub handleIMAGE {
   my $href = $params->{href};
 
   my $context = Foswiki::Func::getContext();
-  if ($context->{JQueryPluginEnabled}) {
-    if ($params->{tooltip} eq 'on') {
-      $params->{class} .= 
-        " imageAddTooltip {".
-          "web:\"$imgWeb\", ".
-          "topic:\"$imgTopic\", ".
-          "image:\"$origFile\", ".
-          "width:\"$params->{tooltipwidth}\", ".
-          "height:\"$params->{tooltipheight}\" ".
-        "}";
-
-      require Foswiki::Plugins::JQueryPlugin;
-      Foswiki::Plugins::JQueryPlugin::createPlugin('Tooltip');
-      Foswiki::Func::addToHEAD("IMAGEPLUGIN::TOOLTIPHELPER", 
-        $this->getTemplate('tooltip'), 'JQUERYPLUGIN::TOOLTIP');
-    }
+  if ($context->{JQueryPluginEnabled} && $params->{tooltip} eq 'on') {
+    Foswiki::Plugins::JQueryPlugin::createPlugin("imagetooltip");
+    $params->{class} .= 
+      " jqImageTooltip {".
+        "web:\"$imgWeb\", ".
+        "topic:\"$imgTopic\", ".
+        "image:\"$origFile\", ".
+        "width:\"$params->{tooltipwidth}\", ".
+        "height:\"$params->{tooltipheight}\" ".
+      "}";
   }
 
   #my $thumbFileUrl = $pubUrl.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgInfo->{file};
@@ -461,8 +457,8 @@ sub processImage {
   $imgInfo{origWidth} ||= 0;
   $imgInfo{origHeight} ||= 0;
 
-  if ($size) {
-    if ($zoom ne 'on' && ($size > $imgInfo{origHeight} || $size > $imgInfo{origWidth})) {
+  if ($size && $size =~ /^\d+$/) {
+    if ($zoom ne 'on' && $size > $imgInfo{origHeight} && $size > $imgInfo{origWidth}) {
       writeDebug("not zooming to size $size");
       $size = '';
     }
@@ -487,7 +483,7 @@ sub processImage {
         $newHeight = $height;
       }
 
-      if ($zoom ne 'on' && ($newHeight > $imgInfo{origHeight} || $newWidth > $imgInfo{origWidth})) {
+      if ($zoom ne 'on' && $newHeight > $imgInfo{origHeight} && $newWidth > $imgInfo{origWidth}) {
         writeDebug("not zooming");
         $newHeight = $imgInfo{origHeight};
         $newWidth = $imgInfo{origWidth};

@@ -6,9 +6,6 @@ lib/Foswiki/Plugins/ImagePlugin.pm 0644
 pub/Sandbox/ImagePluginTest/STS-32_crew.jpg 0644
 pub/Sandbox/ImagePluginTest/Tst.png 0644
 pub/Sandbox/ImagePluginTest/Westminstpalace.jpg 0644
-pub/System/ImagePlugin/jquery.tooltippreview.js 0644
-pub/System/ImagePlugin/jquery.tooltippreview.js.gz 0644
-pub/System/ImagePlugin/jquery.tooltippreview.uncompressed.js 0644
 pub/System/ImagePlugin/magnify-clip.png 0644
 pub/System/ImagePlugin/Makefile 0644
 pub/System/ImagePlugin/style.css 0644

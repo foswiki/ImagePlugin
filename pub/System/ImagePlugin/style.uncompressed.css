@@ -34,31 +34,17 @@ a:hover.imageHref {
 .imageSimple {
   overflow:auto;
 }
-.imageSimple_right,
-.imageFrame_right,
-.imageFloat_right {
-  clear:right;
-  float:right;
-}
+.imageFloat_right,
 .imageSimple_right,
 .imageFrame_right {
-  margin:3px 0px 3px 10px;
-}
-.imageFloat_right {
-  margin:0px 0px 0px 10px;
+  float:right;
+  margin:0px 0px 10px 10px;
 }
 .imageSimple_left,
 .imageFrame_left,
 .imageFloat_left {
-  clear:left;
   float:left;
-}
-.imageSimple_left,
-.imageFrame_left {
-  margin:3px 10px 3px 0px;
-}
-.imageFloat_left {
-  margin:0px 10px 0px 0px;
+  margin:0px 10px 10px 0px;
 }
 .imageSimple_center,
 .imageFrame_center,

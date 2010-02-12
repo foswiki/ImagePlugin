@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2009 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2010 Michael Daum http://michaeldaumconsulting.com
 #
 # Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -26,12 +26,12 @@ package Foswiki::Plugins::ImagePlugin;
 
 use strict;
 use vars qw( 
-  $VERSION $RELEASE $doneHeader $imageCore $baseWeb $baseTopic
-  $origRenderExternalLink
+  $VERSION $RELEASE $imageCore $baseWeb $baseTopic
+  $origRenderExternalLink $doneRegisterJQueryPlugin
 );
 
 $VERSION = '$Rev$';
-$RELEASE = '2.20';
+$RELEASE = '2.30';
 
 use Foswiki::Plugins ();
 use Foswiki::Render ();
@@ -48,6 +48,7 @@ sub initPlugin {
 
   # init plugin variables
   $imageCore = undef;
+  $doneRegisterJQueryPlugin = 0;
 
   # register the tag handlers
   Foswiki::Func::registerTagHandler( 'IMAGE', \&handleIMAGE);
@@ -64,6 +65,13 @@ sub initPlugin {
     }
   }
 
+  # register jquery.imagetooltip plugin if jquery is isntalled
+  if ($Foswiki::cfg{Plugins}{JQueryPlugin}{Enabled}) {
+    require Foswiki::Plugins::JQueryPlugin;
+    Foswiki::Plugins::JQueryPlugin::registerPlugin("ImageTooltip",
+      'Foswiki::Plugins::ImagePlugin::IMAGETOOLTIP');
+  }
+
   # Plugin correctly initialized
   return 1;
 } 
@@ -73,7 +81,7 @@ sub initPlugin {
 sub getCore {
   return $imageCore if $imageCore;
 
-  Foswiki::Func::addToHEAD("IMAGEPLUGIN", <<'HERE');
+  Foswiki::Func::addToZone("head", "IMAGEPLUGIN", <<'HERE');
 <link rel="stylesheet" href="%PUBURL%/%SYSTEMWEB%/ImagePlugin/style.css" type="text/css" media="all" />
 HERE
 

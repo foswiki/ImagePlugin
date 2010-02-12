@@ -239,11 +239,12 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
    * Set SHORTDESCRIPTION = Control the display and alignment of images using an easy syntax
 -->
 |  Plugin Author: | Craig Meyer, Foswiki:Main.MichaelDaum |
-|  Copyright: | &copy; 2006, Craig Meyer, %BR% &copy; 2006-2009 Michael Daum http://michaeldaumconsulting.com |
+|  Copyright: | &copy; 2006, Craig Meyer, %BR% &copy; 2006-2010 Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  12 Feb 2010: | made imagetooltip a proper jQuery plugin; using Foswiki:Extensions/ZonePlugin for faster page loads |
 |  17 Nov 2009: | added =zoom= parameter; fixed manual refresh via url params |
 |  24 Sep 2009: | updated =imageplugin.template= to help XHTML validation (stop rendering empty id attribute) |
 |  14 Sep 2009: | using Foswiki's proxy settings instead of ENV; disabled tooltip previews for Internet Explorers |
