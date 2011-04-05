@@ -28,10 +28,12 @@ use strict;
 use vars qw( 
   $VERSION $RELEASE $imageCore $baseWeb $baseTopic
   $origRenderExternalLink $doneRegisterJQueryPlugin
+  $NO_PREFS_IN_TOPIC
 );
 
 $VERSION = '$Rev$';
-$RELEASE = '2.31';
+$RELEASE = '2.40';
+$NO_PREFS_IN_TOPIC = 1;
 
 use Foswiki::Plugins ();
 use Foswiki::Render ();
@@ -45,6 +47,10 @@ sub initPlugin {
     Foswiki::Func::writeWarning( "Version mismatch between ImagePlugin and Plugins.pm" );
     return 0;
   }
+
+  Foswiki::Func::addToZone("head", "IMAGEPLUGIN::META", <<"HERE");
+<meta name='foswiki.ImagePluginEnabled' content='true' />
+HERE
 
   # init plugin variables
   $imageCore = undef;

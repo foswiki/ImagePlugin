@@ -81,6 +81,8 @@ The image name is mandatory.  Further arguments are optional.
 | =alt= | alt text | image filename |
 | =caption=  | caption text  | empty  |
 | =class= | (see html specs) | imageFrame, imageFloat, ... depending on the type |
+| =crop=  | on/northwest/north/northeast/west/center/east/southwest/south/southeast/off: scrop the image to fit the image into the given aspect ratio; other values than on/off specify the area the croped image gravitates to relative to the original (on=center) | off |
+| =data= | json added to the image class used by the jquery stub | empty |
 | =desc= | description text | title text |
 | =footer= | text to be appended to the html output | empty |
 | =format= | image layout format string | set by type argument |
@@ -92,17 +94,18 @@ The image name is mandatory.  Further arguments are optional.
 | =mouseout= | javascript executed if moving the mouse off the image | empty |
 | =refresh= | on/off/img to trigger recomputing images | off |
 | =size=  | geometry specification | image geometry  |
-| =zoom=  | on/off to scale images, if set to "on" scaling up images is allowed, otherwise it downscales only | off |
 | =style= | (see html specs) | empty |
 | =title= | title text | *alt* value |
-| =tooltip= | on/off | off |
-| =tooltipwidth= | width of tooltip image | 300 |
 | =tooltipheight= | height of tooltip image | 300 |
+| =tooltip= | on/off | off |
+| =tooltipcrop= | on/northwest/north/northeast/west/center/east/southwest/south/southeast/off: same as =crop= but used for the tooltip |
+| =tooltipwidth= | width of tooltip image | 300 |
 | =topic= | valid topic name | topic part of IMGALBUM value or current topic |
 | =type=  | simple, plain, link, thumb[nail], frame, float | plain  |
 | =warn= | on/off, surpress error warnings | on |
 | =web= | valid web name | web part of IMGALBUM value or current topic |
 | =width= | integer value | image width |
+| =zoom=  | on/off to scale images, if set to "on" scaling up images is allowed, otherwise it downscales only | off 
 
 ---+++ Tooltip preview
 The =tooltip= argument allows rendering image previews in a tooltip. This option
@@ -132,6 +135,7 @@ pseudo variables:
 | =$alt= | value of =alt= argumet |
 | =$caption= | caption text |
 | =$class= | value of =class= argumet |
+| =$data= | value of =data= argumet |
 | =$desc= | value of =desc= argument |
 | =$dollar= | replaced with dollar sign ($) |
 | =$height= | image height |
@@ -244,6 +248,15 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  10 Jan 2011: | fixed parsing of mediawiki like params; \
+                  fixed jquery interface to foswiki preferences; \
+                  fixed dependency on !ZonePlugin to only be required for old foswiki versions; \
+                  make result of resize REST service cacheable, i.e. don't use a redirect; \
+                  fixed expansion of standard escapes; \
+                  improved crop parameter to specify the location of the remaining image relative to the original; \
+                  added data parameter to interface with jquery code; \
+                  using md5 now to properly cache thumbnails; \
+                  mirroring external images now obeys the ATTACHFILESIZELIMIT preference; |
 |  12 Feb 2010: | made imagetooltip a proper jQuery plugin; using Foswiki:Extensions/ZonePlugin for faster page loads |
 |  17 Nov 2009: | added =zoom= parameter; fixed manual refresh via url params |
 |  24 Sep 2009: | updated =imageplugin.template= to help XHTML validation (stop rendering empty id attribute) |

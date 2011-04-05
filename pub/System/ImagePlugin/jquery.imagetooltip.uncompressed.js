@@ -16,9 +16,10 @@ jQuery(function($) {
           track:true,
           showURL:false,
           bodyHandler: function() { 
-            var src = foswiki.scriptUrlPath+"/rest/ImagePlugin/resize?"+
+            var src = foswiki.getPreference("SCRIPTURLPATH")+"/rest/ImagePlugin/resize?"+
               "topic="+opts.web+"."+opts.topic+";"+
               "file="+opts.image+";"+
+              "crop="+(opts.crop||'off')+";"+
               "width="+(opts.width||300)+";"+
               "height="+(opts.height||300);
             var img = $("<img/>").attr('src', src);

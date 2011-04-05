@@ -1,9 +1,9 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2010 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2011 Michael Daum http://michaeldaumconsulting.com
 #
-# Based on ImgPlugin
+# Early version Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
 #
 # and Foswiki Contributors. All Rights Reserved. Foswiki Contributors
@@ -27,6 +27,8 @@ package Foswiki::Plugins::ImagePlugin::Core;
 use strict;
 use Error qw( :try );
 use Foswiki::OopsException ();
+use Digest::MD5 ();
+use URI ();
 
 BEGIN {
   # coppied over from TW*k*.pm to cure Item3087
@@ -88,7 +90,7 @@ sub new {
 
 ###############################################################################
 sub handleREST {
-  my ($this, $subject, $verb) = @_;
+  my ($this, $subject, $verb, $response) = @_;
 
   #writeDebug("called handleREST($subject, $verb)");
 
@@ -97,30 +99,34 @@ sub handleREST {
   my $theWeb = $query->param('web') || $this->{session}->{webName};
   my ($imgWeb, $imgTopic) = Foswiki::Func::normalizeWebTopicName($theWeb, $theTopic);
   my $imgFile = $query->param('file');
-  my $imgPath = $Foswiki::cfg{PubDir}.'/'.$imgWeb.'/'.$imgTopic;
-  my $width = $query->param('width') || '';
-  my $height = $query->param('height') || '';
-  my $size = $query->param('size') || '';
-  my $zoom = $query->param('zoom') || 'off';
   my $refresh = $query->param('refresh') || '';
   $refresh = ($refresh =~ /^(on|1|yes|img)$/g)?1:0;
 
-  #writeDebug("processing image");
-  my $imgInfo = $this->processImage($imgWeb, $imgTopic, $imgFile, 
-    $size, $zoom, $width, $height, $refresh);
+  writeDebug("processing image");
+  my $imgInfo = $this->processImage($imgWeb, $imgTopic, $imgFile, {
+      size => ($query->param('size')||''),
+      zoom => ($query->param('zoom')||'off'),
+      crop => ($query->param('crop')||'off'),
+      width => ($query->param('width')||''),
+      height => ($query->param('height')||''),
+    } ,$refresh);
   unless ($imgInfo) {
     Foswiki::Func::writeWarning("ImagePlugin - $this->{errorMsg}");
     return '';
   }
 
-  my $pubUrlPath = Foswiki::Func::getPubUrlPath();
-  my $urlHost = Foswiki::Func::getUrlHost();
-  my $pubUrl = $urlHost.$pubUrlPath;
-  my $thumbFileUrl = $pubUrl.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgInfo->{file};
-  $thumbFileUrl = urlEncode($thumbFileUrl);
+  my $image = readImage($imgWeb, $imgTopic, $imgInfo->{file});
+  my $mimeType = $this->suffixToMimeType($imgInfo->{file});
 
-  #writeDebug("redirecting to $thumbFileUrl");
-  Foswiki::Func::redirectCgiQuery($query, $thumbFileUrl);
+  $response->header(
+    -'Content-Type' => $mimeType,
+    -'Content-Length' => $imgInfo->{filesize}, # overrides wrong length computed by Response
+    -'Cache-Control' => 'max-age=36000, public',
+    -'Expires' => '+12h',
+  );
+  $response->print($image);
+
+  return;
 }
 
 ###############################################################################
@@ -129,16 +135,19 @@ sub handleIMAGE {
 
   #writeDebug("called handleIMAGE(params, $theTopic, $theWeb)");
 
-  if($params->{_DEFAULT} =~ m/^(?:clr|clear)$/io ) { 
+  if($params->{_DEFAULT} && $params->{_DEFAULT} =~ m/^(?:clr|clear)$/io ) { 
     return $this->getTemplate('clear');
   }
 
-  # read parameters
-  my $argsStr = $params->{_DEFAULT} || '';
-  $argsStr =~ s/^\[\[//o;
-  $argsStr =~ s/\]\]$//o;
   $params->{type} ||= '';
-  $this->parseWikipediaParams($params, $argsStr);
+
+  # read parameters
+  $this->parseMediawikiParams($params);
+
+  my $origFile = $params->{_DEFAULT} || $params->{file};
+  return '' unless $origFile;
+
+  #writeDebug("origFile=$origFile");
 
   # default and fix parameters
   $params->{warn} ||= '';
@@ -147,18 +156,22 @@ sub handleIMAGE {
   $params->{caption} ||= '';
   $params->{align} ||= 'none';
   $params->{class} ||= '';
+  $params->{data} ||= '';
   $params->{footer} ||= '';
   $params->{header} ||= '';
   $params->{id} ||= '';
   $params->{mousein} ||= '';
   $params->{mouseout} ||= '';
   $params->{style} ||= '';
-  $params->{zoom} ||= 'off';
+  $params->{zome} ||= 'off';
+  $params->{crop} ||= 'off';
   $params->{tooltip} ||= 'off';
+  $params->{tooltipcrop} ||= 'off';
   $params->{tooltipwidth} ||= '300';
   $params->{tooltipheight} ||= '300';
 
   $params->{class} =~ s/'/"/g;
+  $params->{data} =~ s/'/"/g;
 
   unless ($params->{size}) {
     $params->{size} = Foswiki::Func::getPreferencesValue("IMAGESIZE");
@@ -183,20 +196,17 @@ sub handleIMAGE {
     $params->{size} = $3?"$1x$3":$1;
   }
 
-  my $origFile = $params->{file} || $params->{_DEFAULT};
   my $imgWeb = $params->{web} || $theWeb;
   my $imgTopic;
   my $imgPath;
   my $pubDir = $Foswiki::cfg{PubDir};
   my $pubUrlPath = Foswiki::Func::getPubUrlPath();
   my $urlHost = Foswiki::Func::getUrlHost();
-  my $pubUrl = $urlHost.$pubUrlPath;
+  my $pubUrl = URI->new($pubUrlPath, $urlHost);
   my $albumTopic;
   my $query = Foswiki::Func::getCgiQuery();
   my $doRefresh = $query->param('refresh') || 0;
   $doRefresh = ($doRefresh =~ /^(on|1|yes|img)$/g)?1:0;
-
-  #writeDebug("origFile=$origFile") if $origFile;
 
   # search image
   if ($origFile =~ /^https?:\/\/.*/) {
@@ -211,7 +221,7 @@ sub handleIMAGE {
     my $dummy;
     ($origFile, $dummy) = Foswiki::Sandbox::sanitizeAttachmentName($origFile);
     if ($origFile ne $dummy) {
-      #writeDebug("sanitized filename from $dummy to $origFile");
+      writeDebug("sanitized filename from $dummy to $origFile");
     }
 
     $imgTopic = $params->{topic} || $theTopic;
@@ -226,7 +236,7 @@ sub handleIMAGE {
     unless($this->mirrorImage($imgWeb, $imgTopic, $url, $imgPath, $doRefresh)) {
       return $this->inlineError($params);
     }
-  } elsif ($origFile =~ /^(?:$pubUrl|$pubUrlPath)?(.*)\/(.*?)$/) {
+  } elsif ($origFile =~ /(?:\/?pub\/)?(.*)\/(.*?)$/) {
     # part of the filename
     $origFile = $2;
     ($imgWeb, $imgTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $1);
@@ -307,8 +317,7 @@ sub handleIMAGE {
 
   # compute image
   my $imgInfo = 
-    $this->processImage($imgWeb, $imgTopic, $origFile, 
-      $params->{size}, $params->{zoom}, $params->{width}, $params->{height}, $doRefresh);
+    $this->processImage($imgWeb, $imgTopic, $origFile, $params, $doRefresh);
 
   unless ($imgInfo) {
     #Foswiki::Func::writeWarning("ImagePlugin - $this->{errorMsg}");
@@ -377,8 +386,10 @@ sub handleIMAGE {
         "web:\"$imgWeb\", ".
         "topic:\"$imgTopic\", ".
         "image:\"$origFile\", ".
+        "crop:\"$params->{tooltipcrop}\", ".
         "width:\"$params->{tooltipwidth}\", ".
         "height:\"$params->{tooltipheight}\" ".
+        ($params->{data}?", $params->{data}":'').
       "}";
   }
 
@@ -394,6 +405,7 @@ sub handleIMAGE {
   $result =~ s/\$framewidth/($imgInfo->{width}+2)/ge;
   $result =~ s/\$text/$origFile/g;
   $result =~ s/\$class/$params->{class}/g;
+  $result =~ s/\$data/$params->{data}/g;
   $result =~ s/\$id/$params->{id}/g;
   $result =~ s/\$style/$params->{style}/g;
   $result =~ s/\$align/$params->{align}/g;
@@ -401,10 +413,10 @@ sub handleIMAGE {
   $result =~ s/\$title/<noautolink>$title<\/noautolink>/g;
   $result =~ s/\$desc/<noautolink>$desc<\/noautolink>/g;
 
-  $result =~ s/\$dollar/\$/go;
-  $result =~ s/\$percnt/\%/go;
-  $result =~ s/\$n/\n/go;
+  $result =~ s/\$perce?nt/\%/go;
   $result =~ s/\$nop//go;
+  $result =~ s/\$n/\n/go;
+  $result =~ s/\$dollar/\$/go;
 
   # recursive call for delayed TML expansion
   $result = Foswiki::Func::expandCommonVariables($result, $theTopic, $theWeb);
@@ -414,6 +426,8 @@ sub handleIMAGE {
 ###############################################################################
 sub plainify {
   my $text = shift;
+
+  return '' unless $text;
 
   $text =~ s/<!--.*?-->//gs;          # remove all HTML comments
   $text =~ s/\&[a-z]+;/ /g;           # remove entities
@@ -439,9 +453,15 @@ sub plainify {
 #    * origHeight: height of the source image
 # returns undef on error
 sub processImage {
-  my ($this, $imgWeb, $imgTopic, $imgFile, $size, $zoom, $width, $height, $doRefresh) = @_;
+  my ($this, $imgWeb, $imgTopic, $imgFile, $params, $doRefresh) = @_;
 
-  writeDebug("called processImage($imgWeb, $imgTopic, $imgFile, $size, $zoom, $width, $height, $doRefresh)");
+  my $size = $params->{size} || '';
+  my $crop = $params->{crop} || 'off';
+  my $zoom = $params->{zoom} || 'off';
+  my $width = $params->{width} || '';
+  my $height = $params->{height} || '';
+
+  writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, refresh=$doRefresh)");
 
   $this->{errorMsg} = '';
 
@@ -453,61 +473,41 @@ sub processImage {
   my $origImgPath = $imgPath.'/'.$imgFile;
 
   writeDebug("pinging $imgPath/$imgFile");
-  ($imgInfo{origWidth}, $imgInfo{origHeight}) = $this->{mage}->Ping($origImgPath);
+  ($imgInfo{origWidth}, $imgInfo{origHeight}, $imgInfo{origFilesize}, $imgInfo{origFormat}) = $this->{mage}->Ping($origImgPath);
   $imgInfo{origWidth} ||= 0;
   $imgInfo{origHeight} ||= 0;
 
-  if ($size && $size =~ /^\d+$/) {
-    if ($zoom ne 'on' && $size > $imgInfo{origHeight} && $size > $imgInfo{origWidth}) {
-      writeDebug("not zooming to size $size");
-      $size = '';
-    }
-  }
-
   if ($size || $width || $height || $doRefresh) {
-    # read orig width and height
-    if ($width || $height) {
-
-      # keep aspect ratio
-      my $aspect = $imgInfo{origWidth} ? $imgInfo{origHeight} / $imgInfo{origWidth} : 0;
-      my $newHeight = $imgInfo{origHeight};
-      my $newWidth = $imgInfo{origWidth};
-
-      if ($width && $imgInfo{origWidth} > $width) { # scale down width
-        $newHeight = $width * $aspect;
-        $newWidth = $width;
-      }
-
-      if ($height && $newHeight > $height) { # scale down height
-        $newWidth = $aspect ? $height / $aspect : 0;
-        $newHeight = $height;
-      }
-
-      if ($zoom ne 'on' && $newHeight > $imgInfo{origHeight} && $newWidth > $imgInfo{origWidth}) {
-        writeDebug("not zooming");
-        $newHeight = $imgInfo{origHeight};
-        $newWidth = $imgInfo{origWidth};
-      }
-
-      $width = int($newWidth+0.5);
-      $height = int($newHeight+0.5);
-      writeDebug("origWidth=$imgInfo{origWidth} origHeight=$imgInfo{origHeight} aspect=$aspect width=$width height=$height");
+    if (!$size) {
+      $size = $width.'x'.$height;
     }
+    if ($size !~ /[<>^]$/) {
+      if ($zoom eq 'on') {
+        $size .= '<';
+      } else {
+        $size .= '>';
+      }
+      if ($crop ne 'off') {
+        $size .= '^';
+      }
+    }
+    writeDebug("size=$size");
 
-    my $newImgFile = $this->getImageFile($width, $height, $size, $imgFile);
+    my $newImgFile = $this->getImageFile($size, $zoom, $crop, $imgFile);
     my $newImgPath = $imgPath.'/'.$newImgFile;
-    writeDebug("checking for $newImgFile");
+    #writeDebug("checking for $newImgFile");
 
     # compare file modification times
     $doRefresh = 1 if -f $newImgPath && 
       getModificationTime($origImgPath) > getModificationTime($newImgPath);
 
     if (-f $newImgPath && !$doRefresh) { # cached
-      ($imgInfo{width}, $imgInfo{height}) = $this->{mage}->Ping($newImgPath);
+      ($imgInfo{width}, $imgInfo{height}, $imgInfo{filesize}, $imgInfo{format}) = $this->{mage}->Ping($newImgPath);
       $imgInfo{width} ||= 0;
       $imgInfo{height} ||= 0;
-      writeDebug("found newImgFile=$newImgFile");
+      writeDebug("found $newImgFile at $imgWeb.$imgTopic");
     } else { 
+      writeDebug("creating $newImgFile");
       
       # read
       my $error = $this->{mage}->Read($origImgPath);
@@ -515,35 +515,80 @@ sub processImage {
 	$this->{errorMsg} = $error;
 	return undef if $1 >= 400;
       }
-      
+
       # scale
-      my %args;
-      $args{geometry} = $size if $size;
-      $args{width} = $width if $width;
-      $args{height} = $height if $height;
-      $error = $this->{mage}->Resize(%args);
-      if ($error =~ /(\d+)/) {
-	$this->{errorMsg} = $error;
-	return undef if $1 >= 400;
+      my $geometry = $size;
+      # SMELL: As of IM v6.3.8-3 IM now has a new geometry option flag '^' which
+      # is used to resize the image based on the smallest fitting dimension.
+      if ($crop ne 'off' && $geometry !~ /\^$/) {
+        $geometry .= '^';
       }
-      
+
+      writeDebug("resize($geometry)");
+      $error = $this->{mage}->Resize(geometry=>$geometry);
+      if ($error =~ /(\d+)/) {
+        $this->{errorMsg} = $error;
+        return undef if $1 >= 400;
+      }
+
+      # crop
+      if ($crop =~ /^(on|northwest|north|northeast|west|center|east|southwest|south|southeast)$/i) {
+        my $gravity = $crop;
+        $gravity = "center" if $crop eq 'on';
+        writeDebug("Set(Gravity=>$gravity)");
+        $error = $this->{mage}->Set(Gravity=>$gravity);
+        if ($error =~ /(\d+)/) {
+          $this->{errorMsg} = $error;
+          return undef if $1 >= 400;
+        }
+
+        my $geometry = '';
+        if ($size) {
+          unless ($size =~ /\d+x\d+/) {
+            $size = $size.'x'.$size;
+          }
+          $geometry = $size.'+0+0';
+          $geometry =~ s/[<>^@!]//go;
+        } else {
+          $geometry = $width.'x'.$height.'+0+0';
+        }
+ 
+        writeDebug("crop($geometry)");
+        $error = $this->{mage}->Crop($geometry);
+        if ($error =~ /(\d+)/) {
+          $this->{errorMsg} = $error;
+          return undef if $1 >= 400;
+        }
+
+        $error = $this->{mage}->Set(page=>'0x0+0+0');
+        if ($error =~ /(\d+)/) {
+          $this->{errorMsg} = $error;
+          return undef if $1 >= 400;
+        }
+      }
+
+
       # write
       $error = $this->{mage}->Write($newImgPath);
       if ($error =~ /(\d+)/) {
 	$this->{errorMsg} .= " $error";
 	return undef if $1 >= 400;
       }
-      ($imgInfo{width}, $imgInfo{height}, $imgInfo{filesize}) = $this->{mage}->Get('width', 'height', 'filesize');
+      ($imgInfo{width}, $imgInfo{height}, $imgInfo{filesize}, $imgInfo{format}) = $this->{mage}->Get('width', 'height', 'filesize', 'format');
       $imgInfo{width} ||= 0;
       $imgInfo{height} ||= 0;
 
-      $this->updateAttachment($imgWeb, $imgTopic, $newImgFile, {path => $imgFile, filesize=>$imgInfo{filesize}})
-        if $this->{autoAttachThumbnails};
+      #writeDebug("old geometry=$imgInfo{origWidth}x$imgInfo{origHeight}, new geometry=$imgInfo{width}x$imgInfo{height}");
+
+#      $this->updateAttachment($imgWeb, $imgTopic, $newImgFile, {path => $imgFile, filesize=>$imgInfo{filesize}})
+#        if $this->{autoAttachThumbnails};
     }
     $imgInfo{file} = $newImgFile;
   } else {
     $imgInfo{width} = $imgInfo{origWidth};
     $imgInfo{height} = $imgInfo{origHeight};
+    $imgInfo{filesize} = $imgInfo{origFilesize};
+    $imgInfo{format} = $imgInfo{origFormat};
   }
 
   # forget images
@@ -555,14 +600,18 @@ sub processImage {
 
 ###############################################################################
 # sets type (link,frame,thumb), file, width, height, size, caption
-sub parseWikipediaParams {
-  my ($this, $params, $argStr) = @_;
+sub parseMediawikiParams {
+  my ($this, $params) = @_;
 
+  my $argStr = $params->{_DEFAULT} || '';
   return unless $argStr =~ /\|/g;
+
+  $argStr =~ s/^\[\[//o;
+  $argStr =~ s/\]\]$//o;
 
   my ($file, @args) = split(/\|/, $argStr);
   $params->{type} = 'link' if $file =~ s/^://o;
-  $params->{file} = $file;
+  $params->{file} = $params->{_DEFAULT} = $file;
 
   foreach my $arg (@args) {
     $arg =~ s/^\s+//o;
@@ -612,15 +661,24 @@ sub urlEncode {
 sub mirrorImage {
   my ($this, $web, $topic, $url, $fileName, $force) = @_;
 
-  #writeDebug("called mirrorImage($url, $fileName)");
+  writeDebug("called mirrorImage($url, $fileName)");
   return 1 if !$force && -e $fileName;
 
-  #writeDebug("fetching $url into $fileName");
+  require File::Temp;
+  my $tempImgFile = new File::Temp();
+  writeDebug("fetching $url into $tempImgFile");
 
   unless ($this->{ua}) {
     require LWP::UserAgent;
     my $ua = LWP::UserAgent->new;
     $ua->timeout(10);
+
+    my $attachLimit = Foswiki::Func::getPreferencesValue('ATTACHFILESIZELIMIT') || 0;
+    $attachLimit =~ s/[^\d]//g;
+    if ($attachLimit) {
+      $attachLimit *= 1024;
+      $ua->max_size($attachLimit);
+    }
 
     my $proxy = $Foswiki::cfg{PROXY}{HOST};
     if ($proxy) {
@@ -638,17 +696,28 @@ sub mirrorImage {
     $this->{ua} = $ua;
   }
 
-  my $response = $this->{ua}->mirror($url, $fileName);
+  #my $response = $this->{ua}->mirror($url, $tempImgFile);
+  my $response = $this->{ua}->get($url, ':content_file' => $tempImgFile->filename);
   my $code = $response->code;
+  writeDebug("response code=$code");
 
   unless ($response->is_success || $response->code == 304) {
     my $status = $response->status_line;
     $this->{errorMsg} = "can't fetch image from <nop>'$url': $status";
+    writeDebug("Error: $this->{errorMsg}");
     return 0;
   }
 
+  my $clientAborted = $response->header('client-aborted') || 0;
+  if ($clientAborted eq 'max_size') {
+    $this->{errorMsg} = "can't fetch image from <nop>'$url': max size exceeded";
+    writeDebug("Error: $this->{errorMsg}");
+    return 0;
+  }
+  
   my $filesize = $response->header('content_length');
-  $this->updateAttachment($web, $topic, $fileName, { path => $url, filesize => $filesize })
+  writeDebug("filesize=$filesize");
+  $this->updateAttachment($web, $topic, $fileName, { path => $url, filesize => $filesize, file => $tempImgFile })
     if $this->{autoAttachExternalImages};
 
   return 1;
@@ -656,62 +725,46 @@ sub mirrorImage {
 
 ###############################################################################
 sub getImageFile {
-  my ($this, $width, $height, $size, $imgFile) = @_;
+  my ($this, $size, $zoom, $crop, $imgFile) = @_;
 
-  my @newImgFile;
-  $width =~ s/px//go;
-  $height =~ s/px//go;
-  $size =~ s/px//go;
-  $width = int($width+0.5) if $width;
-  $height = int($height+0.5) if $height;
-
-  push @newImgFile, $height if $height;
-  push @newImgFile, $width if $width;
-  push @newImgFile, $size if $size;
-  push @newImgFile, $imgFile;
-
-  return 'igp_'.join('_', @newImgFile);
+  return 'igp_'.Digest::MD5::md5_hex($size, $zoom, $crop).'_'.$imgFile;
 }
 
 ###############################################################################
 sub updateAttachment {
   my ($this, $web, $topic, $filename, $params) = @_;
 
-  writeDebug("updateAttachment($web, $topic, $filename)");
+  writeDebug("called updateAttachment($web, $topic, $filename)");
+
+  my $baseFilename = $filename;
+  $baseFilename =~ s/^(.*)[\/\\](.*?)$/$2/;
+
+  my $args = {
+    dontlog=>1,
+    filedate=> time(),
+    #hide=>1,
+    minor=>1,
+    #notopicchange=>1, # SMELL: does not work
+  };
+  $args->{file} = $params->{file} if $params->{file};
+  $args->{filepath} = $params->{path} if $params->{path};
+
+  # SMELL: this is called size in the meta data, but seems to need a filesize attr for the api
+  $args->{size} = $params->{filesize} if $params->{filesize};
+  $args->{filesize} = $params->{filesize} if $params->{filesize};
 
   try {
-    my ($meta, $text) = Foswiki::Func::readTopic($web, $topic);
+    Foswiki::Func::saveAttachment($web, $topic, $baseFilename, $args);
+  } catch Foswiki::AccessControlException with {
+    # ignore
     my $user = Foswiki::Func::getCanonicalUserID();
-    unless (Foswiki::Func::checkAccessPermission('CHANGE', $user, $text, $topic, $web, $meta )) {
-      writeDebug("$user has no access rights to $web.$topic");
-      return;
-    }
-
-    Foswiki::Func::setTopicEditLock($web, $topic, 1);
-    my $baseFilename = $filename;
-    $baseFilename =~ s/^(.*)[\/\\](.*?)$/$2/;
-    
-    my $attachment = $meta->get('FILEATTACHMENT', $baseFilename);
-    my $topicInfo = $meta->get('TOPICINFO');
-    $attachment->{name} = $baseFilename;
-    $attachment->{attachment} = $baseFilename; # BTW: not documented in System.MetaData 
-    $attachment->{date} = time();
-    $attachment->{version} ||= 1;
-    $attachment->{attr} = 'h';
-    $attachment->{user} = $user;
-    $attachment->{path} = $params->{path} if $params->{path};
-    $attachment->{size} = $params->{filesize} if $params->{filesize};
-    $meta->putKeyed('FILEATTACHMENT', $attachment);
-    Foswiki::Func::saveTopic($web, $topic, $meta, $text, {minor => 1});
-  } 
-  catch Foswiki::OopsException with {
+    writeDebug("$user has no access rights to $web.$topic");
+  } catch Foswiki::OopsException with {
+    # ignore
     my $e = shift;
     my $message = 'ERROR: ' . $e->stringify();
     writeDebug($message);
-  };
-
-  finally {
-    Foswiki::Func::setTopicEditLock($web, $topic, 0);
+    #print STDERR "$message\n";
   };
 }
 
@@ -739,5 +792,46 @@ sub getTemplate {
 
   return $this->{$name};
 }
+
+###############################################################################
+sub readImage {
+  my ($web, $topic, $image) = @_;
+
+  my $imgPath = $Foswiki::cfg{PubDir}.'/'.$web.'/'.$topic.'/'.$image;
+
+  my $data = '';
+  my $IN_FILE;
+  open( $IN_FILE, '<', $imgPath ) || return '';
+  binmode $IN_FILE;
+
+  local $/ = undef;    # set to read to EOF
+  $data = <$IN_FILE>;
+  close($IN_FILE);
+
+  $data = '' unless $data;    # no undefined
+  
+  return $data;
+}
+
+###############################################################################
+sub suffixToMimeType {
+  my ($this, $image) = @_;
+
+  my $mimeType = 'image/png';
+
+  if ($image && $image =~ /\.([^.]+)$/) {
+    my $suffix = $1;
+    unless ($this->{types}) {
+      $this->{types} = Foswiki::readFile($Foswiki::cfg{MimeTypesFileName});
+    }
+    if ($this->{types} =~ /^([^#]\S*).*?\s$suffix(?:\s|$)/im) {
+      $mimeType = $1;
+    }
+  }
+
+  return $mimeType;
+}
+
+
 
 1;

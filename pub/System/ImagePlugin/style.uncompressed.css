@@ -32,7 +32,7 @@ a:hover.imageHref {
   border-right:1px solid transparent; /* safari + konqueror fix */
 }
 .imageSimple {
-  overflow:auto;
+  overflow:visible;
 }
 .imageFloat_right,
 .imageSimple_right,
