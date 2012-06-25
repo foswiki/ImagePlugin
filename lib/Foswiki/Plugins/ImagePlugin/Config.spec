@@ -18,10 +18,6 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 # handled by the core engine the standard way instead.
 $Foswiki::cfg{ImagePlugin}{Exclude} = 'http://www.google.com';
 
-# **BOOLEAN**
-# Turn on/off attaching generated thumbnails to the current topic. 
-$Foswiki::cfg{ImagePlugin}{AutoAttachThumbnails} = 0;
-
 # **SELECT Image::Magick,Graphics::Magick**
 # Select the image processing backend. Image::Magick and Graphics::Magick are mostly compatible
 # as far as they are used here.

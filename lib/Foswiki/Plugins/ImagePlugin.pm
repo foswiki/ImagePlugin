@@ -25,15 +25,17 @@
 package Foswiki::Plugins::ImagePlugin;
 
 use strict;
-use vars qw( 
-  $VERSION $RELEASE $imageCore $baseWeb $baseTopic
-  $origRenderExternalLink $doneRegisterJQueryPlugin
-  $NO_PREFS_IN_TOPIC
-);
+use warnings;
 
-$VERSION = '$Rev$';
-$RELEASE = '2.41';
-$NO_PREFS_IN_TOPIC = 1;
+our $imageCore;
+our $baseWeb;
+our $baseTopic;
+our $origRenderExternalLink;
+
+our $VERSION = '$Rev$';
+our $RELEASE = '2.50';
+our $NO_PREFS_IN_TOPIC = 1;
+our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 
 use Foswiki::Plugins ();
 use Foswiki::Render ();
@@ -43,49 +45,39 @@ sub initPlugin {
   ($baseTopic, $baseWeb) = @_;
 
   # check for Plugins.pm versions
-  if( $Foswiki::Plugins::VERSION < 1.026 ) {
-    Foswiki::Func::writeWarning( "Version mismatch between ImagePlugin and Plugins.pm" );
+  if ($Foswiki::Plugins::VERSION < 1.026) {
+    Foswiki::Func::writeWarning("Version mismatch between ImagePlugin and Plugins.pm");
     return 0;
   }
 
-  Foswiki::Func::addToZone("head", "IMAGEPLUGIN::META", <<"HERE");
-<meta name='foswiki.ImagePluginEnabled' content='true' />
-HERE
-
   # init plugin variables
   $imageCore = undef;
-  $doneRegisterJQueryPlugin = 0;
 
   # register the tag handlers
-  Foswiki::Func::registerTagHandler( 'IMAGE', sub {
-    getCore($baseWeb, $baseTopic, shift)->handleIMAGE(@_); 
-  });
+  Foswiki::Func::registerTagHandler(
+    'IMAGE',
+    sub {
+      return getCore($baseWeb, $baseTopic, shift)->handleIMAGE(@_);
+    }
+  );
 
   # register rest handler
-  Foswiki::Func::registerRESTHandler('resize', sub {
-    getCore($baseWeb, $baseTopic, shift)->handleREST(@_); 
-  });
-
-
-  # SMELL: monkey-patching Foswiki::Render::_externalLink()
-  if ($Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks}) {
-    unless ($origRenderExternalLink) {
-      no warnings 'redefine';
-      $origRenderExternalLink = \&Foswiki::Render::_externalLink;
-      *Foswiki::Render::_externalLink = \&renderExternalLink;
+  Foswiki::Func::registerRESTHandler(
+    'resize',
+    sub {
+      getCore($baseWeb, $baseTopic, shift)->handleREST(@_);
     }
-  }
+  );
 
   # register jquery.imagetooltip plugin if jquery is isntalled
   if ($Foswiki::cfg{Plugins}{JQueryPlugin}{Enabled}) {
     require Foswiki::Plugins::JQueryPlugin;
-    Foswiki::Plugins::JQueryPlugin::registerPlugin("ImageTooltip",
-      'Foswiki::Plugins::ImagePlugin::IMAGETOOLTIP');
+    Foswiki::Plugins::JQueryPlugin::registerPlugin("ImageTooltip", 'Foswiki::Plugins::ImagePlugin::IMAGETOOLTIP');
   }
 
   # Plugin correctly initialized
   return 1;
-} 
+}
 
 ###############################################################################
 # lazy initializer
@@ -93,7 +85,7 @@ sub getCore {
   return $imageCore if $imageCore;
 
   Foswiki::Func::addToZone("head", "IMAGEPLUGIN", <<'HERE');
-<link rel="stylesheet" href="%PUBURL%/%SYSTEMWEB%/ImagePlugin/style.css" type="text/css" media="all" />
+<link rel="stylesheet" href="%PUBURLPATH%/%SYSTEMWEB%/ImagePlugin/style.css" type="text/css" media="all" />
 HERE
 
   require Foswiki::Plugins::ImagePlugin::Core;
@@ -102,49 +94,67 @@ HERE
 }
 
 ###############################################################################
+sub commonTagsHandler {
+
+  return unless $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks};
+
+  # only render an external image link when in view mode
+  return unless Foswiki::Func::getContext()->{view};
+
+  #my ($text, $topic, $web, $included, $meta) = @_;
+  my $topic = $_[1];
+  my $web = $_[2];
+
+  #print STDERR "called commonTagsHandler($web, $topic, $included)\n";
+
+  # Have our own _externalLink early enough in the rendering loop
+  # so that we know which topic we are rendering the url for. This now
+  # happens as part of the macro expansion and not as part of the tml rendering
+  # loop.
+
+  $_[0] =~ s/(^|(?<!url)[-*\s(|])
+               (https?:
+                   ([^\s<>"]+[^\s*.,!?;:)<|].*\.(?:gif|jpe?g|png|bmp)(?:\?.*)?))/
+                     renderExternalLink($web, $topic, $1, $2)/geox;
+}
+
+###############################################################################
 sub renderExternalLink {
-  my ($this, $url, $text) = @_;
+  my ($web, $topic, $prefix, $url) = @_;
+
+  #print STDERR "called renderExternalLink($web, $topic, $url)\n";
 
   my $href = '';
   my $title = $url;
-  $text ||= '';
 
-  #print STDERR "called renderExternalLink($url, $text)\n";
+  my $session = $Foswiki::Plugins::SESSION;
+  my $pubUrl = $session->getPubUrl(1);
 
-  # also render an image tag for links that have an external image link as a text
-  if ($text =~ /^(https?:).*\.(gif|jpg|jpeg|png)$/i) {
-    $href = $url;
-    $title = $url;
-    $url = $text;
-    $text = '';
+  # skip "external links" to self and to any other excluded url
+  my $excludePattern = $Foswiki::cfg{ImagePlugin}{Exclude};
+  if ($url !~ /^$pubUrl/ && 
+      (!$excludePattern || $url !~ /^$excludePattern()/)) { 
+
+    # untaint url, check above
+    $url = Foswiki::Sandbox::untaintUnchecked($url);
+    $url =~ s/\?.*$//;
+
+    my $params = {
+      _DEFAULT => "$url",
+      href => $href,
+      title => $title,
+      type => 'simple',
+      web => $web,
+      topic => $topic
+    };
+
+    return $prefix.getCore($baseWeb, $baseTopic)->handleIMAGE($params, $topic, $web);
   }
 
-  if ($url =~ /^(https?:).*\.(gif|jpg|jpeg|png)/i && !$text) {
-    my $pubUrl = $this->{session}->getPubUrl(1);
-    # skip "external links" to self and to any other excluded url
-    my $excludePattern = $Foswiki::cfg{ImagePlugin}{Exclude};
-    if ($url !~ /^$pubUrl/ && 
-        (!$excludePattern || $url !~ /^$excludePattern()/)) { 
+  #print STDERR "normal handling of $url\n";
 
-      # untaint url, check above
-      $url = Foswiki::Sandbox::untaintUnchecked($url);
-      $url =~ s/\?.*$//;
-
-      my $params = {
-	_DEFAULT => "$url",
-	href => $href,
-	title => $title,
-	type => 'simple',
-      };
-
-      return getCore($baseWeb, $baseTopic)->handleIMAGE($params, $baseTopic, $baseWeb);
-    } else {
-      #print STDERR "normal handling of $url\n";
-    }
-  }
-
-  # normal
-  return &{$origRenderExternalLink}($this, $url, $text);
+  # else, return the orig url
+  return $prefix.$url;
 }
 
 1;

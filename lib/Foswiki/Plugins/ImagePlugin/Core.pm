@@ -69,7 +69,6 @@ sub new {
   $this->{baseWeb} = $baseWeb;
   $this->{baseTopic} = $baseTopic;
   $this->{errorMsg} = ''; # from image mage
-  $this->{autoAttachThumbnails} = $Foswiki::cfg{ImagePlugin}{AutoAttachThumbnails};
   $this->{autoAttachExternalImages} = $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages};
 
   # Graphics::Magick is less buggy than Image::Magick
@@ -100,6 +99,8 @@ sub handleREST {
   my $imgFile = $query->param('file');
   my $refresh = $query->param('refresh') || '';
   $refresh = ($refresh =~ /^(on|1|yes|img)$/g)?1:0;
+
+  ($imgFile) = Foswiki::Sandbox::sanitizeAttachmentName($imgFile);
 
   writeDebug("processing image");
   my $imgInfo = $this->processImage($imgWeb, $imgTopic, $imgFile, {
@@ -219,10 +220,8 @@ sub handleIMAGE {
   # search image
   if ($origFile =~ /^https?:\/\/.*/) {
     my $url = $origFile;
-    my $ext = '';
-    if ($url =~ /^.*[\\\/](.*?(\.[a-zA-Z]+))$/) {
+    if ($url =~ /^.*[\\\/](.*?\.[a-zA-Z]+)$/) {
       $origFile = $1;
-      $ext = $2;
     }
 
     # sanitize downloaded filename
@@ -244,10 +243,11 @@ sub handleIMAGE {
     unless($this->mirrorImage($imgWeb, $imgTopic, $url, $imgPath, $doRefresh)) {
       return $this->inlineError($params);
     }
-  } elsif ($origFile =~ /(?:pub\/)?(.+?)\/([^\/]+)\/([^\/]+?)$/) {
-    $imgWeb = $1;
+  } elsif ($origFile =~ /(?:pub\/)?(?:(.+?)\/)?([^\/]+)\/([^\/]+?)$/) {
+    $imgWeb = $1 || $theWeb;
     $imgTopic = $2;
     $origFile = $3;
+
     ($imgWeb, $imgTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $imgTopic);
      $imgPath = $pubDir.'/'.$imgWeb.'/'.$imgTopic.'/'.$origFile;
 
@@ -282,6 +282,7 @@ sub handleIMAGE {
       ($testWeb, $testTopic) =
 	Foswiki::Func::normalizeWebTopicName($imgWeb, $theTopic);
       $imgPath = $pubDir.'/'.$testWeb.'/'.$testTopic.'/'.$origFile;
+
       unless (-e $imgPath) {
 	# no, then look in the album
 	$albumTopic = Foswiki::Func::getPreferencesValue('IMAGEALBUM', 
@@ -316,6 +317,7 @@ sub handleIMAGE {
   #writeDebug("origFile=$origFile, imgWeb=$imgWeb, imgTopic=$imgTopic, imgPath=$imgPath");
 
   my $origFileUrl = $pubUrl.'/'.$imgWeb.'/'.$imgTopic.'/'.$origFile;
+
   $params->{alt} ||= $origFile;
   $params->{title} ||= $params->{caption} || $origFile;
   $params->{desc} ||= $params->{title};
@@ -486,7 +488,7 @@ sub processImage {
   my $width = $params->{width} || '';
   my $height = $params->{height} || '';
 
-  writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, refresh=$doRefresh)");
+  #writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, refresh=$doRefresh)");
 
   $this->{errorMsg} = '';
 
@@ -529,7 +531,7 @@ sub processImage {
       writeDebug("found $imgInfo{file} at $imgWeb.$imgTopic");
     } else { 
       writeDebug("creating $imgInfo{file}");
-      
+     
       # read
       my $error = $this->{mage}->Read($imgInfo{origImgPath});
       if ($error =~ /(\d+)/) {
@@ -574,33 +576,13 @@ sub processImage {
           $geometry = $width.'x'.$height.'+0+0';
         }
  
-        if (0) {
-          # old method ... deprecated:
-          # this branch will be removed asap as soon as we know the newer whay to thumbnail
-          # works out fine
-          writeDebug("crop(geometry=>$geometry)");
-          $error = $this->{mage}->Crop($geometry);
-          if ($error =~ /(\d+)/) {
-            $this->{errorMsg} = $error;
-            writeDebug("Error: $error");
-            return undef if $1 >= 400;
-          }
-
-          $error = $this->{mage}->Set(page=>'0x0+0+0');
-          if ($error =~ /(\d+)/) {
-            $this->{errorMsg} = $error;
-            writeDebug("Error: $error");
-            return undef if $1 >= 400;
-          }
-        } else {
-          # new method
-          writeDebug("extent(geometry=>$geometry)");
-          $error = $this->{mage}->Extent($geometry);
-          if ($error =~ /(\d+)/) {
-            $this->{errorMsg} = $error;
-            writeDebug("Error: $error");
-            return undef if $1 >= 400;
-          }
+        # new method
+        writeDebug("extent(geometry=>$geometry)");
+        $error = $this->{mage}->Extent($geometry);
+        if ($error =~ /(\d+)/) {
+          $this->{errorMsg} = $error;
+          writeDebug("Error: $error");
+          return undef if $1 >= 400;
         }
       }
 
@@ -694,9 +676,19 @@ sub mirrorImage {
   writeDebug("called mirrorImage($url, $fileName, $force)");
   return 1 if !$force && -e $fileName;
 
-  require File::Temp;
-  my $tempImgFile = new File::Temp();
-  writeDebug("fetching $url into $tempImgFile");
+  my $downloadFileName;
+
+  if ($this->{autoAttachExternalImages}) {
+    require File::Temp;
+    my $tempImgFile = new File::Temp();
+    $downloadFileName = $tempImgFile->filename;
+  } else {
+
+    # we still need to download it as we can't resize it otherwise
+    $downloadFileName = $fileName;
+  }
+
+  writeDebug("fetching $url into $downloadFileName");
 
   unless ($this->{ua}) {
     require LWP::UserAgent;
@@ -726,8 +718,7 @@ sub mirrorImage {
     $this->{ua} = $ua;
   }
 
-  #my $response = $this->{ua}->mirror($url, $tempImgFile);
-  my $response = $this->{ua}->get($url, ':content_file' => $tempImgFile->filename);
+  my $response = $this->{ua}->get($url, ':content_file' => $downloadFileName);
   my $code = $response->code;
   writeDebug("response code=$code");
 
@@ -738,16 +729,28 @@ sub mirrorImage {
     return 0;
   }
 
+  my $contentType = $response->header('content-type') || '';
+  writeDebug("contentType=$contentType");
+  unless ($contentType =~ /^image/) {
+    $this->{errorMsg} = "not an image at <nop>'$url'";
+    writeDebug("Error: $this->{errorMsg}");
+    unlink $downloadFileName;
+    return 0;
+  }
+
   my $clientAborted = $response->header('client-aborted') || 0;
   if ($clientAborted eq 'max_size') {
     $this->{errorMsg} = "can't fetch image from <nop>'$url': max size exceeded";
     writeDebug("Error: $this->{errorMsg}");
+    unlink $downloadFileName;
     return 0;
   }
-  
-  my $filesize = $response->header('content_length');
+
+  my $filesize = $response->header('content_length') || 0;
   writeDebug("filesize=$filesize");
-  $this->updateAttachment($web, $topic, $fileName, { path => $url, filesize => $filesize, file => $tempImgFile })
+
+  # properly register the file to the store
+  $this->updateAttachment($web, $topic, $fileName, { path => $url, filesize => $filesize, file => $downloadFileName })
     if $this->{autoAttachExternalImages};
 
   return 1;
@@ -769,6 +772,8 @@ sub getImageFile {
 ###############################################################################
 sub updateAttachment {
   my ($this, $web, $topic, $filename, $params) = @_;
+    
+  return unless Foswiki::Func::topicExists($web, $topic);
 
   writeDebug("called updateAttachment($web, $topic, $filename)");
 
@@ -776,6 +781,7 @@ sub updateAttachment {
   $baseFilename =~ s/^(.*)[\/\\](.*?)$/$2/;
 
   my $args = {
+    comment=>'Auto-attached by ImagePlugin',
     dontlog=>1,
     filedate=> time(),
     #hide=>1,
