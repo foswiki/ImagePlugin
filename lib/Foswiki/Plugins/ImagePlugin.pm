@@ -30,10 +30,9 @@ use warnings;
 our $imageCore;
 our $baseWeb;
 our $baseTopic;
-our $origRenderExternalLink;
 
 our $VERSION = '$Rev$';
-our $RELEASE = '2.50';
+our $RELEASE = '2.60';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 
@@ -101,9 +100,7 @@ sub commonTagsHandler {
   # only render an external image link when in view mode
   return unless Foswiki::Func::getContext()->{view};
 
-  #my ($text, $topic, $web, $included, $meta) = @_;
-  my $topic = $_[1];
-  my $web = $_[2];
+  my ($text, $topic, $web) = @_;
 
   #print STDERR "called commonTagsHandler($web, $topic, $included)\n";
 
@@ -112,10 +109,35 @@ sub commonTagsHandler {
   # happens as part of the macro expansion and not as part of the tml rendering
   # loop.
 
-  $_[0] =~ s/(^|(?<!url)[-*\s(|])
+  my $removed = {};
+  $text = takeOutBlocks($text, 'noautolink', $removed);
+
+  $text =~ s/(^|(?<!url)[-*\s(|])
                (https?:
-                   ([^\s<>"]+[^\s*.,!?;:)<|].*\.(?:gif|jpe?g|png|bmp)(?:\?.*)?))/
+                   ([^\s<>"]+[^\s*.,!?;:)<|][^\s]*\.(?:gif|jpe?g|png|bmp)(?:\?.*)?(?=[^\w])))/
                      renderExternalLink($web, $topic, $1, $2)/geox;
+  putBackBlocks(\$text, $removed, 'noautolink', 'noautolink' );
+
+  # restore the text
+  $_[0] = $text;
+}
+
+###############################################################################
+# compatibility wrapper 
+sub takeOutBlocks {
+  my ($text, $tag, $map) = @_;
+
+  return '' unless $text;
+
+  return Foswiki::takeOutBlocks($text, $tag, $map) if defined &Foswiki::takeOutBlocks;
+  return $Foswiki::Plugins::SESSION->renderer->takeOutBlocks($text, $tag, $map);
+}
+
+###############################################################################
+# compatibility wrapper 
+sub putBackBlocks {
+  return Foswiki::putBackBlocks(@_) if defined &Foswiki::putBackBlocks;
+  return $Foswiki::Plugins::SESSION->renderer->putBackBlocks(@_);
 }
 
 ###############################################################################

@@ -35,12 +35,14 @@ a:hover.imageHref {
   overflow:visible;
   display:inline-block;
 }
+.imagePlain_right,
 .imageFloat_right,
 .imageSimple_right,
 .imageFrame_right {
   float:right;
   margin:0px 0px 10px 10px;
 }
+.imagePlain_left,
 .imageSimple_left,
 .imageFrame_left,
 .imageFloat_left {

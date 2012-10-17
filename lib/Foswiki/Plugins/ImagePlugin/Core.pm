@@ -337,39 +337,20 @@ sub handleIMAGE {
 
 
   # format result
-  my $result = $params->{format} || '';
-  if (!$result) {
-    if ($params->{type} eq 'plain') {
-      $result = $this->getTemplate('plain');
-    } elsif ($params->{type} eq 'simple') {
-      $result = $this->getTemplate('simple');
-    } elsif ($params->{type} eq 'link') {
-      $result = $this->getTemplate('link');
-    } elsif ($params->{type} eq 'frame') {
-      $result = $this->getTemplate('frame');
-      $result =~ s/\$captionFormat/$this->getTemplate('caption')/ge
-	if $params->{caption};
-    } elsif ($params->{type} eq 'thumb') {
-      $result = $this->getTemplate('frame'); 
-      my $thumbCaption = $this->getTemplate('magnify').$params->{caption};
-      $result =~ s/\$captionFormat/$this->getTemplate('caption')/ge;
-      $result =~ s/\$caption/$thumbCaption/g;
-    } else {
-      $result = $this->getTemplate('float');
-      $result =~ s/\$captionFormat/$this->getTemplate('caption')/ge
-	if $params->{caption};
-    }
-  }
+  my $result = $params->{format};
+  $result = $this->getTemplate($params->{type}) unless defined $result;
+  $result ||= '';
+
   $result =~ s/\s+$//; # strip whitespace at the end
-
   $result =  $params->{header}.$result.$params->{footer};
-  $result =~ s/\$captionFormat//g;
-
+  $result =~ s/\$caption/$this->getTemplate('caption')/ge;
   $result =~ s/\$caption/$params->{caption}/g;
   $result =~ s/\$magnifyFormat/$this->getTemplate('magnify')/ge;
   $result =~ s/\$magnifyIcon/$this->{magnifyIcon}/g;
   $result =~ s/\$magnifyWidth/$this->{magnifyWidth}/g;
   $result =~ s/\$magnifyHeight/$this->{magnifyHeight}/g;
+  $result =~ s/\$topic/$imgTopic/g;
+  $result =~ s/\$web/$imgWeb/g;
 
   if ($params->{mousein}) {
     $result =~ s/\$mousein/onmouseover="$params->{mousein}"/g;
@@ -488,7 +469,7 @@ sub processImage {
   my $width = $params->{width} || '';
   my $height = $params->{height} || '';
 
-  #writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, refresh=$doRefresh)");
+  writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, refresh=$doRefresh)");
 
   $this->{errorMsg} = '';
 
@@ -501,11 +482,13 @@ sub processImage {
     imgPath => undef,
   );
 
-  if ($size || $width || $height || $doRefresh) {
+  if ($size || $width || $height || $doRefresh || $imgFile =~ /\.svg$/) {
     if (!$size) {
-      $size = $width.'x'.$height;
+      if ($width || $height) {
+        $size = $width.'x'.$height;
+      }
     }
-    if ($size !~ /[<>^]$/) {
+    if ($size && $size !~ /[<>^]$/) {
       if ($zoom eq 'on') {
         $size .= '<';
       } else {
@@ -540,49 +523,51 @@ sub processImage {
       }
 
       # scale
-      my $geometry = $size;
-      # SMELL: As of IM v6.3.8-3 IM now has a new geometry option flag '^' which
-      # is used to resize the image based on the smallest fitting dimension.
-      if ($crop ne 'off' && $geometry !~ /\^$/) {
-        $geometry .= '^';
-      }
+      if ($size) {
+        my $geometry = $size;
+        # SMELL: As of IM v6.3.8-3 IM now has a new geometry option flag '^' which
+        # is used to resize the image based on the smallest fitting dimension.
+        if ($crop ne 'off' && $geometry !~ /\^$/) {
+          $geometry .= '^';
+        }
 
-      writeDebug("resize($geometry)");
-      $error = $this->{mage}->Resize(geometry=>$geometry);
-      if ($error =~ /(\d+)/) {
-        $this->{errorMsg} = $error;
-        return undef if $1 >= 400;
-      }
-
-      # gravity
-      if ($crop =~ /^(on|northwest|north|northeast|west|center|east|southwest|south|southeast)$/i) {
-        $crop = "center" if $crop eq 'on';
-        writeDebug("Set(Gravity=>$crop)");
-        $error = $this->{mage}->Set(Gravity=>"$crop");
+        writeDebug("resize($geometry)");
+        $error = $this->{mage}->Resize(geometry=>$geometry);
         if ($error =~ /(\d+)/) {
           $this->{errorMsg} = $error;
-          writeDebug("Error: $error");
           return undef if $1 >= 400;
         }
 
-        my $geometry = '';
-        if ($size) {
-          unless ($size =~ /\d+x\d+/) {
-            $size = $size.'x'.$size;
+        # gravity
+        if ($crop =~ /^(on|northwest|north|northeast|west|center|east|southwest|south|southeast)$/i) {
+          $crop = "center" if $crop eq 'on';
+          writeDebug("Set(Gravity=>$crop)");
+          $error = $this->{mage}->Set(Gravity=>"$crop");
+          if ($error =~ /(\d+)/) {
+            $this->{errorMsg} = $error;
+            writeDebug("Error: $error");
+            return undef if $1 >= 400;
           }
-          $geometry = $size.'+0+0';
-          $geometry =~ s/[<>^@!]//go;
-        } else {
-          $geometry = $width.'x'.$height.'+0+0';
-        }
- 
-        # new method
-        writeDebug("extent(geometry=>$geometry)");
-        $error = $this->{mage}->Extent($geometry);
-        if ($error =~ /(\d+)/) {
-          $this->{errorMsg} = $error;
-          writeDebug("Error: $error");
-          return undef if $1 >= 400;
+
+          my $geometry = '';
+          if ($size) {
+            unless ($size =~ /\d+x\d+/) {
+              $size = $size.'x'.$size;
+            }
+            $geometry = $size.'+0+0';
+            $geometry =~ s/[<>^@!]//go;
+          } else {
+            $geometry = $width.'x'.$height.'+0+0';
+          }
+   
+          # new method
+          writeDebug("extent(geometry=>$geometry)");
+          $error = $this->{mage}->Extent($geometry);
+          if ($error =~ /(\d+)/) {
+            $this->{errorMsg} = $error;
+            writeDebug("Error: $error");
+            return undef if $1 >= 400;
+          }
         }
       }
 
@@ -761,6 +746,8 @@ sub getImageFile {
   my ($this, $size, $zoom, $crop, $imgFile) = @_;
 
   my $digest = Digest::MD5::md5_hex($size, $zoom, $crop);
+
+  $imgFile =~ s/\.svg$/\.png/g;
 
   if ($imgFile =~ /^(.*)\/(.+?)$/) {
     return $1."/igp_".$digest."_".$2;

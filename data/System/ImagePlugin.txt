@@ -229,6 +229,8 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|   9 Oct 2012: | added svg support |
+|   6 Aug 2012: | respect noautolink tags when rendering external image links |
 |  25 Jun 2012: | fixed attaching external images to the right topic; \
                   removed unused option =AutoAttachThumbnails=; \
                   fixed processing of non-attached external images; \
@@ -280,10 +282,7 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  17 Aug 2006: | width and height arguments had no effect; floating images not clearing proberly on IE |
 |  16 June 2006: | released into the public |
 |  10 May 2006: | Initial version by forking <nop>ImgPlugin |
-|  Dependency: | $Foswiki::Plugins::VERSION 1.1 |
-|  CPAN Dependencies: | %$DEPENDENCIES% |
-|  Other Dependencies: |  |
-|  Perl Version: | 5.8 |
+|  Dependencies: | %$DEPENDENCIES% |
 |  Home: | Foswiki:Extensions/%TOPIC% |
 |  Support: | Foswiki:Support/%TOPIC% |
 
