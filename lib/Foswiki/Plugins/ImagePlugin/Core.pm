@@ -115,16 +115,35 @@ sub handleREST {
     return '';
   }
 
-  my $image = readImage($imgWeb, $imgTopic, $imgInfo->{file});
   my $mimeType = $this->suffixToMimeType($imgInfo->{file});
 
-  $response->header(
-    -'Content-Type' => $mimeType,
-    -'Content-Length' => $imgInfo->{filesize}, # overrides wrong length computed by Response
-    -'Cache-Control' => 'max-age=36000, public',
-    -'Expires' => '+12h',
-  );
-  $response->print($image);
+  my $xsendHeader = $Foswiki::cfg{XSendFileContrib}{Header} || $Foswiki::cfg{ImagePlugin}{XSendFileHeader};
+
+  if (defined $xsendHeader && $xsendHeader ne 'none') {
+    my $location = $Foswiki::cfg{XSendFileContrib}{Location} ||  $Foswiki::cfg{ImagePlugin}{XSendFileLocation} || $Foswiki::cfg{PubDir};
+    my $imgPath = $location.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgInfo->{file};
+    #print STDERR "imgPath=$imgInfo->{imgPath}\n";
+    $response->header(
+      -status => 200,
+      -type => $mimeType,
+      -content_disposition => "inline; filename=\"$imgInfo->{file}\"",
+      -'Cache-Control' => 'max-age=36000',
+      -'Expires' => '+12h',
+      $xsendHeader => $imgPath,
+    );
+    #$response->print('OK');
+  } else {
+    $response->header(
+      -status => 200,
+      -type => $mimeType,
+      -'Content-Length' => $imgInfo->{filesize}, # overrides wrong length computed by Response
+      -'Cache-Control' => 'max-age=36000',
+      -'Expires' => '+12h',
+    );
+
+    my $image = readImage($imgWeb, $imgTopic, $imgInfo);
+    $response->print($image);
+  }
 
   return;
 }
@@ -824,13 +843,11 @@ sub getTemplate {
 
 ###############################################################################
 sub readImage {
-  my ($web, $topic, $image) = @_;
-
-  my $imgPath = $Foswiki::cfg{PubDir}.'/'.$web.'/'.$topic.'/'.$image;
+  my ($web, $topic, $imgInfo) = @_;
 
   my $data = '';
   my $IN_FILE;
-  open( $IN_FILE, '<', $imgPath ) || return '';
+  open( $IN_FILE, '<', $imgInfo->{imgPath} ) || return '';
   binmode $IN_FILE;
 
   local $/ = undef;    # set to read to EOF

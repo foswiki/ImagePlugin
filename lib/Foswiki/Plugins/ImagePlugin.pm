@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2012 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2013 Michael Daum http://michaeldaumconsulting.com
 #
 # Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -31,8 +31,8 @@ our $imageCore;
 our $baseWeb;
 our $baseTopic;
 
-our $VERSION = '$Rev$';
-our $RELEASE = '2.60';
+our $VERSION = '2.70';
+our $RELEASE = '2.70';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 
