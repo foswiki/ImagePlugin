@@ -31,13 +31,13 @@ our $imageCore;
 our $baseWeb;
 our $baseTopic;
 
-our $VERSION = '2.70';
-our $RELEASE = '2.70';
+our $VERSION = '3.00';
+our $RELEASE = '3.00';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 
 use Foswiki::Plugins ();
-use Foswiki::Render ();
+use Foswiki::Meta ();
 
 ###############################################################################
 sub initPlugin {
@@ -93,6 +93,12 @@ HERE
 }
 
 ###############################################################################
+sub afterRenameHandler {
+
+  getCore($baseWeb, $baseTopic)->afterRenameHandler(@_);
+}
+
+###############################################################################
 sub commonTagsHandler {
 
   return unless $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks};
@@ -114,7 +120,7 @@ sub commonTagsHandler {
 
   $text =~ s/(^|(?<!url)[-*\s(|])
                (https?:
-                   ([^\s<>"]+[^\s*.,!?;:)<|][^\s]*\.(?:gif|jpe?g|png|bmp)(?:\?.*)?(?=[^\w])))/
+                   ([^\s<>"]+[^\s*.,!?;:)<|][^\s]*\.(?:gif|jpe?g|png|bmp|svg)(?:\?.*)?(?=[^\w])))/
                      renderExternalLink($web, $topic, $1, $2)/geox;
   putBackBlocks(\$text, $removed, 'noautolink', 'noautolink' );
 

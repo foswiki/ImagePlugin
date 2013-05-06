@@ -9,7 +9,7 @@ jQuery(function($) {
     var $this = $(this);
     var opts = $.extend({}, defaults, $this.metadata());
     $this.addClass("jqInitedImageTooltip");
-    if (opts.image.match(/jpe?g|gif|png|bmp/i)) {
+    if (opts.image.match(/jpe?g|gif|png|bmp|svg/i)) {
       $this.tooltip({
         delay:350,
         track:true,

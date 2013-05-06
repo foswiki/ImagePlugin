@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2012 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2013 Michael Daum http://michaeldaumconsulting.com
 #
 # Early version Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -25,6 +25,8 @@
 package Foswiki::Plugins::ImagePlugin::Core;
 
 use strict;
+use warnings;
+
 use Error qw( :try );
 use Foswiki::OopsException ();
 use Digest::MD5 ();
@@ -122,7 +124,6 @@ sub handleREST {
   if (defined $xsendHeader && $xsendHeader ne 'none') {
     my $location = $Foswiki::cfg{XSendFileContrib}{Location} ||  $Foswiki::cfg{ImagePlugin}{XSendFileLocation} || $Foswiki::cfg{PubDir};
     my $imgPath = $location.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgInfo->{file};
-    #print STDERR "imgPath=$imgInfo->{imgPath}\n";
     $response->header(
       -status => 200,
       -type => $mimeType,
@@ -131,7 +132,6 @@ sub handleREST {
       -'Expires' => '+12h',
       $xsendHeader => $imgPath,
     );
-    #$response->print('OK');
   } else {
     $response->header(
       -status => 200,
@@ -397,7 +397,6 @@ sub handleIMAGE {
       "}";
   }
 
-  # For compatibility with i18n-characters in file names, encode urls (as Foswiki.pm/viewfile does for attachment names in general)
   my $thumbFileUrl = $pubUrl.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgInfo->{file};
   $thumbFileUrl = urlEncode($thumbFileUrl);
 
@@ -612,7 +611,39 @@ sub processImage {
   @$mage = (); 
   
   return \%imgInfo;
-} 
+}
+
+###############################################################################
+sub afterRenameHandler {
+  my ($this, $oldWeb, $oldTopic, $oldAttachment, $newWeb, $newTopic, $newAttachment ) = @_;
+
+#  print STDERR "afterRename($oldWeb, $oldTopic, ".
+#    ($oldAttachment||'undef').", ".
+#    ($newWeb||'undef').", ".
+#    ($newTopic||'undef').", ".
+#    ($newAttachment||'undef').")\n";
+
+  return unless defined $oldAttachment;  
+  return if defined $newAttachment && $oldAttachment eq $newAttachment;
+
+  # attachment has been renamed, delete old thumbnails
+  my $web = $oldWeb;
+  my $topic = $oldTopic;
+  my $attachment = $oldAttachment;
+
+  opendir( my $dh, $Foswiki::cfg{PubDir}.'/'.$web.'/'.$topic.'/' ) || next;
+  my @thumbs = grep { /^igp_[0-9a-f]{32}_$attachment$/  } readdir $dh;
+  closedir $dh;
+
+  #print STDERR "thumbs=@thumbs\n";
+
+  foreach my $file (@thumbs) {
+    my $thumbPath = $web.'/'.$topic.'/'.$file;
+    $thumbPath = Foswiki::Sandbox::untaint($thumbPath, \&Foswiki::Sandbox::validateAttachmentName);
+    #print STDERR "deleting old thumbnail $thumbPath\n";
+    unlink $Foswiki::cfg{PubDir}.'/'.$thumbPath;
+  }
+}
 
 ###############################################################################
 # sets type (link,frame,thumb), file, width, height, size, caption

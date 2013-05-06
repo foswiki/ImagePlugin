@@ -224,11 +224,11 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
    * Set SHORTDESCRIPTION = %$SHORTDESCRIPTION%
 -->
 |  Plugin Author: | Craig Meyer, Foswiki:Main.MichaelDaum |
-|  Copyright: | &copy; 2006, Craig Meyer, %BR% &copy; 2006-2012 Michael Daum http://michaeldaumconsulting.com |
+|  Copyright: | &copy; 2006, Craig Meyer, %BR% &copy; 2006-2013 Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
-|  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|   6 May 2013: | some more svg fixes; cleaning up thumbnails now when images are renamed or moved |
 |   9 Oct 2012: | added svg support |
 |   6 Aug 2012: | respect noautolink tags when rendering external image links |
 |  25 Jun 2012: | fixed attaching external images to the right topic; \
