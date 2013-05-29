@@ -518,7 +518,7 @@ sub processImage {
     }
     writeDebug("size=$size");
 
-    $imgInfo{file} = $this->getImageFile($size, $zoom, $crop, $imgFile);
+    $imgInfo{file} = $this->getImageFile($size, $zoom, $crop, $imgWeb, $imgTopic, $imgFile);
     $imgInfo{imgPath} = $Foswiki::cfg{PubDir}.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgInfo{file};
 
     #writeDebug("checking for $imgInfo{imgFile}");
@@ -526,7 +526,6 @@ sub processImage {
     # compare file modification times
     $doRefresh = 1 if -f $imgInfo{imgPath} && 
       getModificationTime($imgInfo{origImgPath}) > getModificationTime($imgInfo{imgPath});
-
 
     if (-f $imgInfo{imgPath} && !$doRefresh) { # cached
       writeDebug("found $imgInfo{file} at $imgWeb.$imgTopic");
@@ -793,9 +792,12 @@ sub mirrorImage {
 
 ###############################################################################
 sub getImageFile {
-  my ($this, $size, $zoom, $crop, $imgFile) = @_;
+  my ($this, $size, $zoom, $crop, $imgWeb, $imgTopic, $imgFile) = @_;
 
-  my $digest = Digest::MD5::md5_hex($size, $zoom, $crop);
+  my $imgPath = $Foswiki::cfg{PubDir}.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgFile;
+  my $fileSize = -s $imgPath;
+
+  my $digest = Digest::MD5::md5_hex($size, $zoom, $crop, $fileSize);
 
   $imgFile =~ s/\.svg$/\.png/g;
 
