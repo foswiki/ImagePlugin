@@ -228,6 +228,7 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|   8 May 2013: | return a 1x1 pixel when calling the image rest handler for a non-existing image |
 |  24 May 2013: | update thumbnails whenever a new image of the same name was uploaded |
 |   6 May 2013: | some more svg fixes; cleaning up thumbnails now when images are renamed or moved |
 |   9 Oct 2012: | added svg support |

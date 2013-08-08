@@ -113,8 +113,10 @@ sub handleREST {
       height => ($query->param('height')||''),
     } ,$refresh);
   unless ($imgInfo) {
-    Foswiki::Func::writeWarning("ImagePlugin - $this->{errorMsg}");
-    return '';
+    $imgInfo->{file} = 'pixel.gif';
+    $imgInfo->{filesize} = '807';
+    $imgWeb = $Foswiki::cfg{SystemWebName};
+    $imgTopic = 'ImagePlugin';
   }
 
   my $mimeType = $this->suffixToMimeType($imgInfo->{file});
@@ -519,6 +521,10 @@ sub processImage {
     writeDebug("size=$size");
 
     $imgInfo{file} = $this->getImageFile($size, $zoom, $crop, $imgWeb, $imgTopic, $imgFile);
+    unless ($imgInfo{file}) {
+      $this->{errorMsg} = "(5) can't find <nop>$imgFile at <nop>$imgWeb.$imgTopic";
+      return;
+    }
     $imgInfo{imgPath} = $Foswiki::cfg{PubDir}.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgInfo{file};
 
     #writeDebug("checking for $imgInfo{imgFile}");
@@ -529,6 +535,7 @@ sub processImage {
 
     if (-f $imgInfo{imgPath} && !$doRefresh) { # cached
       writeDebug("found $imgInfo{file} at $imgWeb.$imgTopic");
+      $imgInfo{filesize} = -s $imgInfo{imgPath};
     } else { 
       writeDebug("creating $imgInfo{file}");
      
@@ -796,6 +803,7 @@ sub getImageFile {
 
   my $imgPath = $Foswiki::cfg{PubDir}.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgFile;
   my $fileSize = -s $imgPath;
+  return unless defined $fileSize; # not found
 
   my $digest = Digest::MD5::md5_hex($size, $zoom, $crop, $fileSize);
 
