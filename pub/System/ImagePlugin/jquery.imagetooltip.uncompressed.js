@@ -6,23 +6,32 @@ jQuery(function($) {
     showURL:false
   };
   $(".jqImageTooltip:not(.jqInitedImageTooltip)").livequery(function() {
-    var $this = $(this);
-    var opts = $.extend({}, defaults, $this.metadata());
+    var $this = $(this),
+        opts = $.extend({}, defaults, $this.metadata());
+
     $this.addClass("jqInitedImageTooltip");
-    if (opts.image.match(/jpe?g|gif|png|bmp|svg/i)) {
+
+    if (typeof(opts.image) !== 'undefined' && opts.image.match(/jpe?g|gif|png|bmp|svg/i)) {
       $this.tooltip({
-        delay:350,
+        show: {
+          delay: 350
+        },
         track:true,
-        showURL:false,
-        bodyHandler: function() { 
+        tooltipClass:'imageTooltip',
+        position: { 
+          my: "left+15 top+20", 
+          at: "left bottom", 
+          collision: "flipfit" 
+        },
+        content: function() { 
           var src = foswiki.getPreference("SCRIPTURLPATH")+"/rest/ImagePlugin/resize?"+
             "topic="+opts.web+"."+opts.topic+";"+
             "file="+opts.image+";"+
             "crop="+(opts.crop||'off')+";"+
             "width="+(opts.width||300)+";"+
-            "height="+(opts.height||300);
-          var img = $("<img/>").attr('src', src);
-          return $("<div class='imgTooltip'></div>").append(img);
+            "height="+(opts.height||300),
+            img = $("<img/>").attr('src', src);
+          return img;
         }
       });
     }

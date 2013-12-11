@@ -55,6 +55,7 @@ a:hover.imageHref {
   text-align:center;
   clear:both;
   margin:0px auto;
+  display:block;
 }
 .imageFrame_center {
   margin:10px auto;
@@ -80,13 +81,3 @@ a:hover.imageHref {
   margin:0 1px;
 }
 
-/* debug 
-.imageFloat, .imageFrame, 
-.imageFloat_left, .imageFloat_right, .imageFloat_center, .imageFloat_none, 
-.imageFrame_left, .imageFrame_right, .imageFrame_center, .imageFrame_none, 
-.imageLink, .imageCaption, .imageMagnify, .imagePlain
-.imageFloat image, .imageMagnify image, .imageClear
-{
-  border:1px solid red;
-}
-*/

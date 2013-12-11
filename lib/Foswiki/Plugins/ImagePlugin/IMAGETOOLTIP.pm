@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 # 
-# Copyright (C) 2010-2012 Michael Daum, http://michaeldaumconsulting.com
+# Copyright (C) 2010-2013 Michael Daum, http://michaeldaumconsulting.com
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -42,13 +42,13 @@ sub new {
   my $this = bless($class->SUPER::new( 
     $session,
     name => 'ImageTooltip',
-    version => '1.0',
+    version => '2.0',
     author => 'Michael Daum',
     homepage => 'http://foswiki.org/Extensions/ImagePlugin',
     puburl => '%PUBURLPATH%/%SYSTEMWEB%/ImagePlugin',
     documentation => "$Foswiki::cfg{SystemWebName}.ImagePlugin",
     javascript => ['jquery.imagetooltip.js'],
-    dependencies => ['metadata', 'livequery', 'tooltip'], 
+    dependencies => ['metadata', 'livequery', 'ui'], 
   ), $class);
 
   return $this;

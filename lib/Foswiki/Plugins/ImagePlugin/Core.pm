@@ -412,7 +412,7 @@ sub handleIMAGE {
   $result =~ s/\$origwidth/(pingOrigImage($this, $imgInfo))[0]/ge;
   $result =~ s/\$origheight/(pingOrigImage($this, $imgInfo))[1]/ge;
   $result =~ s/\$text/$origFile/g;
-  $result =~ s/\$class/$params->{class}/g;
+  $result =~ s/\$class/ $params->{class}/g;
   $result =~ s/\$data/$params->{data}/g;
   $result =~ s/\$id/$params->{id}/g;
   $result =~ s/\$style/$params->{style}/g;
@@ -538,9 +538,12 @@ sub processImage {
       $imgInfo{filesize} = -s $imgInfo{imgPath};
     } else { 
       writeDebug("creating $imgInfo{file}");
+
+      my $source = $imgInfo{origImgPath};
+      $source .= '[0]' if $source =~ /\.gif$/i; # extract the first frame
      
       # read
-      my $error = $this->{mage}->Read($imgInfo{origImgPath});
+      my $error = $this->{mage}->Read($source);
       if ($error =~ /(\d+)/) {
 	$this->{errorMsg} = $error;
 	return undef if $1 >= 400;

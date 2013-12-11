@@ -86,7 +86,7 @@ The image name is mandatory.  Further arguments are optional.
 | =style= | (see html specs) | empty |
 | =title= | title text | *alt* value |
 | =tooltipheight= | height of tooltip image | 300 |
-| =tooltip= | on/off | off |
+| =tooltip= | on/off renders an image preview in a tooltip | off |
 | =tooltipcrop= | on/northwest/north/northeast/west/center/east/southwest/south/southeast/off: same as =crop= but used for the tooltip | |
 | =tooltipwidth= | width of tooltip image | 300 |
 | =topic= | valid topic name | topic part of IMGALBUM value or current topic |
@@ -95,11 +95,6 @@ The image name is mandatory.  Further arguments are optional.
 | =web= | valid web name | web part of IMGALBUM value or current topic |
 | =width= | integer value | image width |
 | =zoom=  | on/off to scale images, if set to "on" scaling up images is allowed, otherwise it downscales only | off |
-
----+++ Tooltip preview
-The =tooltip= argument allows rendering image previews in a tooltip. This option
-only has effect if Foswiki:Extensions.JQueryPlugin is installed that comes with
-the jquery.tooltip plugin used to render the image tooltip here.
 
 ---+++ Image geometry
 The image geometry in the =size= parameter can be specified in a format 
@@ -228,6 +223,7 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|   3 Aug 2013: | rework image tooltip code to use jquery-ui instead of deprecated jquery.tooltip |
 |   8 May 2013: | return a 1x1 pixel when calling the image rest handler for a non-existing image |
 |  24 May 2013: | update thumbnails whenever a new image of the same name was uploaded |
 |   6 May 2013: | some more svg fixes; cleaning up thumbnails now when images are renamed or moved |
