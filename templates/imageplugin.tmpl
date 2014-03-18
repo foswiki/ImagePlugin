@@ -6,7 +6,7 @@
 
 %TMPL:DEF{"image:simple"}%<a %IF{"'$id'!=''" then="id='$id' "}%class='imageHref imageSimple imageSimple_$align$class' title='$title' style='$style' href='$href' ><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout/></a>%TMPL:END%
   
-%TMPL:DEF{"image:frame"}%<div %IF{"'$id'!=''" then="id='$id' "}%class='imageFrame imageFrame_$align$class' style='_width:$framewidthpx;max-width:$framewidthpx;$style'><a class='imageHref' title='$title' href='$href'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout/></a>$caption</div>%TMPL:END%
+%TMPL:DEF{"image:frame"}%<div %IF{"'$id'!=''" then="id='$id' "}%class='imageFrame imageFrame_$align$class' style='width:$framewidthpx;$style'><a class='imageHref' title='$title' href='$href'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout/></a>$caption</div>%TMPL:END%
 
 %TMPL:DEF{"image:float"}%<div %IF{"'$id'!=''" then="id='$id' "}%class='imageFloat imageFloat_$align$class' style='$style'><a class='imageHref' title='$title' href='$href'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout/></a>$caption</div>%TMPL:END%
 

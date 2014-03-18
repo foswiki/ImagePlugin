@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2013 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2014 Michael Daum http://michaeldaumconsulting.com
 #
 # Early version Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -102,7 +102,7 @@ sub handleREST {
   my $refresh = $query->param('refresh') || '';
   $refresh = ($refresh =~ /^(on|1|yes|img)$/g)?1:0;
 
-  ($imgFile) = Foswiki::Sandbox::sanitizeAttachmentName($imgFile);
+  $imgFile = sanitizeAttachmentName($imgFile);
 
   writeDebug("processing image");
   my $imgInfo = $this->processImage($imgWeb, $imgTopic, $imgFile, {
@@ -168,7 +168,7 @@ sub handleIMAGE {
   my $origFile = $params->{_DEFAULT} || $params->{file};
   return '' unless $origFile;
 
-  #writeDebug("origFile=$origFile");
+  writeDebug("origFile=$origFile");
 
   # default and fix parameters
   $params->{warn} ||= '';
@@ -246,11 +246,9 @@ sub handleIMAGE {
     }
 
     # sanitize downloaded filename
-    my $dummy;
-    ($origFile, $dummy) = Foswiki::Sandbox::sanitizeAttachmentName($origFile);
-    if ($origFile ne $dummy) {
-      writeDebug("sanitized filename from $dummy to $origFile");
-    }
+    $origFile = sanitizeAttachmentName($origFile);
+
+    writeDebug("sanizized to $origFile");
 
     $imgTopic = $params->{topic} || $theTopic;
     ($imgWeb, $imgTopic) = 
@@ -260,6 +258,8 @@ sub handleIMAGE {
     $imgPath .= '/'.$imgTopic;
     mkdir($imgPath) unless -d $imgPath;
     $imgPath .= '/'.$origFile;
+
+    #writeDebug("imgPath=$imgPath");
 
     unless($this->mirrorImage($imgWeb, $imgTopic, $url, $imgPath, $doRefresh)) {
       return $this->inlineError($params);
@@ -364,7 +364,8 @@ sub handleIMAGE {
 
   $result =~ s/\s+$//; # strip whitespace at the end
   $result =  $params->{header}.$result.$params->{footer};
-  $result =~ s/\$caption/$this->getTemplate('caption')/ge;
+
+  $result =~ s/\$caption/$this->getTemplate('caption')/ge if $params->{caption};
   $result =~ s/\$caption/$params->{caption}/g;
   $result =~ s/\$magnifyFormat/$this->getTemplate('magnify')/ge;
   $result =~ s/\$magnifyIcon/$this->{magnifyIcon}/g;
@@ -407,7 +408,7 @@ sub handleIMAGE {
   $result =~ s/\$thumbfile/$imgInfo->{file}/g;
   $result =~ s/\$width/(pingImage($this, $imgInfo))[0]/ge;
   $result =~ s/\$height/(pingImage($this, $imgInfo))[1]/ge;
-  $result =~ s/\$framewidth/(pingImage($this, $imgInfo))[0]+2/ge;
+  $result =~ s/\$framewidth/(pingImage($this, $imgInfo))[0]-1/ge;
   $result =~ s/\$origsrc/$origFileUrl/g;
   $result =~ s/\$origwidth/(pingOrigImage($this, $imgInfo))[0]/ge;
   $result =~ s/\$origheight/(pingOrigImage($this, $imgInfo))[1]/ge;
@@ -718,7 +719,9 @@ sub mirrorImage {
   my ($this, $web, $topic, $url, $fileName, $force) = @_;
 
   writeDebug("called mirrorImage($url, $fileName, $force)");
-  return 1 if !$force && -e $fileName;
+  return 1 if !$force && -e "$fileName";
+
+  writeDebug("didn't find $fileName");
 
   my $downloadFileName;
 
@@ -737,7 +740,7 @@ sub mirrorImage {
   unless ($this->{ua}) {
     require LWP::UserAgent;
     my $ua = LWP::UserAgent->new;
-    $ua->timeout(10);
+    $ua->timeout(5);
 
     my $attachLimit = Foswiki::Func::getPreferencesValue('ATTACHFILESIZELIMIT') || 0;
     $attachLimit =~ s/[^\d]//g;
@@ -922,6 +925,17 @@ sub suffixToMimeType {
   return $mimeType;
 }
 
+##############################################################################
+# local version
+sub sanitizeAttachmentName {
+  my $fileName = shift;
+
+  $fileName =~ s{[\\/]+$}{};    # Get rid of trailing slash/backslash (unlikely)
+  $fileName =~ s!^.*[\\/]!!;    # Get rid of leading directory components
+  $fileName =~ s/[\*?~^\$@%`"'&;|<>\[\]#\x00-\x1f\(\)]//g; # Get rid of a subset of Namefilter
+
+  return Foswiki::Sandbox::untaintUnchecked($fileName);
+}
 
 
 1;

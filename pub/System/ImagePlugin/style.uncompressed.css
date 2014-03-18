@@ -13,6 +13,7 @@
   padding: 3px;
   border: 1px solid #ccc;
   background-color: #f9f9f9;
+  display:inline-block;
 }
 a.imageHref {
   border:0px;
@@ -40,44 +41,44 @@ a:hover.imageHref {
 .imageSimple_right,
 .imageFrame_right {
   float:right;
-  margin:0px 0px 10px 10px;
+  margin:0 0 1em 1em;
 }
 .imagePlain_left,
 .imageSimple_left,
 .imageFrame_left,
 .imageFloat_left {
   float:left;
-  margin:0px 10px 10px 0px;
+  margin:0 1em 1em 0;
 }
 .imageSimple_center,
 .imageFrame_center,
 .imageFloat_center {
   text-align:center;
   clear:both;
-  margin:0px auto;
+  margin:0 auto;
   display:block;
 }
 .imageFrame_center {
-  margin:10px auto;
+  margin:1em auto;
 }
 .imageFrame_none {
-  margin:10px;
+  margin:1em;
 }
 .imageCaption {
   text-align: left;
   color:#444;
   line-height:140%;
-  padding:.3em 2px .1em 2px;
+  padding:.3em 2px;
 }
 .imageMagnify {
   float:right;
-  margin:.3em 0px .1em 0px;
+  margin:.3em 0;
 }
 .imageCaption .imageMagnify a {
   text-decoration:none;
 }
 .imageMagnify img {
-  border:0px;
+  border:0;
   margin:0 1px;
 }
 

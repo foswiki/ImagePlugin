@@ -219,10 +219,11 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
    * Set SHORTDESCRIPTION = %$SHORTDESCRIPTION%
 -->
 |  Plugin Author: | Craig Meyer, Foswiki:Main.MichaelDaum |
-|  Copyright: | &copy; 2006, Craig Meyer, %BR% &copy; 2006-2013 Michael Daum http://michaeldaumconsulting.com |
+|  Copyright: | &copy; 2006, Craig Meyer, %BR% &copy; 2006-2014 Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  18 Mar 2014: | support blanks in image names |
 |   3 Aug 2013: | rework image tooltip code to use jquery-ui instead of deprecated jquery.tooltip |
 |   8 May 2013: | return a 1x1 pixel when calling the image rest handler for a non-existing image |
 |  24 May 2013: | update thumbnails whenever a new image of the same name was uploaded |
