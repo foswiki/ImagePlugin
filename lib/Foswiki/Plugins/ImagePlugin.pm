@@ -65,7 +65,8 @@ sub initPlugin {
     'resize',
     sub {
       getCore($baseWeb, $baseTopic, shift)->handleREST(@_);
-    }
+    },
+    authenticate => 0
   );
 
   # register jquery.imagetooltip plugin if jquery is isntalled
