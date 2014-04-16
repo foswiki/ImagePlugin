@@ -1,9 +1,11 @@
 /* ImagePlugin css styles */
+.imageThumb,
 .imageFrame,
 .imageFloat,
 .imageSimple {
   line-height:120%;
 }
+.imageThumb,
 .imageFrame,
 .imageFloat {
   font-size:90%;
@@ -13,6 +15,10 @@
   padding: 3px;
   border: 1px solid #ccc;
   background-color: #f9f9f9;
+  display:inline-block;
+}
+.imageThumb {
+  padding: 3px;
   display:inline-block;
 }
 a.imageHref {
@@ -29,13 +35,19 @@ a:hover.imageHref {
   display:block;
   overflow: hidden;
 }
+.imageThum img,
 .imageFrame img {
   border-right:1px solid transparent; /* safari + konqueror fix */
+}
+.imageThumb .imageHref {
+  display:block;
+  overflow: hidden;
 }
 .imageSimple {
   overflow:visible;
   display:inline-block;
 }
+.imageThumb_right,
 .imagePlain_right,
 .imageFloat_right,
 .imageSimple_right,
@@ -43,6 +55,7 @@ a:hover.imageHref {
   float:right;
   margin:0 0 1em 1em;
 }
+.imageThumb_left,
 .imagePlain_left,
 .imageSimple_left,
 .imageFrame_left,
@@ -50,6 +63,7 @@ a:hover.imageHref {
   float:left;
   margin:0 1em 1em 0;
 }
+.imageThumb_center,
 .imageSimple_center,
 .imageFrame_center,
 .imageFloat_center {
@@ -58,9 +72,11 @@ a:hover.imageHref {
   margin:0 auto;
   display:block;
 }
+.imageThumb_center,
 .imageFrame_center {
   margin:1em auto;
 }
+.imageThumb_none,
 .imageFrame_none {
   margin:1em;
 }

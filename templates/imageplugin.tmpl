@@ -10,6 +10,8 @@
 
 %TMPL:DEF{"image:float"}%<div %IF{"'$id'!=''" then="id='$id' "}%class='imageFloat imageFloat_$align$class' style='$style'><a class='imageHref' title='$title' href='$href'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout/></a>$caption</div>%TMPL:END%
 
+%TMPL:DEF{"image:thumb"}%<div %IF{"'$id'!=''" then="id='$id' "}%class='imageThumb imageThumb_$align$class' style='width:$framewidthpx;$style'><a class='imageHref' title='$title' href='$href'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout/></a>$caption</div>%TMPL:END%
+
 %{ helper snippets }%
 
 %TMPL:DEF{"image:clear"}%<br class='imageClear' clear='all' />%TMPL:END%

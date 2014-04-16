@@ -44,12 +44,12 @@ BEGIN {
   }
 };
 
-use constant DEBUG => 0; # toggle me
+use constant TRACE => 0; # toggle me
 
 ###############################################################################
 # static
 sub writeDebug {
-  print STDERR "ImagePlugin - $_[0]\n" if DEBUG;
+  print STDERR "ImagePlugin - $_[0]\n" if TRACE;
 }
 
 ###############################################################################
