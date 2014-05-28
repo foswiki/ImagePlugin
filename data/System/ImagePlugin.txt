@@ -223,6 +223,7 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  28 May 2014: | fixed thumbnail handling in afterRenameHandler |
 |  16 Apr 2014: | brought back =thumb= image type |
 |  04 Apr 2014: | flag rest handlers that don't require authentication |
 |  18 Mar 2014: | support blanks in image names |

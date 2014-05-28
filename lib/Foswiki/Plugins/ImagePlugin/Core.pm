@@ -627,21 +627,24 @@ sub processImage {
 sub afterRenameHandler {
   my ($this, $oldWeb, $oldTopic, $oldAttachment, $newWeb, $newTopic, $newAttachment ) = @_;
 
-#  print STDERR "afterRename($oldWeb, $oldTopic, ".
-#    ($oldAttachment||'undef').", ".
-#    ($newWeb||'undef').", ".
-#    ($newTopic||'undef').", ".
-#    ($newAttachment||'undef').")\n";
+# print STDERR "afterRename(oldWeb=$oldWeb, oldTopic=$oldTopic, oldAttachment=".
+#   ($oldAttachment||'undef').", newWeb=".
+#   ($newWeb||'undef').", newTopic=".
+#   ($newTopic||'undef').", newAttachment=".
+#   ($newAttachment||'undef').")\n";
 
   return unless defined $oldAttachment;  
-  return if defined $newAttachment && $oldAttachment eq $newAttachment;
+  return unless defined $newAttachment;  
+  return if $oldAttachment eq $newAttachment &&
+            $oldWeb eq $newWeb &&
+            $oldTopic eq $newTopic;
 
   # attachment has been renamed, delete old thumbnails
   my $web = $oldWeb;
   my $topic = $oldTopic;
   my $attachment = $oldAttachment;
 
-  opendir( my $dh, $Foswiki::cfg{PubDir}.'/'.$web.'/'.$topic.'/' ) || next;
+  opendir( my $dh, $Foswiki::cfg{PubDir}.'/'.$web.'/'.$topic.'/' ) || return;
   my @thumbs = grep { /^igp_[0-9a-f]{32}_$attachment$/  } readdir $dh;
   closedir $dh;
 

@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="reprev" date="1397648760" format="1.1" reprev="3" version="3"}%
+%META:TOPICINFO{author="ProjectContributor" comment="reprev" date="1397816603" format="1.1" reprev="4" version="4"}%
 ---+!! Exhaustive Test Page for !ImagePlugin
 %TOC%
 
@@ -87,6 +87,6 @@ colon before "image" in an intra-wiki link, like this
 %IMAGE{":STS-32_crew.jpg|STS-32 crew"}%
 
 
-%META:FILEATTACHMENT{name="Westminstpalace.jpg" attr="h" autoattached="1" comment="" date="1144761714" path="Westminstpalace.jpg" size="19790" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="Tst.png" attr="h" autoattached="1" comment="" date="1144761728" path="Tst.png" size="499" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="STS-32_crew.jpg" attr="h" autoattached="1" comment="" date="1144681150" path="STS-32_crew.jpg" size="49583" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="Westminstpalace.jpg" attr="h" comment="" date="1225717138" path="Westminstpalace.jpg" size="19790" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="Tst.png" attr="h" comment="" date="1225717138" path="Tst.png" size="499" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="STS-32_crew.jpg" attr="h" comment="" date="1225717138" path="STS-32_crew.jpg" size="49583" user="ProjectContributor" version="1"}%
