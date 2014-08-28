@@ -1,0 +1,5 @@
+foswiki-imageplugin (3.32-1+mdc0) precise; urgency=low
+
+  * Initial debianization
+
+ -- Michael Daum <debian@michaeldaumconsulting.com>  Sat, 24 May 2014 18:42:40 +0200

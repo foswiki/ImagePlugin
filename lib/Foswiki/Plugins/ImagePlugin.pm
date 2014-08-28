@@ -31,8 +31,8 @@ our $imageCore;
 our $baseWeb;
 our $baseTopic;
 
-our $VERSION = '3.33';
-our $RELEASE = '3.33';
+our $VERSION = '3.40';
+our $RELEASE = '3.40';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 
@@ -66,7 +66,9 @@ sub initPlugin {
     sub {
       getCore($baseWeb, $baseTopic, shift)->handleREST(@_);
     },
-    authenticate => 0
+    authenticate => 0,
+    validate => 0,
+    http_allow => 'GET,POST',
   );
 
   # register jquery.imagetooltip plugin if jquery is isntalled
@@ -121,7 +123,7 @@ sub commonTagsHandler {
 
   $text =~ s/(^|(?<!url)[-*\s(|])
                (https?:
-                   ([^\s<>"]+[^\s*.,!?;:)<|][^\s]*\.(?:gif|jpe?g|png|bmp|svg)(?:\?.*)?(?=[^\w])))/
+                   ([^\s<>"]+[^\s*.,!?;:)<|][^\s]*\.(?:gif|jpe?g|png|bmp|svg)(?:\?.*)?(?=[^\w\-])))/
                      renderExternalLink($web, $topic, $1, $2)/geox;
   putBackBlocks(\$text, $removed, 'noautolink', 'noautolink' );
 

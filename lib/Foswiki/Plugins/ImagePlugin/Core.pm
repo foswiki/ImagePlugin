@@ -489,8 +489,9 @@ sub processImage {
   my $zoom = $params->{zoom} || 'off';
   my $width = $params->{width} || '';
   my $height = $params->{height} || '';
+  my $output = $params->{output} || '';
 
-  writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, refresh=$doRefresh)");
+  writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, refresh=$doRefresh, output=$output)");
 
   $this->{errorMsg} = '';
 
@@ -503,7 +504,7 @@ sub processImage {
     imgPath => undef,
   );
 
-  if ($size || $width || $height || $doRefresh || $imgFile =~ /\.svg$/) {
+  if ($size || $width || $height || $doRefresh || $imgFile =~ /\.(svg|tiff?)$/ || $output) {
     if (!$size) {
       if ($width || $height) {
         $size = $width.'x'.$height;
@@ -521,7 +522,7 @@ sub processImage {
     }
     writeDebug("size=$size");
 
-    $imgInfo{file} = $this->getImageFile($size, $zoom, $crop, $imgWeb, $imgTopic, $imgFile);
+    $imgInfo{file} = $this->getImageFile($size, $zoom, $crop, $imgWeb, $imgTopic, $imgFile, $output);
     unless ($imgInfo{file}) {
       $this->{errorMsg} = "(5) can't find <nop>$imgFile at <nop>$imgWeb.$imgTopic";
       return;
@@ -541,7 +542,7 @@ sub processImage {
       writeDebug("creating $imgInfo{file}");
 
       my $source = $imgInfo{origImgPath};
-      $source .= '[0]' if $source =~ /\.gif$/i; # extract the first frame
+      $source .= '[0]' if $source =~ /\.gif$/i; # extract the first frame only
      
       # read
       my $error = $this->{mage}->Read($source);
@@ -597,6 +598,22 @@ sub processImage {
             return undef if $1 >= 400;
           }
         }
+      }
+
+      # auto orient
+      $error = $this->{mage}->AutoOrient();
+      if ($error =~ /(\d+)/) {
+        $this->{errorMsg} = $error;
+        writeDebug("Error: $error");
+        return undef if $1 >= 400;
+      }
+
+      # strip of profiles and comments
+      $error = $this->{mage}->Strip();
+      if ($error =~ /(\d+)/) {
+        $this->{errorMsg} = $error;
+        writeDebug("Error: $error");
+        return undef if $1 >= 400;
       }
 
       # write
@@ -808,7 +825,7 @@ sub mirrorImage {
 
 ###############################################################################
 sub getImageFile {
-  my ($this, $size, $zoom, $crop, $imgWeb, $imgTopic, $imgFile) = @_;
+  my ($this, $size, $zoom, $crop, $imgWeb, $imgTopic, $imgFile, $output) = @_;
 
   my $imgPath = $Foswiki::cfg{PubDir}.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgFile;
   my $fileSize = -s $imgPath;
@@ -816,7 +833,14 @@ sub getImageFile {
 
   my $digest = Digest::MD5::md5_hex($size, $zoom, $crop, $fileSize);
 
+  # force conversion of some non-webby image formats
   $imgFile =~ s/\.svg$/\.png/g;
+  $imgFile =~ s/\.tiff?$/\.png/g;
+
+  # switch manually specified output format
+  if ($output && $imgFile =~ /^(.+)\.([^\.]+)$/) {
+    $imgFile = $1 . '.'. $output;
+  }
 
   if ($imgFile =~ /^(.*)\/(.+?)$/) {
     return $1."/igp_".$digest."_".$2;

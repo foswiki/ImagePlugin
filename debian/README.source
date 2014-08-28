@@ -1,0 +1,16 @@
+ImagePlugin for Foswiki
+-----------------------
+
+Use this plugin to control the display and alignment of images using an easy
+syntax and support for server-side resizing and thumbnailing. There are a set
+of pre-defined layout formats for images as well as a free layout configurability.
+
+Example:
+
+%IMAGE{"Photo.jpg"
+  type="frame" 
+  align="none" 
+  caption="That's my daughter"
+}%
+
+See http://foswiki.org/Extensions/ImagePlugin for more.

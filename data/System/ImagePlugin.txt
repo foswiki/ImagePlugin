@@ -77,6 +77,7 @@ The image name is mandatory.  Further arguments are optional.
 | =format= | image layout format string | set by type argument |
 | =header= | text to be prepended to the html output | empty |
 | =height= | integer value | image width |
+| =output= | image format to convert the input source to | same as source image, except tiff and svg being converted to png |
 | =href= | hyperlink when clicking on the image | url of the source image |
 | =id= | (see html specs) | empty |
 | =mousein= | javascript executed if moving the mouse over the image | empty |
@@ -223,6 +224,10 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  28 Aug 2014 | only render the first frame of a gif animation generating thumbnails; \
+                 fix orientation of thumbnail as specified in the EXIF metadata; \
+                 fully specify REST security flags; \
+                 new parameter =output= |
 |  28 May 2014: | fixed thumbnail handling in afterRenameHandler |
 |  16 Apr 2014: | brought back =thumb= image type |
 |  04 Apr 2014: | flag rest handlers that don't require authentication |

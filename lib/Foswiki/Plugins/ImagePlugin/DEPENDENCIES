@@ -1,7 +1,7 @@
-Image::Magick,>=6.2.4.5,cpan,Required.
-LWP::UserAgent,>=0,cpan,Required.
-Graphics::Magick,>=1.1.11,cpan,Optional.
-Foswiki::Plugins::JQueryPlugin,>=4.90,perl,Required.
-Foswiki::Contrib::XSendFileContrib,>=1.00,perl,Optional.
+Image::Magick,>=6.2.4.5,cpan,Required
+LWP::UserAgent,>=0,cpan,Required
+Graphics::Magick,>=1.1.11,cpan,Optional
+Foswiki::Plugins::JQueryPlugin,>=4.90,perl,Required
+Foswiki::Contrib::XSendFileContrib,>=1.00,perl,Optional
 ONLYIF ( $Foswiki::Plugins::VERSION < 2.1)
-Foswiki::Plugins::ZonePlugin,>=1.0,perl,Required. required for Foswiki < 1.1
+Foswiki::Plugins::ZonePlugin,>=1.0,perl,Required for Foswiki < 1.1
