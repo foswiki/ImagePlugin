@@ -31,8 +31,8 @@ our $imageCore;
 our $baseWeb;
 our $baseTopic;
 
-our $VERSION = '3.40';
-our $RELEASE = '3.40';
+our $VERSION = '4.00';
+our $RELEASE = '4.00';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 

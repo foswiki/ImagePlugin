@@ -11,7 +11,7 @@ jQuery(function($) {
 
     $this.addClass("jqInitedImageTooltip");
 
-    if (typeof(opts.image) !== 'undefined' && opts.image.match(/jpe?g|gif|png|bmp|svg/i)) {
+    if (typeof(opts.image) !== 'undefined' && opts.image.match(/jpe?g|gif|png|bmp|svg|xcf|psd|tiff?/i)) {
       $this.tooltip({
         show: {
           delay: 350

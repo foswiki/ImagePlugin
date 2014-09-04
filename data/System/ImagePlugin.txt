@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" date="1308213511" format="1.1" version="3"}%
+%META:TOPICINFO{author="ProjectContributor" date="1409847733" format="1.1" version="1"}%
 ---+!! <nop>%TOPIC%
 %TOC%
 
@@ -75,6 +75,8 @@ The image name is mandatory.  Further arguments are optional.
 | =desc= | description text | title text |
 | =footer= | text to be appended to the html output | empty |
 | =format= | image layout format string | set by type argument |
+| =frame= | extract a specific frame or layer from the source file; this comes in handy when rendering a thumbnail for a video clip |
+| =layer= | alias for =frame= |
 | =header= | text to be prepended to the html output | empty |
 | =height= | integer value | image width |
 | =output= | image format to convert the input source to | same as source image, except tiff and svg being converted to png |
@@ -224,6 +226,7 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  04 Sep 2014 | implemented =frame= and =layer= parameter for thumbnail extraction from videos, animations and layered images |
 |  28 Aug 2014 | only render the first frame of a gif animation generating thumbnails; \
                  fix orientation of thumbnail as specified in the EXIF metadata; \
                  fully specify REST security flags; \
@@ -294,5 +297,5 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  Support: | Foswiki:Support/%TOPIC% |
 
 
-%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1185796830" path="WestminstpalaceSample.png" size="107728" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1266012865" path="http://www.google.com/intl/en_ALL/images/logo.gif" size="8558" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1409847733" path="WestminstpalaceSample.png" size="107728" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1409847733" path="http://www.google.com/intl/en_ALL/images/logo.gif" size="8558" user="ProjectContributor" version="1"}%

@@ -504,7 +504,7 @@ sub processImage {
     imgPath => undef,
   );
 
-  if ($size || $width || $height || $doRefresh || $imgFile =~ /\.(svg|tiff?)$/ || $output) {
+  if ($size || $width || $height || $doRefresh || $imgFile =~ /\.(svg|tiff?|xcf|psd)$/ || $output) {
     if (!$size) {
       if ($width || $height) {
         $size = $width.'x'.$height;
@@ -521,8 +521,24 @@ sub processImage {
       }
     }
     writeDebug("size=$size");
+    my $frame;
+    if (defined $params->{layer}) {
+      $frame = $params->{layer};
+    } elsif (defined $params->{frame}) {
+      $frame = $params->{frame};
+    } else {
+      $frame = '0' if $imgInfo{origImgPath} =~/\.gif$/;
+    }
+    if (defined $frame) {
+      $frame =~ s/^.*?(\d+).*$/$1/g;
+      $frame = 1000 if $frame > 1000; # for security
+      $frame = 0 if $frame < 0;
+      $frame = '['.$frame.']';
+    } else {
+      $frame = '';
+    }
 
-    $imgInfo{file} = $this->getImageFile($size, $zoom, $crop, $imgWeb, $imgTopic, $imgFile, $output);
+    $imgInfo{file} = $this->getImageFile($size, $zoom, $crop, $frame, $imgWeb, $imgTopic, $imgFile, $output);
     unless ($imgInfo{file}) {
       $this->{errorMsg} = "(5) can't find <nop>$imgFile at <nop>$imgWeb.$imgTopic";
       return;
@@ -541,8 +557,7 @@ sub processImage {
     } else { 
       writeDebug("creating $imgInfo{file}");
 
-      my $source = $imgInfo{origImgPath};
-      $source .= '[0]' if $source =~ /\.gif$/i; # extract the first frame only
+      my $source = $imgInfo{origImgPath}.$frame;
      
       # read
       my $error = $this->{mage}->Read($source);
@@ -550,6 +565,12 @@ sub processImage {
 	$this->{errorMsg} = $error;
 	return undef if $1 >= 400;
       }
+
+      # merge layers
+      if ($imgFile =~ /\.(xcf|psd)$/i) {
+        $this->{mage} = $this->{mage}->Layers(method=>'merge');
+      }
+
 
       # scale
       if ($size) {
@@ -825,17 +846,16 @@ sub mirrorImage {
 
 ###############################################################################
 sub getImageFile {
-  my ($this, $size, $zoom, $crop, $imgWeb, $imgTopic, $imgFile, $output) = @_;
+  my ($this, $size, $zoom, $crop, $frame, $imgWeb, $imgTopic, $imgFile, $output) = @_;
 
   my $imgPath = $Foswiki::cfg{PubDir}.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgFile;
   my $fileSize = -s $imgPath;
   return unless defined $fileSize; # not found
 
-  my $digest = Digest::MD5::md5_hex($size, $zoom, $crop, $fileSize);
+  my $digest = Digest::MD5::md5_hex($size, $zoom, $crop, $frame, $fileSize);
 
   # force conversion of some non-webby image formats
-  $imgFile =~ s/\.svg$/\.png/g;
-  $imgFile =~ s/\.tiff?$/\.png/g;
+  $imgFile =~ s/\.(svg|tiff?|xcf|psd)$/\.png/g;
 
   # switch manually specified output format
   if ($output && $imgFile =~ /^(.+)\.([^\.]+)$/) {
