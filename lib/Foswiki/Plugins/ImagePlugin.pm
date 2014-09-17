@@ -28,11 +28,9 @@ use strict;
 use warnings;
 
 our $imageCore;
-our $baseWeb;
-our $baseTopic;
 
-our $VERSION = '4.00';
-our $RELEASE = '4.00';
+our $VERSION = '5.00';
+our $RELEASE = '5.00';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 
@@ -41,7 +39,6 @@ use Foswiki::Meta ();
 
 ###############################################################################
 sub initPlugin {
-  ($baseTopic, $baseWeb) = @_;
 
   # check for Plugins.pm versions
   if ($Foswiki::Plugins::VERSION < 1.026) {
@@ -56,7 +53,7 @@ sub initPlugin {
   Foswiki::Func::registerTagHandler(
     'IMAGE',
     sub {
-      return getCore($baseWeb, $baseTopic, shift)->handleIMAGE(@_);
+      return getCore(shift)->handleIMAGE(@_);
     }
   );
 
@@ -64,7 +61,7 @@ sub initPlugin {
   Foswiki::Func::registerRESTHandler(
     'resize',
     sub {
-      getCore($baseWeb, $baseTopic, shift)->handleREST(@_);
+      getCore(shift)->handleREST(@_);
     },
     authenticate => 0,
     validate => 0,
@@ -98,8 +95,16 @@ HERE
 ###############################################################################
 sub afterRenameHandler {
 
-  getCore($baseWeb, $baseTopic)->afterRenameHandler(@_);
+  getCore->afterRenameHandler(@_);
 }
+
+###############################################################################
+sub beforeSaveHandler {
+  #my ($text, $topic, $web, $meta) = @_;
+
+  getCore->beforeSaveHandler(@_);
+}
+
 
 ###############################################################################
 sub commonTagsHandler {
@@ -179,7 +184,7 @@ sub renderExternalLink {
       topic => $topic
     };
 
-    return $prefix.getCore($baseWeb, $baseTopic)->handleIMAGE($params, $topic, $web);
+    return $prefix.getCore()->handleIMAGE($params, $topic, $web);
   }
 
   #print STDERR "normal handling of $url\n";

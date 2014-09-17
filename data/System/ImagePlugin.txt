@@ -85,6 +85,7 @@ The image name is mandatory.  Further arguments are optional.
 | =mousein= | javascript executed if moving the mouse over the image | empty |
 | =mouseout= | javascript executed if moving the mouse off the image | empty |
 | =refresh= | on/off/img to trigger recomputing images | off |
+| =rotate= | rotate image by the given dregrees | keep original orientation |
 | =size=  | geometry specification | image geometry  |
 | =style= | (see html specs) | empty |
 | =title= | title text | *alt* value |
@@ -226,6 +227,8 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  17 Sep 2014 | added feature to convert inline image data to proper attachments |
+|  08 Sep 2014 | added =rotate= parameter |
 |  04 Sep 2014 | implemented =frame= and =layer= parameter for thumbnail extraction from videos, animations and layered images |
 |  28 Aug 2014 | only render the first frame of a gif animation generating thumbnails; \
                  fix orientation of thumbnail as specified in the EXIF metadata; \

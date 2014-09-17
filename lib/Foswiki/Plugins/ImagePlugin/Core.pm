@@ -30,21 +30,24 @@ use warnings;
 use Error qw( :try );
 use Foswiki::OopsException ();
 use Digest::MD5 ();
+use MIME::Base64 ();
+use Digest::MD5 ();
+use File::Temp ();
 use URI ();
 
 BEGIN {
   # Image::Magick seems to override locale usage
   my $useLocale = $Foswiki::cfg{UseLocale};
-  if ( $useLocale ) {
+  if ($useLocale) {
     my $siteLocale = $Foswiki::cfg{Site}{Locale};
     $ENV{LC_CTYPE} = $siteLocale;
     require POSIX;
     import POSIX qw( locale_h LC_CTYPE );
     setlocale(&LC_CTYPE, $siteLocale);
   }
-};
+}
 
-use constant TRACE => 0; # toggle me
+use constant TRACE => 0;    # toggle me
 
 ###############################################################################
 # static
@@ -55,29 +58,30 @@ sub writeDebug {
 ###############################################################################
 # ImageCore constructor
 sub new {
-  my ($class, $baseWeb, $baseTopic, $session) = @_;
-  my $this = bless({}, $class);
+  my $class = shift;
+  my $session = shift;
 
-  $session ||= $Foswiki::Plugins::SESSION || $Foswiki::Plugins::SESSION;
-  $this->{session} = $session;
-  $this->{magnifyIcon} = 
-    Foswiki::Func::getPluginPreferencesValue('IMAGEPLUGIN_MAGNIFY_ICON') ||
-    '%PUBURLPATH%/%SYSTEMWEB%/ImagePlugin/magnify-clip.png';
-  $this->{magnifyWidth} = 15; # TODO: make this configurable/autodetected/irgnored
-  $this->{magnifyHeight} = 11; # TODO: make this configurable/autodetected/irgnored
+  my $this = bless({
+      session => $session || $Foswiki::Plugins::SESSION,
+      magnifyIcon => $Foswiki::cfg{ImagePlugin}{MagnifyIcon} || '%PUBURLPATH%/%SYSTEMWEB%/ImagePlugin/magnify-clip.png',
+      magnifyWidth => $Foswiki::cfg{ImagePlugin}{MagnifyIconWidth} || 15,
+      magnifyHeight => $Foswiki::cfg{ImagePlugin}{MagnifyIconHeight} || 11,
+      thumbSize => $Foswiki::cfg{ImagePlugin}{DefaultThumbnailSize} || 180,
+      autoAttachExternalImages => $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} || 0,
+      autoAttachInlineImages => $Foswiki::cfg{ImagePlugin}{AutoAttachInlineImages} || 0,
+      inlineImageTemplate => $Foswiki::cfg{ImagePlugin}{InlineImageTemplate} || "<img %BEFORE% src='%PUBURLPATH%/%WEB%/%TOPIC%/%ATTACHMENT%' %AFTER% />",
+      @_
+    },
+    $class
+  );
 
-  $this->{thumbSize} = 
-    Foswiki::Func::getPreferencesValue('THUMBNAIL_SIZE') || 180;
-  $this->{baseWeb} = $baseWeb;
-  $this->{baseTopic} = $baseTopic;
-  $this->{errorMsg} = ''; # from image mage
-  $this->{autoAttachExternalImages} = $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages};
+  $this->{errorMsg} = '';    # from image mage
 
   # Graphics::Magick is less buggy than Image::Magick
-  my $impl = 
-    $Foswiki::cfg{ImagePlugin}{Impl} || 
-    $Foswiki::cfg{ImageGalleryPlugin}{Impl} || 
-    'Image::Magick'; 
+  my $impl =
+       $Foswiki::cfg{ImagePlugin}{Impl}
+    || $Foswiki::cfg{ImageGalleryPlugin}{Impl}
+    || 'Image::Magick';
 
   #writeDebug("creating new image mage using $impl");
   eval "use $impl";
@@ -100,18 +104,24 @@ sub handleREST {
   my ($imgWeb, $imgTopic) = Foswiki::Func::normalizeWebTopicName($theWeb, $theTopic);
   my $imgFile = $query->param('file');
   my $refresh = $query->param('refresh') || '';
-  $refresh = ($refresh =~ /^(on|1|yes|img)$/g)?1:0;
+  $refresh = ($refresh =~ /^(on|1|yes|img)$/g) ? 1 : 0;
 
   $imgFile = sanitizeAttachmentName($imgFile);
 
   writeDebug("processing image");
-  my $imgInfo = $this->processImage($imgWeb, $imgTopic, $imgFile, {
-      size => ($query->param('size')||''),
-      zoom => ($query->param('zoom')||'off'),
-      crop => ($query->param('crop')||'off'),
-      width => ($query->param('width')||''),
-      height => ($query->param('height')||''),
-    } ,$refresh);
+  my $imgInfo = $this->processImage(
+    $imgWeb,
+    $imgTopic,
+    $imgFile,
+    {
+      size => ($query->param('size') || ''),
+      zoom => ($query->param('zoom') || 'off'),
+      crop => ($query->param('crop') || 'off'),
+      width => ($query->param('width') || ''),
+      height => ($query->param('height') || ''),
+    },
+    $refresh
+  );
   unless ($imgInfo) {
     $imgInfo->{file} = 'pixel.gif';
     $imgInfo->{filesize} = '807';
@@ -124,8 +134,8 @@ sub handleREST {
   my $xsendHeader = $Foswiki::cfg{XSendFileContrib}{Header} || $Foswiki::cfg{ImagePlugin}{XSendFileHeader};
 
   if (defined $xsendHeader && $xsendHeader ne 'none') {
-    my $location = $Foswiki::cfg{XSendFileContrib}{Location} ||  $Foswiki::cfg{ImagePlugin}{XSendFileLocation} || $Foswiki::cfg{PubDir};
-    my $imgPath = $location.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgInfo->{file};
+    my $location = $Foswiki::cfg{XSendFileContrib}{Location} || $Foswiki::cfg{ImagePlugin}{XSendFileLocation} || $Foswiki::cfg{PubDir};
+    my $imgPath = $location . '/' . $imgWeb . '/' . $imgTopic . '/' . $imgInfo->{file};
     $response->header(
       -status => 200,
       -type => $mimeType,
@@ -138,7 +148,7 @@ sub handleREST {
     $response->header(
       -status => 200,
       -type => $mimeType,
-      -'Content-Length' => $imgInfo->{filesize}, # overrides wrong length computed by Response
+      -'Content-Length' => $imgInfo->{filesize},    # overrides wrong length computed by Response
       -'Cache-Control' => 'max-age=36000',
       -'Expires' => '+12h',
     );
@@ -156,7 +166,7 @@ sub handleIMAGE {
 
   writeDebug("called handleIMAGE(params, $theTopic, $theWeb)");
 
-  if($params->{_DEFAULT} && $params->{_DEFAULT} =~ m/^(?:clr|clear)$/io ) { 
+  if ($params->{_DEFAULT} && $params->{_DEFAULT} =~ m/^(?:clr|clear)$/io) {
     return $this->getTemplate('clear');
   }
 
@@ -201,20 +211,20 @@ sub handleIMAGE {
 
   unless ($params->{type}) {
     if ($params->{href} || $params->{width} || $params->{height} || $params->{size}) {
-      $params->{type} = 'simple' 
+      $params->{type} = 'simple';
     } else {
-      $params->{type} = 'plain' 
+      $params->{type} = 'plain';
     }
   }
 
   # validate args
   $params->{type} = 'thumb' if $params->{type} eq 'thumbnail';
   if ($params->{type} eq 'thumb' && !$params->{size}) {
-    $params->{size} = $this->{thumbSize}
+    $params->{size} = Foswiki::Func::getPreferencesValue('THUMBNAIL_SIZE') || $this->{thumbSize};
   }
 
   if ($params->{size} =~ /^(\d+)(px)?x?(\d+)?(px)?$/) {
-    $params->{size} = $3?"$1x$3":$1;
+    $params->{size} = $3 ? "$1x$3" : $1;
   }
 
   my $imgWeb = $params->{web} || $theWeb;
@@ -227,13 +237,13 @@ sub handleIMAGE {
   my $albumTopic;
   my $query = Foswiki::Func::getCgiQuery();
   my $doRefresh = $query->param('refresh') || 0;
-  $doRefresh = ($doRefresh =~ /^(on|1|yes|img)$/g)?1:0;
+  $doRefresh = ($doRefresh =~ /^(on|1|yes|img)$/g) ? 1 : 0;
 
   # strip off prefix pointing to self
-  
+
   # http://foswiki...
-  $origFile =~ s/^$Foswiki::cfg{DefaultUrlHost}$Foswiki::cfg{PubUrlPath}//;    
-  
+  $origFile =~ s/^$Foswiki::cfg{DefaultUrlHost}$Foswiki::cfg{PubUrlPath}//;
+
   # the %PUBURLPATH% part, but could also be a custom http://foswiki-static...
   $origFile =~ s/^$Foswiki::cfg{PubUrlPath}//;
   $origFile =~ s/^\///;
@@ -251,17 +261,16 @@ sub handleIMAGE {
     writeDebug("sanizized to $origFile");
 
     $imgTopic = $params->{topic} || $theTopic;
-    ($imgWeb, $imgTopic) = 
-      Foswiki::Func::normalizeWebTopicName($imgWeb, $imgTopic);
-    $imgPath = $pubDir.'/'.$imgWeb;
+    ($imgWeb, $imgTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $imgTopic);
+    $imgPath = $pubDir . '/' . $imgWeb;
     mkdir($imgPath) unless -d $imgPath;
-    $imgPath .= '/'.$imgTopic;
+    $imgPath .= '/' . $imgTopic;
     mkdir($imgPath) unless -d $imgPath;
-    $imgPath .= '/'.$origFile;
+    $imgPath .= '/' . $origFile;
 
     #writeDebug("imgPath=$imgPath");
 
-    unless($this->mirrorImage($imgWeb, $imgTopic, $url, $imgPath, $doRefresh)) {
+    unless ($this->mirrorImage($imgWeb, $imgTopic, $url, $imgPath, $doRefresh)) {
       return $this->inlineError($params);
     }
   } elsif ($origFile =~ /(?:pub\/)?(?:(.+?)\/)?([^\/]+)\/([^\/]+?)$/) {
@@ -270,7 +279,7 @@ sub handleIMAGE {
     $origFile = $3;
 
     ($imgWeb, $imgTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $imgTopic);
-     $imgPath = $pubDir.'/'.$imgWeb.'/'.$imgTopic.'/'.$origFile;
+    $imgPath = $pubDir . '/' . $imgWeb . '/' . $imgTopic . '/' . $origFile;
 
     #writeDebug("looking for an image file at $imgPath");
 
@@ -286,58 +295,53 @@ sub handleIMAGE {
     if ($params->{topic}) {
       # topic parameter is known
       $imgTopic = $params->{topic};
-      ($testWeb, $testTopic) = 
-	Foswiki::Func::normalizeWebTopicName($imgWeb, $imgTopic);
-      $imgPath = $pubDir.'/'.$testWeb.'/'.$testTopic.'/'.$origFile;
+      ($testWeb, $testTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $imgTopic);
+      $imgPath = $pubDir . '/' . $testWeb . '/' . $testTopic . '/' . $origFile;
 
       # you said so but it still is not there
       unless (-e $imgPath) {
-	$this->{errorMsg} = "(2) can't find <nop>$origFile at <nop>$testWeb.$testTopic";
-	return $this->inlineError($params);
+        $this->{errorMsg} = "(2) can't find <nop>$origFile at <nop>$testWeb.$testTopic";
+        return $this->inlineError($params);
       }
       # found at given web-topic
       $imgWeb = $testWeb;
       $imgTopic = $testTopic;
     } else {
       # check current topic and then the album topic
-      ($testWeb, $testTopic) =
-	Foswiki::Func::normalizeWebTopicName($imgWeb, $theTopic);
-      $imgPath = $pubDir.'/'.$testWeb.'/'.$testTopic.'/'.$origFile;
+      ($testWeb, $testTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $theTopic);
+      $imgPath = $pubDir . '/' . $testWeb . '/' . $testTopic . '/' . $origFile;
 
       unless (-e $imgPath) {
-	# no, then look in the album
-	$albumTopic = Foswiki::Func::getPreferencesValue('IMAGEALBUM', 
-	  ($testWeb eq $theWeb)?undef:$testWeb);
-	unless ($albumTopic) {
-	  # not found, and no album
-	  $this->{errorMsg} = "(3) can't find <nop>$origFile in <nop>$imgWeb";
-	  return $this->inlineError($params);
-	}
-	$albumTopic = 
-	  Foswiki::Func::expandCommonVariables($albumTopic, $testTopic, $testWeb);
-	($testWeb, $testTopic) =
-	  Foswiki::Func::normalizeWebTopicName($imgWeb, $albumTopic);
-	$imgPath = $pubDir.'/'.$testWeb.'/'.$testTopic.'/'.$origFile;
+        # no, then look in the album
+        $albumTopic = Foswiki::Func::getPreferencesValue('IMAGEALBUM', ($testWeb eq $theWeb) ? undef : $testWeb);
+        unless ($albumTopic) {
+          # not found, and no album
+          $this->{errorMsg} = "(3) can't find <nop>$origFile in <nop>$imgWeb";
+          return $this->inlineError($params);
+        }
+        $albumTopic = Foswiki::Func::expandCommonVariables($albumTopic, $testTopic, $testWeb);
+        ($testWeb, $testTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $albumTopic);
+        $imgPath = $pubDir . '/' . $testWeb . '/' . $testTopic . '/' . $origFile;
 
-	# not found in album
-	unless (-e $imgPath) {
-	  $this->{errorMsg} = "(4) can't find <nop>$origFile in <nop>$testWeb.$testTopic";
-	  return $this->inlineError($params);
-	}
-	# found in album
-	$imgWeb = $testWeb;
-	$imgTopic = $testTopic;
+        # not found in album
+        unless (-e $imgPath) {
+          $this->{errorMsg} = "(4) can't find <nop>$origFile in <nop>$testWeb.$testTopic";
+          return $this->inlineError($params);
+        }
+        # found in album
+        $imgWeb = $testWeb;
+        $imgTopic = $testTopic;
       } else {
-	# found at current topic
-	$imgWeb = $testWeb;
-	$imgTopic = $testTopic;
+        # found at current topic
+        $imgWeb = $testWeb;
+        $imgTopic = $testTopic;
       }
     }
   }
 
   #writeDebug("origFile=$origFile, imgWeb=$imgWeb, imgTopic=$imgTopic, imgPath=$imgPath");
 
-  my $origFileUrl = $pubUrl.'/'.$imgWeb.'/'.$imgTopic.'/'.$origFile;
+  my $origFileUrl = $pubUrl . '/' . $imgWeb . '/' . $imgTopic . '/' . $origFile;
 
   $params->{alt} ||= $origFile;
   $params->{title} ||= $params->{caption} || $origFile;
@@ -348,22 +352,20 @@ sub handleIMAGE {
   #writeDebug("size=$params->{size}, width=$params->{width}, height=$params->{height}");
 
   # compute image
-  my $imgInfo = 
-    $this->processImage($imgWeb, $imgTopic, $origFile, $params, $doRefresh);
+  my $imgInfo = $this->processImage($imgWeb, $imgTopic, $origFile, $params, $doRefresh);
 
   unless ($imgInfo) {
     #Foswiki::Func::writeWarning("ImagePlugin - $this->{errorMsg}");
     return $this->inlineError($params);
   }
 
-
   # format result
   my $result = $params->{format};
   $result = $this->getTemplate($params->{type}) unless defined $result;
   $result ||= '';
 
-  $result =~ s/\s+$//; # strip whitespace at the end
-  $result =  $params->{header}.$result.$params->{footer};
+  $result =~ s/\s+$//;    # strip whitespace at the end
+  $result = $params->{header} . $result . $params->{footer};
 
   $result =~ s/\$caption/$this->getTemplate('caption')/ge if $params->{caption};
   $result =~ s/\$caption/$params->{caption}/g;
@@ -388,19 +390,10 @@ sub handleIMAGE {
   my $context = Foswiki::Func::getContext();
   if ($context->{JQueryPluginEnabled} && $params->{tooltip} eq 'on') {
     Foswiki::Plugins::JQueryPlugin::createPlugin("imagetooltip");
-    $params->{class} .= 
-      " jqImageTooltip {".
-        "web:\"$imgWeb\", ".
-        "topic:\"$imgTopic\", ".
-        "image:\"$origFile\", ".
-        "crop:\"$params->{tooltipcrop}\", ".
-        "width:\"$params->{tooltipwidth}\", ".
-        "height:\"$params->{tooltipheight}\" ".
-        ($params->{data}?", $params->{data}":'').
-      "}";
+    $params->{class} .= " jqImageTooltip {" . "web:\"$imgWeb\", " . "topic:\"$imgTopic\", " . "image:\"$origFile\", " . "crop:\"$params->{tooltipcrop}\", " . "width:\"$params->{tooltipwidth}\", " . "height:\"$params->{tooltipheight}\" " . ($params->{data} ? ", $params->{data}" : '') . "}";
   }
 
-  my $thumbFileUrl = $pubUrl.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgInfo->{file};
+  my $thumbFileUrl = $pubUrl . '/' . $imgWeb . '/' . $imgTopic . '/' . $imgInfo->{file};
   $thumbFileUrl = urlEncode($thumbFileUrl);
 
   $result =~ s/\$href/$params->{href}/g;
@@ -429,8 +422,8 @@ sub handleIMAGE {
 
   # recursive call for delayed TML expansion
   $result = Foswiki::Func::expandCommonVariables($result, $theTopic, $theWeb);
-  return $result; 
-} 
+  return $result;
+}
 
 ###############################################################################
 sub plainify {
@@ -438,14 +431,14 @@ sub plainify {
 
   return '' unless $text;
 
-  $text =~ s/<!--.*?-->//gs;          # remove all HTML comments
-  $text =~ s/\&[a-z]+;/ /g;           # remove entities
+  $text =~ s/<!--.*?-->//gs;    # remove all HTML comments
+  $text =~ s/\&[a-z]+;/ /g;     # remove entities
   $text =~ s/\[\[([^\]]*\]\[)(.*?)\]\]/$2/g;
-  $text =~ s/<[^>]*>//g;              # remove all HTML tags
-  $text =~ s/[\[\]\*\|=_\&\<\>]/ /g;  # remove Wiki formatting chars
-  $text =~ s/^\-\-\-+\+*\s*\!*/ /gm;  # remove heading formatting and hbar
-  $text =~ s/^\s+//o;                  # remove leading whitespace
-  $text =~ s/\s+$//o;                  # remove trailing whitespace
+  $text =~ s/<[^>]*>//g;        # remove all HTML tags
+  $text =~ s/[\[\]\*\|=_\&\<\>]/ /g;    # remove Wiki formatting chars
+  $text =~ s/^\-\-\-+\+*\s*\!*/ /gm;    # remove heading formatting and hbar
+  $text =~ s/^\s+//o;                   # remove leading whitespace
+  $text =~ s/\s+$//o;                   # remove trailing whitespace
   $text =~ s/"/ /o;
 
   return $text;
@@ -462,9 +455,8 @@ sub pingImage {
     $imgInfo->{height} ||= 0;
   }
 
-  return ($imgInfo->{width}, $imgInfo->{height}, $imgInfo->{filesize}, $imgInfo->{format})
+  return ($imgInfo->{width}, $imgInfo->{height}, $imgInfo->{filesize}, $imgInfo->{format});
 }
-
 
 ###############################################################################
 sub pingOrigImage {
@@ -477,7 +469,7 @@ sub pingOrigImage {
     $imgInfo->{origHeight} ||= 0;
   }
 
-  return ($imgInfo->{origWidth}, $imgInfo->{origHeight}, $imgInfo->{origFilesize}, $imgInfo->{origFormat})
+  return ($imgInfo->{origWidth}, $imgInfo->{origHeight}, $imgInfo->{origFilesize}, $imgInfo->{origFormat});
 }
 
 ###############################################################################
@@ -490,8 +482,9 @@ sub processImage {
   my $width = $params->{width} || '';
   my $height = $params->{height} || '';
   my $output = $params->{output} || '';
+  my $rotate = $params->{rotate} || '';
 
-  writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, refresh=$doRefresh, output=$output)");
+  writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, rotate=$rotate, refresh=$doRefresh, output=$output)");
 
   $this->{errorMsg} = '';
 
@@ -499,15 +492,15 @@ sub processImage {
     imgWeb => $imgWeb,
     imgTopic => $imgTopic,
     origFile => $imgFile,
-    origImgPath => $Foswiki::cfg{PubDir}.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgFile,
+    origImgPath => $Foswiki::cfg{PubDir} . '/' . $imgWeb . '/' . $imgTopic . '/' . $imgFile,
     file => undef,
     imgPath => undef,
   );
 
-  if ($size || $width || $height || $doRefresh || $imgFile =~ /\.(svg|tiff?|xcf|psd)$/ || $output) {
+  if ($size || $width || $height || $rotate || $doRefresh || $imgFile =~ /\.(svg|tiff?|xcf|psd)$/ || $output) {
     if (!$size) {
       if ($width || $height) {
-        $size = $width.'x'.$height;
+        $size = $width . 'x' . $height;
       }
     }
     if ($size && $size !~ /[<>^]$/) {
@@ -527,53 +520,56 @@ sub processImage {
     } elsif (defined $params->{frame}) {
       $frame = $params->{frame};
     } else {
-      $frame = '0' if $imgInfo{origImgPath} =~/\.gif$/;
+      $frame = '0' if $imgInfo{origImgPath} =~ /\.gif$/;
     }
     if (defined $frame) {
       $frame =~ s/^.*?(\d+).*$/$1/g;
-      $frame = 1000 if $frame > 1000; # for security
+      $frame = 1000 if $frame > 1000;    # for security
       $frame = 0 if $frame < 0;
-      $frame = '['.$frame.']';
+      $frame = '[' . $frame . ']';
     } else {
       $frame = '';
     }
 
-    $imgInfo{file} = $this->getImageFile($size, $zoom, $crop, $frame, $imgWeb, $imgTopic, $imgFile, $output);
+    $imgInfo{file} = $this->getImageFile($size, $zoom, $crop, $rotate, $frame, $imgWeb, $imgTopic, $imgFile, $output);
     unless ($imgInfo{file}) {
       $this->{errorMsg} = "(5) can't find <nop>$imgFile at <nop>$imgWeb.$imgTopic";
       return;
     }
-    $imgInfo{imgPath} = $Foswiki::cfg{PubDir}.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgInfo{file};
+    $imgInfo{imgPath} = $Foswiki::cfg{PubDir} . '/' . $imgWeb . '/' . $imgTopic . '/' . $imgInfo{file};
 
     #writeDebug("checking for $imgInfo{imgFile}");
 
     # compare file modification times
-    $doRefresh = 1 if -f $imgInfo{imgPath} && 
-      getModificationTime($imgInfo{origImgPath}) > getModificationTime($imgInfo{imgPath});
+    $doRefresh = 1
+      if -f $imgInfo{imgPath}
+      && getModificationTime($imgInfo{origImgPath}) > getModificationTime($imgInfo{imgPath});
 
-    if (-f $imgInfo{imgPath} && !$doRefresh) { # cached
+    if (-f $imgInfo{imgPath} && !$doRefresh) {    # cached
       writeDebug("found $imgInfo{file} at $imgWeb.$imgTopic");
       $imgInfo{filesize} = -s $imgInfo{imgPath};
-    } else { 
+    } else {
       writeDebug("creating $imgInfo{file}");
 
-      my $source = $imgInfo{origImgPath}.$frame;
-     
+      my $source = $imgInfo{origImgPath} . $frame;
+
       # read
+      writeDebug("reading $source");
       my $error = $this->{mage}->Read($source);
       if ($error =~ /(\d+)/) {
-	$this->{errorMsg} = $error;
-	return undef if $1 >= 400;
+        $this->{errorMsg} = $error;
+        return undef if $1 >= 400;
       }
 
       # merge layers
       if ($imgFile =~ /\.(xcf|psd)$/i) {
-        $this->{mage} = $this->{mage}->Layers(method=>'merge');
+        writeDebug("merge");
+        $this->{mage} = $this->{mage}->Layers(method => 'merge');
       }
-
 
       # scale
       if ($size) {
+        writeDebug("scale");
         my $geometry = $size;
         # SMELL: As of IM v6.3.8-3 IM now has a new geometry option flag '^' which
         # is used to resize the image based on the smallest fitting dimension.
@@ -582,7 +578,7 @@ sub processImage {
         }
 
         writeDebug("resize($geometry)");
-        $error = $this->{mage}->Resize(geometry=>$geometry);
+        $error = $this->{mage}->Resize(geometry => $geometry);
         if ($error =~ /(\d+)/) {
           $this->{errorMsg} = $error;
           return undef if $1 >= 400;
@@ -592,7 +588,7 @@ sub processImage {
         if ($crop =~ /^(on|northwest|north|northeast|west|center|east|southwest|south|southeast)$/i) {
           $crop = "center" if $crop eq 'on';
           writeDebug("Set(Gravity=>$crop)");
-          $error = $this->{mage}->Set(Gravity=>"$crop");
+          $error = $this->{mage}->Set(Gravity => "$crop");
           if ($error =~ /(\d+)/) {
             $this->{errorMsg} = $error;
             writeDebug("Error: $error");
@@ -602,14 +598,14 @@ sub processImage {
           my $geometry = '';
           if ($size) {
             unless ($size =~ /\d+x\d+/) {
-              $size = $size.'x'.$size;
+              $size = $size . 'x' . $size;
             }
-            $geometry = $size.'+0+0';
+            $geometry = $size . '+0+0';
             $geometry =~ s/[<>^@!]//go;
           } else {
-            $geometry = $width.'x'.$height.'+0+0';
+            $geometry = $width . 'x' . $height . '+0+0';
           }
-   
+
           # new method
           writeDebug("extent(geometry=>$geometry)");
           $error = $this->{mage}->Extent($geometry);
@@ -622,6 +618,7 @@ sub processImage {
       }
 
       # auto orient
+      writeDebug("auto orient");
       $error = $this->{mage}->AutoOrient();
       if ($error =~ /(\d+)/) {
         $this->{errorMsg} = $error;
@@ -630,6 +627,7 @@ sub processImage {
       }
 
       # strip of profiles and comments
+      writeDebug("strip");
       $error = $this->{mage}->Strip();
       if ($error =~ /(\d+)/) {
         $this->{errorMsg} = $error;
@@ -637,12 +635,24 @@ sub processImage {
         return undef if $1 >= 400;
       }
 
+      # rotate
+      if ($rotate) {
+        writeDebug("rotate");
+        $error = $this->{mage}->Rotate(degrees => $rotate);
+        if ($error =~ /(\d+)/) {
+          $this->{errorMsg} = $error;
+          writeDebug("Error: $error");
+          return undef if $1 >= 400;
+        }
+      }
+
       # write
+      writeDebug("write");
       $error = $this->{mage}->Write($imgInfo{imgPath});
       if ($error =~ /(\d+)/) {
-	$this->{errorMsg} .= " $error";
+        $this->{errorMsg} .= " $error";
         writeDebug("Error: $error");
-	return undef if $1 >= 400;
+        return undef if $1 >= 400;
       }
 
       ($imgInfo{width}, $imgInfo{height}, $imgInfo{filesize}, $imgInfo{format}) = $this->{mage}->Get('width', 'height', 'filesize', 'format');
@@ -653,46 +663,114 @@ sub processImage {
     $imgInfo{file} = $imgInfo{origFile};
     $imgInfo{imgPath} = $imgInfo{origImgPath};
   }
+  writeDebug("done");
 
   # forget images
   my $mage = $this->{mage};
-  @$mage = (); 
-  
+  @$mage = ();
+
   return \%imgInfo;
 }
 
 ###############################################################################
+sub beforeSaveHandler {
+  my ($this, undef, $topic, $web, $meta) = @_;
+
+  return unless $this->{autoAttachInlineImages};
+
+  my $wikiName = Foswiki::Func::getWikiName();
+  return unless Foswiki::Func::checkAccessPermission("CHANGE", $wikiName, undef, $topic, $web);
+
+  $meta = Foswiki::Func::readTopic($web, $topic) unless defined $meta;
+  my $text = $meta->text;
+
+  my $i = 0;
+  my @images = ();
+
+  while ($text =~ s/<img\s+([^>]*?)\s*src=["']data:([a-z]+\/[a-z\-\.\+]+)(;[a-z\-]+\=[a-z\-]+)?;base64,(.*?)["']\s*([^>]*?)\s*\/?>/_IMAGE_$i/i) {
+
+    my $before = $1 || '';
+    my $mimeType = $2;
+    my $charset = $3 || '';
+    my $data = MIME::Base64::decode_base64($4);
+    my $after = $5 || '';
+
+    my $suffix = $this->mimeTypeToSuffix($mimeType);
+    my $fh = File::Temp->new();
+    my $filename = $fh->filename;
+
+    print $fh $data;
+    my $size = do { use bytes; length $data };
+
+    my $attachment = Digest::MD5::md5_hex($data) . '.' . $suffix;
+
+    #print STDERR "found inline image: mimeType=$mimeType, attachment=$attachment, charset=$charset, data=$size, tmpfile=$filename\n";
+
+    $meta->attach(
+      name => $attachment,
+      file => $filename,
+      filesize => $size,
+      minor => 1,
+      dontlog => 1,
+      comment => 'Auto-attached by ImagePlugin',
+    );
+
+    my $image = $this->{inlineImageTemplate};
+    $image =~ s/%WEB%/$web/g;
+    $image =~ s/%TOPIC%/$topic/g;
+    $image =~ s/%ATTACHMENT%/$attachment/g;
+    $image =~ s/%BEFORE%/$before/;
+    $image =~ s/%AFTER%/$after/;
+
+    push @images, $image;
+    $i++;
+  }
+
+  $i = 0;
+
+  # patch in the markup
+  foreach my $image (@images) {
+    $text =~ s/_IMAGE_$i/$image/ or print STDERR "WOOPS not found\n";
+    $i++;
+  }
+
+  $meta->text($text) if $i;
+
+}
+
+###############################################################################
 sub afterRenameHandler {
-  my ($this, $oldWeb, $oldTopic, $oldAttachment, $newWeb, $newTopic, $newAttachment ) = @_;
+  my ($this, $oldWeb, $oldTopic, $oldAttachment, $newWeb, $newTopic, $newAttachment) = @_;
 
-# print STDERR "afterRename(oldWeb=$oldWeb, oldTopic=$oldTopic, oldAttachment=".
-#   ($oldAttachment||'undef').", newWeb=".
-#   ($newWeb||'undef').", newTopic=".
-#   ($newTopic||'undef').", newAttachment=".
-#   ($newAttachment||'undef').")\n";
+  # print STDERR "afterRename(oldWeb=$oldWeb, oldTopic=$oldTopic, oldAttachment=".
+  #   ($oldAttachment||'undef').", newWeb=".
+  #   ($newWeb||'undef').", newTopic=".
+  #   ($newTopic||'undef').", newAttachment=".
+  #   ($newAttachment||'undef').")\n";
 
-  return unless defined $oldAttachment;  
-  return unless defined $newAttachment;  
-  return if $oldAttachment eq $newAttachment &&
-            $oldWeb eq $newWeb &&
-            $oldTopic eq $newTopic;
+  return unless defined $oldAttachment;
+  return unless defined $newAttachment;
+  return
+       if $oldAttachment eq $newAttachment
+    && $oldWeb eq $newWeb
+    && $oldTopic eq $newTopic;
 
   # attachment has been renamed, delete old thumbnails
   my $web = $oldWeb;
   my $topic = $oldTopic;
   my $attachment = $oldAttachment;
 
-  opendir( my $dh, $Foswiki::cfg{PubDir}.'/'.$web.'/'.$topic.'/' ) || return;
-  my @thumbs = grep { /^igp_[0-9a-f]{32}_$attachment$/  } readdir $dh;
+  opendir(my $dh, $Foswiki::cfg{PubDir} . '/' . $web . '/' . $topic . '/') || return;
+  my @thumbs = grep { /^igp_[0-9a-f]{32}_$attachment$/ } readdir $dh;
   closedir $dh;
 
   #print STDERR "thumbs=@thumbs\n";
 
   foreach my $file (@thumbs) {
-    my $thumbPath = $web.'/'.$topic.'/'.$file;
+    my $thumbPath = $web . '/' . $topic . '/' . $file;
     $thumbPath = Foswiki::Sandbox::untaint($thumbPath, \&Foswiki::Sandbox::validateAttachmentName);
     #print STDERR "deleting old thumbnail $thumbPath\n";
-    unlink $Foswiki::cfg{PubDir}.'/'.$thumbPath;
+    unlink $Foswiki::cfg{PubDir} . '/' . $thumbPath;
   }
 }
 
@@ -714,12 +792,12 @@ sub parseMediawikiParams {
   foreach my $arg (@args) {
     $arg =~ s/^\s+//o;
     $arg =~ s/\s+$//o;
-    if ($arg =~ /^(right|left|center|none)$/i ) {
+    if ($arg =~ /^(right|left|center|none)$/i) {
       $params->{align} = $1 unless $params->{align};
     } elsif ($arg =~ /^frame$/i) {
       $params->{type} = 'frame';
     } elsif ($arg =~ m/^thumb(nail)?$/i) {
-      $params->{type}= 'thumb' unless $params->{type};
+      $params->{type} = 'thumb' unless $params->{type};
     } elsif ($arg =~ /^(\d+)(px)?$/i) {
       $params->{size} = $1 unless $params->{size};
     } elsif ($arg =~ /^w(\d+)(px)=$/i) {
@@ -737,11 +815,10 @@ sub inlineError {
   my ($this, $params) = @_;
 
   return '' if $params && $params->{warn} eq 'off';
-  return "<span class=\"foswikiAlert\">Error: $this->{errorMsg}</span>" 
+  return "<span class=\"foswikiAlert\">Error: $this->{errorMsg}</span>"
     unless $params && $params->{warn};
-  return $params?$params->{warn}:'undefined warning';
+  return $params ? $params->{warn} : 'undefined warning';
 }
-
 
 ###############################################################################
 # from Foswiki.pm
@@ -794,7 +871,7 @@ sub mirrorImage {
     if ($proxy) {
       my $port = $Foswiki::cfg{PROXY}{PORT};
       $proxy .= ':' . $port if $port;
-      $ua->proxy([ 'http', 'https' ], $proxy);
+      $ua->proxy(['http', 'https'], $proxy);
 
       my $proxySkip = $Foswiki::cfg{PROXY}{SkipProxyForDomains};
       if ($proxySkip) {
@@ -838,7 +915,7 @@ sub mirrorImage {
   writeDebug("filesize=$filesize");
 
   # properly register the file to the store
-  $this->updateAttachment($web, $topic, $fileName, { path => $url, filesize => $filesize, file => $downloadFileName })
+  $this->updateAttachment($web, $topic, $fileName, {path => $url, filesize => $filesize, file => $downloadFileName})
     if $this->{autoAttachExternalImages};
 
   return 1;
@@ -846,33 +923,33 @@ sub mirrorImage {
 
 ###############################################################################
 sub getImageFile {
-  my ($this, $size, $zoom, $crop, $frame, $imgWeb, $imgTopic, $imgFile, $output) = @_;
+  my ($this, $size, $zoom, $crop, $rotate, $frame, $imgWeb, $imgTopic, $imgFile, $output) = @_;
 
-  my $imgPath = $Foswiki::cfg{PubDir}.'/'.$imgWeb.'/'.$imgTopic.'/'.$imgFile;
+  my $imgPath = $Foswiki::cfg{PubDir} . '/' . $imgWeb . '/' . $imgTopic . '/' . $imgFile;
   my $fileSize = -s $imgPath;
-  return unless defined $fileSize; # not found
+  return unless defined $fileSize;    # not found
 
-  my $digest = Digest::MD5::md5_hex($size, $zoom, $crop, $frame, $fileSize);
+  my $digest = Digest::MD5::md5_hex($size, $zoom, $crop, $rotate, $frame, $fileSize);
 
   # force conversion of some non-webby image formats
   $imgFile =~ s/\.(svg|tiff?|xcf|psd)$/\.png/g;
 
   # switch manually specified output format
   if ($output && $imgFile =~ /^(.+)\.([^\.]+)$/) {
-    $imgFile = $1 . '.'. $output;
+    $imgFile = $1 . '.' . $output;
   }
 
   if ($imgFile =~ /^(.*)\/(.+?)$/) {
-    return $1."/igp_".$digest."_".$2;
+    return $1 . "/igp_" . $digest . "_" . $2;
   } else {
-    return "igp_".$digest."_".$imgFile;
+    return "igp_" . $digest . "_" . $imgFile;
   }
 }
 
 ###############################################################################
 sub updateAttachment {
   my ($this, $web, $topic, $filename, $params) = @_;
-    
+
   return unless Foswiki::Func::topicExists($web, $topic);
 
   writeDebug("called updateAttachment($web, $topic, $filename)");
@@ -881,11 +958,11 @@ sub updateAttachment {
   $baseFilename =~ s/^(.*)[\/\\](.*?)$/$2/;
 
   my $args = {
-    comment=>'Auto-attached by ImagePlugin',
-    dontlog=>1,
-    filedate=> time(),
+    comment => 'Auto-attached by ImagePlugin',
+    dontlog => 1,
+    filedate => time(),
     #hide=>1,
-    minor=>1,
+    minor => 1,
     #notopicchange=>1, # SMELL: does not work
   };
   $args->{file} = $params->{file} if $params->{file};
@@ -897,11 +974,13 @@ sub updateAttachment {
 
   try {
     Foswiki::Func::saveAttachment($web, $topic, $baseFilename, $args);
-  } catch Foswiki::AccessControlException with {
+  }
+  catch Foswiki::AccessControlException with {
     # ignore
     my $user = Foswiki::Func::getCanonicalUserID();
     writeDebug("$user has no access rights to $web.$topic");
-  } catch Foswiki::OopsException with {
+  }
+  catch Foswiki::OopsException with {
     # ignore
     my $e = shift;
     my $message = 'ERROR: ' . $e->stringify();
@@ -923,7 +1002,7 @@ sub getTemplate {
   my ($this, $name) = @_;
 
   return '' unless $name;
-  $name = 'image:'.$name;
+  $name = 'image:' . $name;
 
   unless (defined $this->{$name}) {
     unless (defined $this->{imageplugin}) {
@@ -941,7 +1020,7 @@ sub readImage {
 
   my $data = '';
   my $IN_FILE;
-  open( $IN_FILE, '<', $imgInfo->{imgPath} ) || return '';
+  open($IN_FILE, '<', $imgInfo->{imgPath}) || return '';
   binmode $IN_FILE;
 
   local $/ = undef;    # set to read to EOF
@@ -949,8 +1028,28 @@ sub readImage {
   close($IN_FILE);
 
   $data = '' unless $data;    # no undefined
-  
+
   return $data;
+}
+
+###############################################################################
+sub mimeTypeToSuffix {
+  my ($this, $mimeType) = @_;
+
+  my $suffix = '';
+  if ($mimeType =~ /.*\/(.*)/) {
+    $suffix = $1;             # fallback
+  }
+
+  unless ($this->{types}) {
+    $this->{types} = Foswiki::readFile($Foswiki::cfg{MimeTypesFileName});
+  }
+
+  if ($this->{types} =~ /^$mimeType\s*(\S*)(?:\s|$)/im) {
+    $suffix = $1;
+  }
+
+  return $suffix;
 }
 
 ###############################################################################
@@ -979,10 +1078,9 @@ sub sanitizeAttachmentName {
 
   $fileName =~ s{[\\/]+$}{};    # Get rid of trailing slash/backslash (unlikely)
   $fileName =~ s!^.*[\\/]!!;    # Get rid of leading directory components
-  $fileName =~ s/[\*?~^\$@%`"'&;|<>\[\]#\x00-\x1f\(\)]//g; # Get rid of a subset of Namefilter
+  $fileName =~ s/[\*?~^\$@%`"'&;|<>\[\]#\x00-\x1f\(\)]//g;    # Get rid of a subset of Namefilter
 
   return Foswiki::Sandbox::untaintUnchecked($fileName);
 }
-
 
 1;
