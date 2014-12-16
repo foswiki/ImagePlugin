@@ -29,8 +29,8 @@ use warnings;
 
 our $imageCore;
 
-our $VERSION = '5.00';
-our $RELEASE = '5.00';
+our $VERSION = '6.00';
+our $RELEASE = '6.00';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 
@@ -163,8 +163,7 @@ sub renderExternalLink {
   my $href = '';
   my $title = $url;
 
-  my $session = $Foswiki::Plugins::SESSION;
-  my $pubUrl = $session->getPubUrl(1);
+  my $pubUrl = getPubUrl();
 
   # skip "external links" to self and to any other excluded url
   my $excludePattern = $Foswiki::cfg{ImagePlugin}{Exclude};
@@ -191,6 +190,18 @@ sub renderExternalLink {
 
   # else, return the orig url
   return $prefix.$url;
+}
+
+sub getPubUrl {
+  my $session = $Foswiki::Plugins::SESSION;
+
+  if ($session->can("getPubUrl")) {
+    # pre 1.2
+    return $session->getPubUrl(1);
+  } 
+
+  # post 1.2
+  return Foswiki::Func::getPubUrlPath(absolute=>1);
 }
 
 1;

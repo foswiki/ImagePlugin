@@ -396,6 +396,14 @@ sub handleIMAGE {
   my $thumbFileUrl = $pubUrl . '/' . $imgWeb . '/' . $imgTopic . '/' . $imgInfo->{file};
   $thumbFileUrl = urlEncode($thumbFileUrl);
 
+  my $baseTopic = $this->{session}{topicName};
+  my $absolute = ($context->{'command_line'} || $context->{'rss'} || $context->{'absolute_urls'} || $baseTopic =~ /^(WebRss|WebAtom)/);
+
+  if ($absolute) {
+    $params->{href} = $this->{session}{urlHost} . $params->{href} unless $params->{href} =~ /^[a-z]+:/;
+    $thumbFileUrl = $this->{session}{urlHost} . $thumbFileUrl unless $thumbFileUrl =~ /^[a-z]+:/;
+  }
+
   $result =~ s/\$href/$params->{href}/g;
   $result =~ s/\$src/$thumbFileUrl/g;
   $result =~ s/\$thumbfile/$imgInfo->{file}/g;
@@ -497,7 +505,7 @@ sub processImage {
     imgPath => undef,
   );
 
-  if ($size || $width || $height || $rotate || $doRefresh || $imgFile =~ /\.(svg|tiff?|xcf|psd)$/ || $output) {
+  if ($size || $width || $height || $rotate || $doRefresh || $imgFile =~ /\.(svgz?|tiff?|xcf|psd)$/ || $output) {
     if (!$size) {
       if ($width || $height) {
         $size = $width . 'x' . $height;
@@ -520,7 +528,7 @@ sub processImage {
     } elsif (defined $params->{frame}) {
       $frame = $params->{frame};
     } else {
-      $frame = '0' if $imgInfo{origImgPath} =~ /\.gif$/;
+      $frame = '0' if $imgInfo{origImgPath} =~ /\.gif|mp4|mov|m4v|mpeg|mpg|wmv$/i;
     }
     if (defined $frame) {
       $frame =~ s/^.*?(\d+).*$/$1/g;
@@ -932,7 +940,7 @@ sub getImageFile {
   my $digest = Digest::MD5::md5_hex($size, $zoom, $crop, $rotate, $frame, $fileSize);
 
   # force conversion of some non-webby image formats
-  $imgFile =~ s/\.(svg|tiff?|xcf|psd)$/\.png/g;
+  $imgFile =~ s/\.(svgz?|tiff?|xcf|psd)$/\.png/g;
 
   # switch manually specified output format
   if ($output && $imgFile =~ /^(.+)\.([^\.]+)$/) {

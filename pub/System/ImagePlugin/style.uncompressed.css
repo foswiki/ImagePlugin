@@ -63,6 +63,7 @@ a:hover.imageHref {
   float:left;
   margin:0 1em 1em 0;
 }
+.imagePlain_center,
 .imageThumb_center,
 .imageSimple_center,
 .imageFrame_center,
