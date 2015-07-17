@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" date="1418735227" format="1.1" version="1"}%
+%META:TOPICINFO{author="ProjectContributor" date="1437152721" format="1.1" version="1"}%
 ---+!! <nop>%TOPIC%
 %TOC%
 
@@ -223,10 +223,13 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
    * Set SHORTDESCRIPTION = %$SHORTDESCRIPTION%
 -->
 |  Plugin Author: | Craig Meyer, Foswiki:Main.MichaelDaum |
-|  Copyright: | &copy; 2006, Craig Meyer, %BR% &copy; 2006-2014 Michael Daum http://michaeldaumconsulting.com |
+|  Copyright: | &copy; 2006, Craig Meyer, %BR% &copy; 2006-2015 Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  17 Jul 2015 | optionally extract and convert inline svg to real images; \
+                 optionally process html img tags and downscale them on the server; \
+                 add support for Foswiki-2.x |
 |  16 Dec 2014 | work around call to unofficial internal api to get absolute pub urls;\
                  support extracting thumbnails from movies (mp4,mov,m4v,mpeg,mpg and wmv)  |
 |  17 Sep 2014 | added feature to convert inline image data to proper attachments |
@@ -302,5 +305,5 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  Support: | Foswiki:Support/%TOPIC% |
 
 
-%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1418735227" path="WestminstpalaceSample.png" size="107728" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1418735227" path="http://www.google.com/intl/en_ALL/images/logo.gif" size="8558" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1437152721" path="WestminstpalaceSample.png" size="107728" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1437152721" path="http://www.google.com/intl/en_ALL/images/logo.gif" size="8558" user="ProjectContributor" version="1"}%

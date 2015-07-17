@@ -7,6 +7,10 @@
 $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks} = 1;
 
 # **BOOLEAN**
+# Activate this flag to process HTML <code>img</code> markup to local images
+$Foswiki::cfg{ImagePlugin}{RenderLocalImages} = 1;
+
+# **BOOLEAN**
 # Turn on/off attaching a mirrored image to the current topic. If switched on 
 # an attachment-record is generated for this image in addition to
 # downloading the image. Attachments will be marked as hidden. Note, that any
@@ -31,9 +35,9 @@ $Foswiki::cfg{ImagePlugin}{InlineImageTemplate} = "<img %BEFORE% src='%PUBURLPAT
 # Enable efficient delivery of resized images 
 # using the xsendfile feature available in apache, nginx and lighttpd.
 # Use <ul>
-# <li>X-Sendfile for Apache2 <li>
-# <li>X-LIGHTTPD-send-file for Lighttpd<li>
-# <li>X-Accel-Redirect for Nginx<li>
+# <li>X-Sendfile for Apache2 </li>
+# <li>X-LIGHTTPD-send-file for Lighttpd<l/i>
+# <li>X-Accel-Redirect for Nginx</li>
 # </ul>
 # Note that you will need to configure your http server accordingly.
 # If you installed <a href="http://foswiki.org/Extensions/XSendFileContrib">XSendFileContrib</a> as well, its {XSendFileContrib}{Header}

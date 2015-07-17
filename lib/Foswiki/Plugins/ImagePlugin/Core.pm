@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2014 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2015 Michael Daum http://michaeldaumconsulting.com
 #
 # Early version Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -27,6 +27,8 @@ package Foswiki::Plugins::ImagePlugin::Core;
 use strict;
 use warnings;
 
+use Foswiki::Plugins ();
+use Foswiki::Func ();
 use Error qw( :try );
 use Foswiki::OopsException ();
 use Digest::MD5 ();
@@ -34,6 +36,7 @@ use MIME::Base64 ();
 use Digest::MD5 ();
 use File::Temp ();
 use URI ();
+use Encode ();
 
 BEGIN {
   # Image::Magick seems to override locale usage
@@ -60,6 +63,8 @@ sub writeDebug {
 sub new {
   my $class = shift;
   my $session = shift;
+
+  $session ||= $Foswiki::Plugins::SESSION;
 
   my $this = bless({
       session => $session || $Foswiki::Plugins::SESSION,
@@ -105,6 +110,16 @@ sub handleREST {
   my $imgFile = $query->param('file');
   my $refresh = $query->param('refresh') || '';
   $refresh = ($refresh =~ /^(on|1|yes|img)$/g) ? 1 : 0;
+
+  $imgFile =~ s/^$Foswiki::cfg{DefaultUrlHost}$Foswiki::cfg{PubUrlPath}//;
+  $imgFile =~ s/^$Foswiki::cfg{PubUrlPath}//;
+  $imgFile =~ s/^\///;
+
+  if ($imgFile =~ /(?:pub\/)?(?:(.+?)\/)?([^\/]+)\/([^\/]+?)$/) {
+    $imgWeb = $1 || $imgWeb;
+    $imgTopic = $2;
+    $imgFile = $3;
+  }
 
   $imgFile = sanitizeAttachmentName($imgFile);
 
@@ -175,7 +190,7 @@ sub handleIMAGE {
   # read parameters
   $this->parseMediawikiParams($params);
 
-  my $origFile = $params->{_DEFAULT} || $params->{file};
+  my $origFile = $params->{_DEFAULT} || $params->{file} || $params->{src};
   return '' unless $origFile;
 
   writeDebug("origFile=$origFile");
@@ -783,6 +798,103 @@ sub afterRenameHandler {
 }
 
 ###############################################################################
+sub completePageHandler {
+  my $this = shift;
+  #my $text = $_[0];
+
+  $_[0] =~ s/(<svg.*?<\/svg>)/$this->processInlineSvg($1)/geims;
+}
+
+###############################################################################
+sub processInlineSvg {
+  my ($this, $data) = @_;
+
+  my $imgWeb = $this->{session}{webName};
+  my $imgTopic = $this->{session}{topicName};
+  my $topicPath = $Foswiki::cfg{PubDir} . '/' . $imgWeb . '/' . $imgTopic;
+
+  my $digest = Digest::MD5::md5_hex($data);
+  my $svgFile = $digest.'.svg';
+  my $svgPath = $topicPath . '/' . $svgFile;
+
+  unless (-e $svgPath) {
+    mkdir($topicPath) unless -d $topicPath;
+    Foswiki::Func::saveFile($svgPath, $data);
+  }
+
+  my $imgFile = $this->getImageFile('', 'off', 'off', '', '', $imgWeb, $imgTopic, $svgFile, '');
+  my $imgPath = $topicPath . '/' . $imgFile;
+
+  my ($topicDate) = Foswiki::Func::getRevisionInfo($imgWeb, $imgTopic);
+  my $imgDate = -e $imgPath ? getModificationTime($imgPath) : 0;
+
+  my $imgInfo;
+
+  #print STDERR "svgPath=$svgPath, imgPath=$imgPath, imgFile=$imgFile\n";
+
+  if ($topicDate > $imgDate) {
+    #print STDERR "generating fresh png from svg\n";
+
+
+    $imgInfo = $this->processImage(
+      $imgWeb,
+      $imgTopic,
+      $svgFile,
+      {
+        size => '',
+        zoom => 'off',
+        crop => 'off',
+        width => '',
+        height => '',
+      },
+      1
+    );
+
+    return $this->inlineError unless $imgInfo;
+
+  } else {
+    #print STDERR "png is up-to-date\n";
+    $imgInfo = {
+      file => $imgFile,
+      imgPath => $imgPath,
+    };
+  }
+
+  my $pubUrlPath = Foswiki::Func::getPubUrlPath();
+  my $urlHost = Foswiki::Func::getUrlHost();
+  my $pubUrl = URI->new($pubUrlPath, $urlHost);
+  my $thumbFileUrl = $pubUrl . '/' . $imgWeb . '/' . $imgTopic . '/' . $imgInfo->{file};
+  $thumbFileUrl = urlEncode($thumbFileUrl);
+
+  my $result = $this->getTemplate("plain");
+  #%TMPL:DEF{"image:plain"}%<img class='imagePlain imagePlain_$align$class' src='$src' alt='$alt' title='$title' width='$width' height='$height' $mousein $mouseout style='$style' />%TMPL:END%
+
+  $result =~ s/\$src/$thumbFileUrl/g;
+  $result =~ s/\$width/(pingImage($this, $imgInfo))[0]/ge;
+  $result =~ s/\$height/(pingImage($this, $imgInfo))[1]/ge;
+  $result =~ s/\$framewidth/(pingImage($this, $imgInfo))[0]-1/ge;
+  $result =~ s/\$class//g;
+  $result =~ s/\$data//g;
+  $result =~ s/\$id//g;
+  $result =~ s/\$style//g;
+  $result =~ s/\$align/none/g;
+  $result =~ s/\$alt//g;
+  $result =~ s/\$title/auto-converted from inlien svg/g;
+  $result =~ s/\$desc//g;
+  $result =~ s/\$mousein//g;
+  $result =~ s/\$mouseout//g;
+
+  $result =~ s/\$perce?nt/\%/go;
+  $result =~ s/\$nop//go;
+  $result =~ s/\$n/\n/go;
+  $result =~ s/\$dollar/\$/go;
+
+  unlink ($svgPath);
+
+  return $result;
+}
+
+###############################################################################
 # sets type (link,frame,thumb), file, width, height, size, caption
 sub parseMediawikiParams {
   my ($this, $params) = @_;
@@ -833,6 +945,7 @@ sub inlineError {
 sub urlEncode {
   my $text = shift;
 
+  $text = Encode::encode_utf8($text) if $Foswiki::UNICODE;
   $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/'%'.sprintf('%02x',ord($1))/ge;
 
   return $text;
@@ -852,7 +965,6 @@ sub mirrorImage {
   my $downloadFileName;
 
   if ($this->{autoAttachExternalImages}) {
-    require File::Temp;
     my $tempImgFile = new File::Temp();
     $downloadFileName = $tempImgFile->filename;
   } else {
@@ -1086,7 +1198,7 @@ sub sanitizeAttachmentName {
 
   $fileName =~ s{[\\/]+$}{};    # Get rid of trailing slash/backslash (unlikely)
   $fileName =~ s!^.*[\\/]!!;    # Get rid of leading directory components
-  $fileName =~ s/[\*?~^\$@%`"'&;|<>\[\]#\x00-\x1f\(\)]//g;    # Get rid of a subset of Namefilter
+  $fileName =~ s/[\*?~^\$@%`"'&;|<>\[\]#\x00-\x1f]//g;    # Get rid of a subset of Namefilter
 
   return Foswiki::Sandbox::untaintUnchecked($fileName);
 }
