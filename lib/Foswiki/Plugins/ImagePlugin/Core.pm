@@ -88,13 +88,24 @@ sub new {
     || $Foswiki::cfg{ImageGalleryPlugin}{Impl}
     || 'Image::Magick';
 
-  #writeDebug("creating new image mage using $impl");
-  eval "use $impl";
+
+  writeDebug("creating new image mage using $impl");
+  eval "require $impl";
   die $@ if $@;
   $this->{mage} = new $impl;
   #writeDebug("done");
 
   return $this;
+}
+
+###############################################################################
+sub finishPlugin {
+  my $this = shift;
+
+  $this->{mage} = undef;
+  $this->{ua} = undef;
+  $this->{types} = undef;
+  $this->{imageplugin} = undef;
 }
 
 ###############################################################################
@@ -241,6 +252,9 @@ sub handleIMAGE {
   if ($params->{size} =~ /^(\d+)(px)?x?(\d+)?(px)?$/) {
     $params->{size} = $3 ? "$1x$3" : $1;
   }
+
+  $params->{height} =~ s/px$//;
+  $params->{width} =~ s/px$//;
 
   my $imgWeb = $params->{web} || $theWeb;
   my $imgTopic;
@@ -543,7 +557,7 @@ sub processImage {
     } elsif (defined $params->{frame}) {
       $frame = $params->{frame};
     } else {
-      $frame = '0' if $imgInfo{origImgPath} =~ /\.gif|mp4|mov|m4v|mpeg|mpg|wmv$/i;
+      $frame = '0' if $imgInfo{origImgPath} =~ /\.(gif|mp4|mov|m4v|mpeg|mpg|wmv|tiff?)$/i;
     }
     if (defined $frame) {
       $frame =~ s/^.*?(\d+).*$/$1/g;
@@ -670,7 +684,7 @@ sub processImage {
       }
 
       # write
-      writeDebug("write");
+      writeDebug("writing to $imgInfo{imgPath}");
       $error = $this->{mage}->Write($imgInfo{imgPath});
       if ($error =~ /(\d+)/) {
         $this->{errorMsg} .= " $error";
@@ -946,7 +960,7 @@ sub urlEncode {
   my $text = shift;
 
   $text = Encode::encode_utf8($text) if $Foswiki::UNICODE;
-  $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/'%'.sprintf('%02x',ord($1))/ge;
+  $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/sprintf('%%%02x',ord($1))/ge;
 
   return $text;
 }
@@ -1052,7 +1066,7 @@ sub getImageFile {
   my $digest = Digest::MD5::md5_hex($size, $zoom, $crop, $rotate, $frame, $fileSize);
 
   # force conversion of some non-webby image formats
-  $imgFile =~ s/\.(svgz?|tiff?|xcf|psd)$/\.png/g;
+  $imgFile =~ s/\.(tiff?|xcf|psd)$/\.png/g;
 
   # switch manually specified output format
   if ($output && $imgFile =~ /^(.+)\.([^\.]+)$/) {
@@ -1198,7 +1212,7 @@ sub sanitizeAttachmentName {
 
   $fileName =~ s{[\\/]+$}{};    # Get rid of trailing slash/backslash (unlikely)
   $fileName =~ s!^.*[\\/]!!;    # Get rid of leading directory components
-  $fileName =~ s/[\*?~^\$@%`"'&;|<>\[\]#\x00-\x1f]//g;    # Get rid of a subset of Namefilter
+  $fileName =~ s/[\\\\\*?~^\$@%`"'&;|<>\[\]#\x00-\x1f]//g;    # Get rid of a subset of Namefilter
 
   return Foswiki::Sandbox::untaintUnchecked($fileName);
 }

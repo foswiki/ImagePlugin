@@ -30,12 +30,11 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 
-our $VERSION = '7.00';
-our $RELEASE = '7.00';
+our $VERSION = '7.01';
+our $RELEASE = '26 Sep 2015';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 our $core;
-
 
 ###############################################################################
 sub initPlugin {
@@ -88,8 +87,13 @@ sub getCore {
 HERE
 
   require Foswiki::Plugins::ImagePlugin::Core;
-  $core = new Foswiki::Plugins::ImagePlugin::Core(@_);
+  $core = Foswiki::Plugins::ImagePlugin::Core->new(@_);
   return $core;
+}
+
+###############################################################################
+sub finishPlugin {
+  $core->finishPlugin if defined $core;
 }
 
 ###############################################################################
@@ -130,7 +134,7 @@ sub commonTagsHandler {
     $text =~ s/(^|(?<!url)[-*\s(|])
                  (https?:
                      ([^\s<>"]+[^\s*.,!?;:)<|][^\s]*\.(?:gif|jpe?g|png|bmp|svg)(?:\?.*)?(?=[^\w\-])))/
-                       renderExternalImage($web, $topic, $1, $2)/geox;
+                       renderExternalImage($web, $topic, $1, $2)/gieox;
 
   }
 
@@ -195,6 +199,8 @@ sub renderLocalImage {
           #print STDERR "not a local image: $val\n";
           return $text;
         }
+      } elsif (($attr eq 'width' || $attr eq 'height') && $val !~ /^\d+(px)?$/) {
+        return $text; # this is not a px unit ... keep the img as it is
       } else {
         push @args, "$attr=\"$val\"";
       }
@@ -208,7 +214,6 @@ sub renderLocalImage {
   my $result = "%IMAGE{\"$file\" ".join(" ", @args)."}%";
 
   #print STDERR "result=$result\n";
-  #print STDERR "text=$text\n";
 
   return $result;
 }

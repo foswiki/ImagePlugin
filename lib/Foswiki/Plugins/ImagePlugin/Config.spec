@@ -11,6 +11,10 @@ $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks} = 1;
 $Foswiki::cfg{ImagePlugin}{RenderLocalImages} = 1;
 
 # **BOOLEAN**
+# Activate this flag to convert inline-svg to png
+$Foswiki::cfg{ImagePlugin}{ConvertInlineSVG} = 0;
+
+# **BOOLEAN**
 # Turn on/off attaching a mirrored image to the current topic. If switched on 
 # an attachment-record is generated for this image in addition to
 # downloading the image. Attachments will be marked as hidden. Note, that any
