@@ -1066,7 +1066,7 @@ sub getImageFile {
   my $digest = Digest::MD5::md5_hex($size, $zoom, $crop, $rotate, $frame, $fileSize);
 
   # force conversion of some non-webby image formats
-  $imgFile =~ s/\.(tiff?|xcf|psd)$/\.png/g;
+  $imgFile =~ s/\.(svgz?|tiff?|xcf|psd)$/\.png/g;
 
   # switch manually specified output format
   if ($output && $imgFile =~ /^(.+)\.([^\.]+)$/) {
