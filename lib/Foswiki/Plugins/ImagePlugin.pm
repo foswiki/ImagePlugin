@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2015 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2016 Michael Daum http://michaeldaumconsulting.com
 #
 # Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -30,8 +30,8 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 
-our $VERSION = '7.01';
-our $RELEASE = '26 Sep 2015';
+our $VERSION = '7.10';
+our $RELEASE = '01 Apr 2016';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 our $core;
@@ -221,8 +221,6 @@ sub renderLocalImage {
 ###############################################################################
 sub renderExternalImage {
   my ($web, $topic, $prefix, $url) = @_;
-
-  #print STDERR "called renderExternalImage($web, $topic, $url)\n";
 
   my $href = '';
   my $title = $url;

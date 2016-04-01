@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2015 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2016 Michael Daum http://michaeldaumconsulting.com
 #
 # Early version Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -82,30 +82,39 @@ sub new {
 
   $this->{errorMsg} = '';    # from image mage
 
-  # Graphics::Magick is less buggy than Image::Magick
-  my $impl =
-       $Foswiki::cfg{ImagePlugin}{Impl}
-    || $Foswiki::cfg{ImageGalleryPlugin}{Impl}
-    || 'Image::Magick';
-
-
-  writeDebug("creating new image mage using $impl");
-  eval "require $impl";
-  die $@ if $@;
-  $this->{mage} = new $impl;
   #writeDebug("done");
 
   return $this;
 }
 
 ###############################################################################
+sub mage {
+  my $this = shift;
+
+  unless ($this->{mage}) {
+
+    my $impl =
+         $Foswiki::cfg{ImagePlugin}{Impl}
+      || $Foswiki::cfg{ImageGalleryPlugin}{Impl}
+      || 'Image::Magick';
+
+    writeDebug("creating new image mage using $impl");
+    eval "require $impl";
+    die $@ if $@;
+    $this->{mage} = $impl->new();
+  }
+
+  return $this->{mage};
+}
+
+###############################################################################
 sub finishPlugin {
   my $this = shift;
 
-  $this->{mage} = undef;
-  $this->{ua} = undef;
-  $this->{types} = undef;
-  $this->{imageplugin} = undef;
+  undef $this->{mage};
+  undef $this->{ua};
+  undef $this->{types};
+  undef $this->{imageplugin};
 }
 
 ###############################################################################
@@ -180,7 +189,7 @@ sub handleREST {
     );
 
     my $image = readImage($imgWeb, $imgTopic, $imgInfo);
-    $response->print($image);
+    $response->body($image);
   }
 
   return;
@@ -457,6 +466,9 @@ sub handleIMAGE {
   $result =~ s/\$n/\n/go;
   $result =~ s/\$dollar/\$/go;
 
+  # clean up empty 
+  $result =~ s/(style|width|height|class|alt|id)=''//go;
+
   # recursive call for delayed TML expansion
   $result = Foswiki::Func::expandCommonVariables($result, $theTopic, $theWeb);
   return $result;
@@ -487,7 +499,7 @@ sub pingImage {
 
   unless (defined $imgInfo->{width}) {
     writeDebug("pinging $imgInfo->{imgPath}\n");
-    ($imgInfo->{width}, $imgInfo->{height}, $imgInfo->{filesize}, $imgInfo->{format}) = $this->{mage}->Ping($imgInfo->{imgPath});
+    ($imgInfo->{width}, $imgInfo->{height}, $imgInfo->{filesize}, $imgInfo->{format}) = $this->mage->Ping($imgInfo->{imgPath});
     $imgInfo->{width} ||= 0;
     $imgInfo->{height} ||= 0;
   }
@@ -501,7 +513,7 @@ sub pingOrigImage {
 
   unless (defined $imgInfo->{origWidth}) {
     writeDebug("pinging $imgInfo->{origImgPath}\n");
-    ($imgInfo->{origWidth}, $imgInfo->{origHeight}, $imgInfo->{origFilesize}, $imgInfo->{origFormat}) = $this->{mage}->Ping($imgInfo->{origImgPath});
+    ($imgInfo->{origWidth}, $imgInfo->{origHeight}, $imgInfo->{origFilesize}, $imgInfo->{origFormat}) = $this->mage->Ping($imgInfo->{origImgPath});
     $imgInfo->{origWidth} ||= 0;
     $imgInfo->{origHeight} ||= 0;
   }
@@ -592,7 +604,7 @@ sub processImage {
 
       # read
       writeDebug("reading $source");
-      my $error = $this->{mage}->Read($source);
+      my $error = $this->mage->Read($source);
       if ($error =~ /(\d+)/) {
         $this->{errorMsg} = $error;
         return undef if $1 >= 400;
@@ -601,7 +613,7 @@ sub processImage {
       # merge layers
       if ($imgFile =~ /\.(xcf|psd)$/i) {
         writeDebug("merge");
-        $this->{mage} = $this->{mage}->Layers(method => 'merge');
+        $this->{mage} = $this->mage->Layers(method => 'merge');
       }
 
       # scale
@@ -615,7 +627,7 @@ sub processImage {
         }
 
         writeDebug("resize($geometry)");
-        $error = $this->{mage}->Resize(geometry => $geometry);
+        $error = $this->mage->Resize(geometry => $geometry);
         if ($error =~ /(\d+)/) {
           $this->{errorMsg} = $error;
           return undef if $1 >= 400;
@@ -625,7 +637,7 @@ sub processImage {
         if ($crop =~ /^(on|northwest|north|northeast|west|center|east|southwest|south|southeast)$/i) {
           $crop = "center" if $crop eq 'on';
           writeDebug("Set(Gravity=>$crop)");
-          $error = $this->{mage}->Set(Gravity => "$crop");
+          $error = $this->mage->Set(Gravity => "$crop");
           if ($error =~ /(\d+)/) {
             $this->{errorMsg} = $error;
             writeDebug("Error: $error");
@@ -645,7 +657,7 @@ sub processImage {
 
           # new method
           writeDebug("extent(geometry=>$geometry)");
-          $error = $this->{mage}->Extent($geometry);
+          $error = $this->mage->Extent($geometry);
           if ($error =~ /(\d+)/) {
             $this->{errorMsg} = $error;
             writeDebug("Error: $error");
@@ -656,7 +668,7 @@ sub processImage {
 
       # auto orient
       writeDebug("auto orient");
-      $error = $this->{mage}->AutoOrient();
+      $error = $this->mage->AutoOrient();
       if ($error =~ /(\d+)/) {
         $this->{errorMsg} = $error;
         writeDebug("Error: $error");
@@ -665,7 +677,7 @@ sub processImage {
 
       # strip of profiles and comments
       writeDebug("strip");
-      $error = $this->{mage}->Strip();
+      $error = $this->mage->Strip();
       if ($error =~ /(\d+)/) {
         $this->{errorMsg} = $error;
         writeDebug("Error: $error");
@@ -675,7 +687,7 @@ sub processImage {
       # rotate
       if ($rotate) {
         writeDebug("rotate");
-        $error = $this->{mage}->Rotate(degrees => $rotate);
+        $error = $this->mage->Rotate(degrees => $rotate);
         if ($error =~ /(\d+)/) {
           $this->{errorMsg} = $error;
           writeDebug("Error: $error");
@@ -685,14 +697,14 @@ sub processImage {
 
       # write
       writeDebug("writing to $imgInfo{imgPath}");
-      $error = $this->{mage}->Write($imgInfo{imgPath});
+      $error = $this->mage->Write($imgInfo{imgPath});
       if ($error =~ /(\d+)/) {
         $this->{errorMsg} .= " $error";
         writeDebug("Error: $error");
         return undef if $1 >= 400;
       }
 
-      ($imgInfo{width}, $imgInfo{height}, $imgInfo{filesize}, $imgInfo{format}) = $this->{mage}->Get('width', 'height', 'filesize', 'format');
+      ($imgInfo{width}, $imgInfo{height}, $imgInfo{filesize}, $imgInfo{format}) = $this->mage->Get('width', 'height', 'filesize', 'format');
       $imgInfo{width} ||= 0;
       $imgInfo{height} ||= 0;
     }
@@ -702,8 +714,8 @@ sub processImage {
   }
   writeDebug("done");
 
-  # forget images
-  my $mage = $this->{mage};
+  # unload images
+  my $mage = $this->mage;
   @$mage = ();
 
   return \%imgInfo;
@@ -714,6 +726,8 @@ sub beforeSaveHandler {
   my ($this, undef, $topic, $web, $meta) = @_;
 
   return unless $this->{autoAttachInlineImages};
+
+  writeDebug("called beforeSaveHandler");
 
   my $wikiName = Foswiki::Func::getWikiName();
   return unless Foswiki::Func::checkAccessPermission("CHANGE", $wikiName, undef, $topic, $web);
@@ -736,7 +750,9 @@ sub beforeSaveHandler {
     my $fh = File::Temp->new();
     my $filename = $fh->filename;
 
+    binmode($fh);
     print $fh $data;
+
     my $size = do { use bytes; length $data };
 
     my $attachment = Digest::MD5::md5_hex($data) . '.' . $suffix;
@@ -792,6 +808,8 @@ sub afterRenameHandler {
     && $oldWeb eq $newWeb
     && $oldTopic eq $newTopic;
 
+  writeDebug("called afterRenameHandler");
+
   # attachment has been renamed, delete old thumbnails
   my $web = $oldWeb;
   my $topic = $oldTopic;
@@ -815,6 +833,8 @@ sub afterRenameHandler {
 sub completePageHandler {
   my $this = shift;
   #my $text = $_[0];
+
+  writeDebug("called completePageHandler");
 
   $_[0] =~ s/(<svg.*?<\/svg>)/$this->processInlineSvg($1)/geims;
 }
@@ -881,7 +901,6 @@ sub processInlineSvg {
   $thumbFileUrl = urlEncode($thumbFileUrl);
 
   my $result = $this->getTemplate("plain");
-  #%TMPL:DEF{"image:plain"}%<img class='imagePlain imagePlain_$align$class' src='$src' alt='$alt' title='$title' width='$width' height='$height' $mousein $mouseout style='$style' />%TMPL:END%
 
   $result =~ s/\$src/$thumbFileUrl/g;
   $result =~ s/\$width/(pingImage($this, $imgInfo))[0]/ge;
@@ -902,6 +921,9 @@ sub processInlineSvg {
   $result =~ s/\$nop//go;
   $result =~ s/\$n/\n/go;
   $result =~ s/\$dollar/\$/go;
+
+  # clean up empty 
+  $result =~ s/(style|width|height|class|alt|id)=''//go;
 
   unlink ($svgPath);
 
@@ -1210,9 +1232,16 @@ sub suffixToMimeType {
 sub sanitizeAttachmentName {
   my $fileName = shift;
 
+  my $origFileName = $fileName;
+
+  my $filter = 
+    $Foswiki::cfg{AttachmentNameFilter}  ||
+    $Foswiki::cfg{NameFilter} ||
+    '[^[:alnum:]\. _-]';
+
   $fileName =~ s{[\\/]+$}{};    # Get rid of trailing slash/backslash (unlikely)
   $fileName =~ s!^.*[\\/]!!;    # Get rid of leading directory components
-  $fileName =~ s/[\\\\\*?~^\$@%`"'&;|<>\[\]#\x00-\x1f]//g;    # Get rid of a subset of Namefilter
+  $fileName =~ s/$filter+//g;
 
   return Foswiki::Sandbox::untaintUnchecked($fileName);
 }
