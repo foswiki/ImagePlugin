@@ -30,8 +30,8 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 
-our $VERSION = '7.10';
-our $RELEASE = '01 Apr 2016';
+our $VERSION = '7.20';
+our $RELEASE = '06 Apr 2016';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 our $core;

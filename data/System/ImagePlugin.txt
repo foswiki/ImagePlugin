@@ -226,6 +226,7 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  06 Apr 2016 | fixed attaching inline data images |
 |  01 Apr 2016 | fixed resize rest handler returning invalid image data; \
                  working around buggy implementations of imagemagick core-dumping on exit |
 |  26 Sep 2015 | fixed rewrite of html img tags to bail out when width/height units aren't px values; \

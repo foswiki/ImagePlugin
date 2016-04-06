@@ -747,17 +747,23 @@ sub beforeSaveHandler {
     my $after = $5 || '';
 
     my $suffix = $this->mimeTypeToSuffix($mimeType);
-    my $fh = File::Temp->new();
-    my $filename = $fh->filename;
-
-    binmode($fh);
-    print $fh $data;
-
     my $size = do { use bytes; length $data };
-
     my $attachment = Digest::MD5::md5_hex($data) . '.' . $suffix;
 
-    #print STDERR "found inline image: mimeType=$mimeType, attachment=$attachment, charset=$charset, data=$size, tmpfile=$filename\n";
+    #print STDERR "found inline image: mimeType=$mimeType, attachment=$attachment, charset=$charset, data=$size\n";
+
+    my $fh = File::Temp->new();
+    my $filename = $fh->filename;
+    binmode($fh);
+
+    my $offset = 0;
+    my $r = $size;
+    while ($r) {
+      my $w = syswrite($fh, $data, $r, $offset);
+      die "system write error: $!\n" unless defined $w;
+      $offset += $w;
+      $r -= $w;
+    }
 
     $meta->attach(
       name => $attachment,
