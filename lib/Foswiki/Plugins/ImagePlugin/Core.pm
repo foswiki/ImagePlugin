@@ -442,6 +442,8 @@ sub handleIMAGE {
     $thumbFileUrl = $this->{session}{urlHost} . $thumbFileUrl unless $thumbFileUrl =~ /^[a-z]+:/;
   }
 
+  $result =~ s/\$data/$params->{data}/g;
+  $result =~ s/\$class/ $params->{class}/g;
   $result =~ s/\$href/$params->{href}/g;
   $result =~ s/\$src/$thumbFileUrl/g;
   $result =~ s/\$thumbfile/$imgInfo->{file}/g;
@@ -452,8 +454,6 @@ sub handleIMAGE {
   $result =~ s/\$origwidth/(pingOrigImage($this, $imgInfo))[0]/ge;
   $result =~ s/\$origheight/(pingOrigImage($this, $imgInfo))[1]/ge;
   $result =~ s/\$text/$origFile/g;
-  $result =~ s/\$class/ $params->{class}/g;
-  $result =~ s/\$data/$params->{data}/g;
   $result =~ s/\$id/$params->{id}/g;
   $result =~ s/\$style/$params->{style}/g;
   $result =~ s/\$align/$params->{align}/g;
@@ -738,7 +738,7 @@ sub beforeSaveHandler {
   my $i = 0;
   my @images = ();
 
-  while ($text =~ s/<img\s+([^>]*?)\s*src=["']data:([a-z]+\/[a-z\-\.\+]+)(;[a-z\-]+\=[a-z\-]+)?;base64,(.*?)["']\s*([^>]*?)\s*\/?>/_IMAGE_$i/i) {
+  while ($text =~ s/<img\s+([^>]*?)\s*src=["']data:([a-z]+\/[a-z\-\.\+]+)?(;[a-z\-]+\=[a-z\-]+)?;base64,(.*?)["']\s*([^>]*?)\s*\/?>/_IMAGE_$i/i) {
 
     my $before = $1 || '';
     my $mimeType = $2;
@@ -746,7 +746,15 @@ sub beforeSaveHandler {
     my $data = MIME::Base64::decode_base64($4);
     my $after = $5 || '';
 
-    my $suffix = $this->mimeTypeToSuffix($mimeType);
+    my $suffix;
+    if (defined $mimeType) {
+      $suffix = $this->mimeTypeToSuffix($mimeType);
+    } else {
+      (undef, undef, undef, $suffix) = $this->mage->Ping(blob=>$data);
+      $suffix = lc($suffix);
+      $suffix =~ s/(bmp)\d/$1/g; # SMELL: rewrite some
+      $mimeType = $this->suffixToMimeType('.'.$suffix);
+    }
     my $size = do { use bytes; length $data };
     my $attachment = Digest::MD5::md5_hex($data) . '.' . $suffix;
 
@@ -1035,7 +1043,7 @@ sub mirrorImage {
       $proxy .= ':' . $port if $port;
       $ua->proxy(['http', 'https'], $proxy);
 
-      my $proxySkip = $Foswiki::cfg{PROXY}{SkipProxyForDomains};
+      my $proxySkip = $Foswiki::cfg{PROXY}{SkipProxyForDomains} || $Foswiki::cfg{PROXY}{NoProxy};
       if ($proxySkip) {
         my @skipDomains = split(/\s*,\s*/, $proxySkip);
         $ua->no_proxy(@skipDomains);

@@ -4,13 +4,13 @@
 
 %TMPL:DEF{"image:plain"}%<img class='imagePlain imagePlain_$align$class' src='$src' alt='$alt' title='$title' width='$width' height='$height' $mousein $mouseout style='$style' />%TMPL:END%
 
-%TMPL:DEF{"image:simple"}%<a href='$href' id='$id' class='imageHref imageSimple imageSimple_$align$class' title='$title'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style' /></a>%TMPL:END%
+%TMPL:DEF{"image:simple"}%<a href='$href' id='$id' class='imageHref imageSimple imageSimple_$align$class' title='$title' data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style' /></a>%TMPL:END%
   
-%TMPL:DEF{"image:frame"}%<div id='$id' class='imageFrame imageFrame_$align$class' style='width:$framewidthpx'><a href='$href' class='imageHref' title='$title'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style'/></a>$caption</div>%TMPL:END%
+%TMPL:DEF{"image:frame"}%<div id='$id' class='imageFrame imageFrame_$align$class' style='width:$framewidthpx'><a href='$href' class='imageHref' title='$title' data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style'/></a>$caption</div>%TMPL:END%
 
-%TMPL:DEF{"image:float"}%<div id='$id' class='imageFloat imageFloat_$align$class'><a href='$href' class='imageHref' title='$title'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout  style='$style'/></a>$caption</div>%TMPL:END%
+%TMPL:DEF{"image:float"}%<div id='$id' class='imageFloat imageFloat_$align$class'><a href='$href' class='imageHref' title='$title' data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout  style='$style'/></a>$caption</div>%TMPL:END%
 
-%TMPL:DEF{"image:thumb"}%<div id='$id' class='imageThumb imageThumb_$align$class' style='width:$framewidthpx'><a href='$href' class='imageHref' title='$title'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style'/></a>$caption</div>%TMPL:END%
+%TMPL:DEF{"image:thumb"}%<div id='$id' class='imageThumb imageThumb_$align$class' style='width:$framewidthpx'><a href='$href' class='imageHref' title='$title' data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style'/></a>$caption</div>%TMPL:END%
 
 %{ helper snippets }%
 

@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" date="1437152721" format="1.1" version="1"}%
+%META:TOPICINFO{author="ProjectContributor" date="1464689198" format="1.1" version="1"}%
 ---+!! <nop>%TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -226,6 +226,7 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  31 May 2016 | added mime type detection for inline image data that don't specify it; improved support for html5 data |
 |  06 Apr 2016 | fixed attaching inline data images |
 |  01 Apr 2016 | fixed resize rest handler returning invalid image data; \
                  working around buggy implementations of imagemagick core-dumping on exit |
@@ -305,8 +306,8 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  16 June 2006: | released into the public |
 |  10 May 2006: | Initial version by forking <nop>ImgPlugin |
 
-%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1437152721" path="WestminstpalaceSample.png" size="107728" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1437152721" path="http://www.google.com/intl/en_ALL/images/logo.gif" size="8558" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1464689198" path="WestminstpalaceSample.png" size="107728" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1464689198" path="http://www.google.com/intl/en_ALL/images/logo.gif" size="8558" user="ProjectContributor" version="1"}%
 %META:FORM{name="PackageForm"}%
 %META:FIELD{name="Author" title="Author" value="Craig Meyer, Michael Daum"}%
 %META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, %BR% &copy; 2006-2016 Michael Daum http://michaeldaumconsulting.com"}%
