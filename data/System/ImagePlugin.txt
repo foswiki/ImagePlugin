@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" date="1464689198" format="1.1" version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1501145906" format="1.1"  version="1"}%
 ---+!! <nop>%TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -13,7 +13,8 @@ Short example:
 *You type:*
 
 <verbatim>
-%IMAGE{"Sandbox/ImagePluginTest/Westminstpalace.jpg"
+%IMAGE{
+  "Westminstpalace.jpg"
   type="frame" 
   align="none" 
   caption="caption text"
@@ -23,14 +24,15 @@ Short example:
 *You get:*
 
 <div style="margin:7px;_width:418px;max-width:418px;">
-<a href='%PUBURLPATH%/Sandbox/ImagePluginTest/Westminstpalace.jpg' class='imageHref' title='caption text'>
+<a href='%ATTACHURLPATH%/ImagePlugin/Westminstpalace.jpg' class='imageHref' title='caption text'>
 <img src="%ATTACHURLPATH%/WestminstpalaceSample.png" alt="WestminstpalaceSample.png" width='416' height='339' />
 </a>
 </div>
 
 *If installed:*
 
-%IMAGE{"Sandbox/ImagePluginTest/Westminstpalace.jpg"
+%IMAGE{
+  "Westminstpalace.jpg"
   type="frame" 
   align="none" 
   caption="caption text"
@@ -77,8 +79,8 @@ The image name is mandatory.  Further arguments are optional.
 | =desc= | description text | title text |
 | =footer= | text to be appended to the html output | empty |
 | =format= | image layout format string | set by type argument |
-| =frame= | extract a specific frame or layer from the source file; this comes in handy when rendering a thumbnail for a video clip |
-| =layer= | alias for =frame= |
+| =frame= | extract a specific frame or layer from the source file; this comes in handy when rendering a thumbnail for a video clip | |
+| =layer= | alias for =frame= | |
 | =header= | text to be prepended to the html output | empty |
 | =height= | integer value | image width |
 | =output= | image format to convert the input source to | same as source image, except tiff and svg being converted to png |
@@ -101,6 +103,7 @@ The image name is mandatory.  Further arguments are optional.
 | =web= | valid web name | web part of IMGALBUM value or current topic |
 | =width= | integer value | image width |
 | =zoom=  | on/off to scale images, if set to "on" scaling up images is allowed, otherwise it downscales only | off |
+| =filter= | one or more image filters to be applied to the image; see below | |
 
 ---+++ Image geometry
 The image geometry in the =size= parameter can be specified in a format 
@@ -115,6 +118,109 @@ Note, that you must set =zoom="on"= to scale images up. Otherwise images smaller
 than the given geometry will stay as they are. For instance, when generating thumbnails
 it is preferable to keep small icons as they are instead of bloating them up
 to a standard thumbnail size.
+
+---+++ Image Filters
+
+ImagePlugin comes with a set of low-level and high-level filters that might be applied to an image. 
+High-level filters are a combination of a set of low-level filters to immitate instagram-like modifications
+to the image.
+
+---++++ Low-level fiters
+
+   * autogamma()
+   * autolevel()
+   * background(color)
+   * blueshift(factor)
+   * blur(radius, sigma)
+   * brightness(value)
+   * charcoal(radius, sigma)
+   * colorize(fill, blend)
+   * contrast(geometry)
+   * emboss(radius, sigma)
+   * equalize(channel)
+   * gamma(value)
+   * grayscale(factor)
+   * hue(value)
+   * level(level, level, ...)
+   * levelcolors(color1, color2, invert)
+   * negate()
+   * noise(value, attentuate)
+   * normalize(channel)
+   * oilpaint(radius)
+   * posterize(levels)
+   * saturate(value)
+   * sharpen(radius, sigma)
+   * tint(fill)
+
+For a more thorough explanation of these filters, please read the [[http://www.imagemagick.org/Usage/color_mods/][color modifications manual]] of <nop>ImageMagick used underneath.
+
+---+++++ High-level filters
+
+   * sepia(factor)
+   * vignette(factor, color)
+   * 1977(factor)
+   * gotham(factor)
+   * inkwell(factor)
+   * kelvin(factor)
+   * moon(factor)
+   * lomo(factor)
+   * nashville(factor)
+   * toast(factor)
+   * hudson(factor)
+
+---+++ Example filters
+
+<noautolink>
+   * autogamma
+   * gamma(1)
+   * gamma(2)
+   * gamma(5)
+   * gamma(0.8,1.3,1.0)
+   * grayscale(33%)
+   * contrast(3)
+   * grayscale;contrast(3);tint(blue)
+   * sepia(33%)
+   * sepia,hue(33.3)
+   * contrast(3);saturate(160);sepia(60%)
+   * brightness(50)
+   * hue(33.3)
+   * level(25%)
+   * level(0,75%)
+   * level(25%,100%)
+   * level(-25%)
+   * level(0%,100%,0.5)
+   * level(0%,100%,2.0)
+   * levelcolors(green,gold)
+   * levelcolors(,DodgerBlue)
+   * levelcolors(Firebrick)
+   * levelcolors(DarkGreen);autogamma
+   * levelcolors(navy,lemonchiffon)
+   * levelcolors(#664B19,#FFFACD);autogamma
+   * normalize(Yellow)
+   * noise(Uniform)
+   * noise(Gaussian)
+   * noise(Multiplicative)
+   * noise(Impulse)
+   * noise(Laplacian)
+   * noise(Poisson)
+   * blueshift(0)
+   * blueshift(0.5)
+   * blueshift(1)
+   * blueshift(1.5)
+   * blur(1,1)
+   * sharpen(0.4)
+   * charcoal(,1)
+   * emboss(1,2)
+   * vignette(1.5)
+   * colorize(,50%)
+   * colorize(blue,10%)
+   * 1977(33%)
+   * moon(100%)
+   * moon(100%);levelcolors(navy,lightyellow)
+   * toaster(100%)
+</noautolink>
+
+%IMAGE{"InstagramExamples.jpeg" size="800" style="width:100%;height:auto"}%
 
 ---+++ Format specification
 Format strings given in =header=, =footer= and =format= may contain the following
@@ -154,11 +260,11 @@ _after_ the IMAGE tag has been computed, whereas the default evaluation
 order is left-to-right-inside-out.
 
 ---++ REST image service
-The <nop>ImagePlugin implements a REST handler =resize= to generate thumbnails for image attachments
+The <nop>ImagePlugin implements a REST handler =process= to generate thumbnails for image attachments
 on the fly.  This handler is then called in an =img= tag like this:
 
 <verbatim>
-<img src='%SCRIPTURLPATH{"rest"}%/ImagePlugin/resize?
+<img src='%SCRIPTURLPATH{"rest"}%/ImagePlugin/process?
   topic=web.topic;
   file=attachment;
   width=300;
@@ -167,19 +273,22 @@ on the fly.  This handler is then called in an =img= tag like this:
 />
 </verbatim>
 
-Arguments to the =resize= handlers are:
+Arguments to the =process= handlers are:
 
 | *Name* |  *Values*  |  *Default*  |
-| =topic= | specifies the topic where the image is attached | BASEWEB.BASETOPIC |
-| =file= | specifies the image filename | | 
-| =width= | width of thumbnail  | |
+| =topic= | topic where the image is attached | BASEWEB.BASETOPIC |
+| =file= | image filename | | 
+| =crop= | cropping mode  | |
+| =filter= | filter to be applied to the image | |
 | =height= | height of thumbnail  | |
-| =size= | geometry of thumbnail  | |
-| =zoom= | switch on/off upscaling  | |
 | =refresh= | on/off/img to trigger recomputing images | off |
+| =rotate= | degree to rotate the image | |
+| =size= | geometry of thumbnail  | |
+| =width= | width of thumbnail  | |
+| =zoom= | switch on/off upscaling  | off |
 
 ---++ Examples
-   * See also [[Sandbox.ImagePluginTest]] for an exhaustive sample and test page
+   * See also [[Sandbox.ImagePluginFilterTest]] for an exhaustive sample and test page
    * Resize to 100 pixels, text flows right, with caption 
      <verbatim>%IMAGE{"Westminstpalace.jpg" size="100" align="left" caption="This is my caption"}%</verbatim>
    * Resize to %<nop>THUMBNAIL_SIZE% size, and center image
@@ -207,16 +316,6 @@ auto-attached image will update the topic and with it its timestamp.
 $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 </verbatim>
 
----+++ Image processing backend
-The plugin makes use of either CPAN:Image::Magick or [[http://www.graphicsmagick.org/][Graphics::Magick]],
-a fork of the former. Both are compatible as far as they are used here. Graphics::Magick does seem
-to perform faster than Image::Magick; some Image::Magick might be broken on your server distribution.
-By default Image::Magick is used as it is the more common extension for perlbased image processing.
-
-<verbatim>
-$Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
-</verbatim>
-
 ---++ Installation Instructions
 %$INSTALL_INSTRUCTIONS%
 
@@ -226,6 +325,15 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  27 Jul 2017 | removed support for Graphics::Magick ... not worth it and not a 100% drop-in replacement; \
+                 performance: don't deliver image blobs by itself, use a redirect instead; \
+                 removed support for xsendfile protocol as we are redirecting now; \
+                 improved method to delete unused thumbnails; \
+                 added support to generate a cover image of a video; \
+                 better support for gallery renderers (photoswipe, prettyphoto, ...); \
+                 don't process literal blocks; \
+                 renamed =resize= rest handler to =process= (former still there for compatibility) |
+|  11 Oct 2016 | added image filters with instagram-like presets |
 |  31 May 2016 | added mime type detection for inline image data that don't specify it; improved support for html5 data |
 |  06 Apr 2016 | fixed attaching inline data images |
 |  01 Apr 2016 | fixed resize rest handler returning invalid image data; \
@@ -306,15 +414,16 @@ $Foswiki::cfg{ImagePlugin}{Mode} = 'Image::Magick';
 |  16 June 2006: | released into the public |
 |  10 May 2006: | Initial version by forking <nop>ImgPlugin |
 
-%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1464689198" path="WestminstpalaceSample.png" size="107728" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1464689198" path="http://www.google.com/intl/en_ALL/images/logo.gif" size="8558" user="ProjectContributor" version="1"}%
 %META:FORM{name="PackageForm"}%
 %META:FIELD{name="Author" title="Author" value="Craig Meyer, Michael Daum"}%
-%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, %BR% &copy; 2006-2016 Michael Daum http://michaeldaumconsulting.com"}%
-%META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/%TOPIC%"}%
-%META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%
-%META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
-%META:FIELD{name="Description" title="Release" value="%25$SHORTDESCRIPTION%25"}%
-%META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ImagePlugin"}%
-%META:FIELD{name="Support" title="Support" value="Foswiki:Support/%TOPIC%"}%
 %META:FIELD{name="Version" title="Version" value="%25$VERSION%25"}%
+%META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
+%META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
+%META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ImagePlugin"}%
+%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, %25BR%25 &copy; 2006-2017 Michael Daum http://michaeldaumconsulting.com"}%
+%META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%
+%META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/%25TOPIC%25"}%
+%META:FIELD{name="Support" title="Support" value="Foswiki:Support/%25TOPIC%25"}%
+%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1501145906" size="107728" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1501145906" size="8558" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1501145906" size="737387" user="ProjectContributor" version="1"}%

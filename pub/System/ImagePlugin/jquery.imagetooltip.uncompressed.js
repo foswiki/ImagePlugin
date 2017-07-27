@@ -1,4 +1,5 @@
 /* helper to display an image preview in a tooltip */
+"use strict";
 jQuery(function($) {
   var defaults = {
     delay:300,
@@ -7,11 +8,11 @@ jQuery(function($) {
   };
   $(".jqImageTooltip:not(.jqInitedImageTooltip)").livequery(function() {
     var $this = $(this),
-        opts = $.extend({}, defaults, $this.metadata());
+        opts = $.extend({}, defaults, $this.data(), $this.metadata());
 
     $this.addClass("jqInitedImageTooltip");
 
-    if (typeof(opts.image) !== 'undefined' && opts.image.match(/jpe?g|gif|png|bmp|svg|xcf|psd|tiff?/i)) {
+    if (typeof(opts.image) !== 'undefined' && opts.image.match(/\.(jpe?g|gif|png|bmp|svgz?|xcf|psd|tiff?|ico|pdf|psd|ps|mp4|avi|mov)$/i)) { // SMELL: yet another list of webby images
       $this.tooltip({
         show: {
           delay: 350

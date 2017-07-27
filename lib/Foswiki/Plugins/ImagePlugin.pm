@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2016 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2017 Michael Daum http://michaeldaumconsulting.com
 #
 # Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -29,9 +29,10 @@ use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
+  use Foswiki::Plugins::ImagePlugin::Core;
 
-our $VERSION = '7.30';
-our $RELEASE = '31 May 2016';
+our $VERSION = '8.00';
+our $RELEASE = '27 Jul 2017';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 our $core;
@@ -45,9 +46,6 @@ sub initPlugin {
     return 0;
   }
 
-  # init plugin variables
-  $core = undef;
-
   # register the tag handlers
   Foswiki::Func::registerTagHandler(
     'IMAGE',
@@ -56,7 +54,18 @@ sub initPlugin {
     }
   );
 
-  # register rest handler
+  # register process rest handler
+  Foswiki::Func::registerRESTHandler(
+    'process',
+    sub {
+      getCore(shift)->handleREST(@_);
+    },
+    authenticate => 0,
+    validate => 0,
+    http_allow => 'GET,POST',
+  );
+
+  # same as process, still there for compatibility
   Foswiki::Func::registerRESTHandler(
     'resize',
     sub {
@@ -78,7 +87,6 @@ sub initPlugin {
 }
 
 ###############################################################################
-# lazy initializer
 sub getCore {
   return $core if $core;
 
@@ -94,6 +102,8 @@ HERE
 ###############################################################################
 sub finishPlugin {
   $core->finishPlugin if defined $core;
+
+  undef $core;
 }
 
 ###############################################################################
@@ -110,39 +120,38 @@ sub beforeSaveHandler {
 }
 
 ###############################################################################
-sub completePageHandler {
-  #my $text = $_[0];
-
-  return unless $Foswiki::cfg{ImagePlugin}{ConvertInlineSVG};
-
-  getCore->completePageHandler(@_);
-}
-
-
-###############################################################################
 sub commonTagsHandler {
 
   return unless Foswiki::Func::getContext()->{view};
-  return unless $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks} || $Foswiki::cfg{ImagePlugin}{RenderLocalImages};
 
   my ($text, $topic, $web) = @_;
 
   my $removed = {};
   $text = takeOutBlocks($text, 'noautolink', $removed);
+  $text = takeOutBlocks($text, 'literal', $removed);
 
-  if ($Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks}) {
-    $text =~ s/(^|(?<!url)[-*\s(|])
-                 (https?:
-                     ([^\s<>"]+[^\s*.,!?;:)<|][^\s]*\.(?:gif|jpe?g|png|bmp|svg)(?:\?.*)?(?=[^\w\-])))/
-                       renderExternalImage($web, $topic, $1, $2)/gieox;
+  if ($Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks} || $Foswiki::cfg{ImagePlugin}{RenderLocalImages}) {
+
+    if ($Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks}) {
+      $text =~ s/(^|(?<!url)[-*\s(|])
+                   (https?:
+                       ([^\s<>"]+[^\s*.,!?;:)<|][^\s]*\.(?:gif|jpe?g|png|bmp|svg)(?:\?.*)?(?=[^\w\-])))/
+                         renderExternalImage($web, $topic, $1, $2)/gieox;
+
+    }
+
+    if ($Foswiki::cfg{ImagePlugin}{RenderLocalImages}) {
+      $text =~ s/(<img ([^>]+)?\/>)/renderLocalImage($web, $topic, $1)/ge;
+    }
 
   }
 
-  if ($Foswiki::cfg{ImagePlugin}{RenderLocalImages}) {
-    $text =~ s/(<img ([^>]+)?\/>)/renderLocalImage($web, $topic, $1)/ge;
+  if ($Foswiki::cfg{ImagePlugin}{ConvertInlineSVG}) {
+    getCore->takeOutSVG($text);
   }
 
-  putBackBlocks(\$text, $removed, 'noautolink', 'noautolink');
+  putBackBlocks(\$text, $removed, 'literal');
+  putBackBlocks(\$text, $removed, 'noautolink');
 
   # restore the text
   $_[0] = $text;
@@ -230,7 +239,7 @@ sub renderExternalImage {
   # skip "external links" to self and to any other excluded url
   my $excludePattern = $Foswiki::cfg{ImagePlugin}{Exclude};
   if ($url !~ /^$pubUrl/ && 
-      (!$excludePattern || $url !~ /^$excludePattern()/)) { 
+      (!$excludePattern || $url !~ /^$excludePattern/)) { 
 
     # untaint url, check above
     $url = Foswiki::Sandbox::untaintUnchecked($url);

@@ -4,7 +4,7 @@
 
 %TMPL:DEF{"image:plain"}%<img class='imagePlain imagePlain_$align$class' src='$src' alt='$alt' title='$title' width='$width' height='$height' $mousein $mouseout style='$style' />%TMPL:END%
 
-%TMPL:DEF{"image:simple"}%<a href='$href' id='$id' class='imageHref imageSimple imageSimple_$align$class' title='$title' data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style' /></a>%TMPL:END%
+%TMPL:DEF{"image:simple"}%<a href='$href' title='$title' id='$id' class='imageHref imageSimple imageSimple_$align$class' style='$style' data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout />$caption</a>%TMPL:END%
   
 %TMPL:DEF{"image:frame"}%<div id='$id' class='imageFrame imageFrame_$align$class' style='width:$framewidthpx'><a href='$href' class='imageHref' title='$title' data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style'/></a>$caption</div>%TMPL:END%
 
@@ -12,10 +12,12 @@
 
 %TMPL:DEF{"image:thumb"}%<div id='$id' class='imageThumb imageThumb_$align$class' style='width:$framewidthpx'><a href='$href' class='imageHref' title='$title' data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style'/></a>$caption</div>%TMPL:END%
 
+%TMPL:DEF{"image:photoswipe"}%<span class='jqPhotoSwipe'><a href='$href' title='$title' id='$id' class='imageHref imageSimple imageSimple_$align$class' data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style' />$caption</a></span>%JQREQUIRE{"photoswipe" warn="off"}%%TMPL:END%
+
 %{ helper snippets }%
 
 %TMPL:DEF{"image:clear"}%<br class='imageClear' clear='all' />%TMPL:END%
  
-%TMPL:DEF{"image:caption"}%<div class='imageCaption'> $caption </div>%TMPL:END%
+%TMPL:DEF{"image:caption"}%<div class='imageCaption'><div class='imageCaptionBackground'></div><div class='imageCaptionContent'>$caption</div></div>%TMPL:END%
 
-%TMPL:DEF{"image:magnify"}%<div class='imageMagnify'><a href='$href' title='Enlarge'><img src='$magnifyIcon' width='$magnifyWidth' height='$magnifyHeight' alt='Enlarge' /></a></div>%TMPL:END%
+%TMPL:DEF{"image:magnify"}%<div class='imageMagnify'><a href='$href' title='%MAKETEXT{"Enlarge"}%'><img src='$magnifyIcon' width='$magnifyWidth' height='$magnifyHeight' alt='Enlarge' /></a></div>%TMPL:END%

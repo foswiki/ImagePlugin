@@ -1,21 +1,26 @@
+!noci
 data/Sandbox/ImagePluginTest.txt 0644
 data/System/ImagePlugin.txt 0644
 lib/Foswiki/Plugins/ImagePlugin/Config.spec 0644
 lib/Foswiki/Plugins/ImagePlugin/Core.pm 0644
+lib/Foswiki/Plugins/ImagePlugin/DEPENDENCIES 0644
+lib/Foswiki/Plugins/ImagePlugin/Filter.pm 0644
 lib/Foswiki/Plugins/ImagePlugin/IMAGETOOLTIP.pm 0644
 lib/Foswiki/Plugins/ImagePlugin.pm 0644
 pub/Sandbox/ImagePluginTest/STS-32_crew.jpg 0644
 pub/Sandbox/ImagePluginTest/Tst.png 0644
 pub/Sandbox/ImagePluginTest/Westminstpalace.jpg 0644
+pub/System/ImagePlugin/InstagramExamples.jpeg 0644
 pub/System/ImagePlugin/jquery.imagetooltip.js 0644
 pub/System/ImagePlugin/jquery.imagetooltip.js.gz 0644
 pub/System/ImagePlugin/jquery.imagetooltip.uncompressed.js 0644
 pub/System/ImagePlugin/logo.gif 0644
 pub/System/ImagePlugin/magnify-clip.png 0644
 pub/System/ImagePlugin/Makefile 0644
+pub/System/ImagePlugin/pixel.gif 0644
 pub/System/ImagePlugin/style.css 0644
 pub/System/ImagePlugin/style.css.gz 0644
 pub/System/ImagePlugin/style.uncompressed.css 0644
+pub/System/ImagePlugin/Westminstpalace.jpg 0644
 pub/System/ImagePlugin/WestminstpalaceSample.png 0644
-pub/System/ImagePlugin/pixel.gif 0644
 templates/imageplugin.tmpl 0644
