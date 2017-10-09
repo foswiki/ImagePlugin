@@ -325,6 +325,7 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  09 Sep 2017 | fixed filter api; really default crop to off |
 |  27 Jul 2017 | removed support for Graphics::Magick ... not worth it and not a 100% drop-in replacement; \
                  performance: don't deliver image blobs by itself, use a redirect instead; \
                  removed support for xsendfile protocol as we are redirecting now; \

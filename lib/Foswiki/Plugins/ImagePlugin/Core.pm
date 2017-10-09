@@ -36,6 +36,7 @@ use MIME::Base64 ();
 use File::Temp ();
 use URI ();
 use Encode ();
+use Image::Magick ();
 
 use constant TRACE => 0;    # toggle me
 
@@ -77,13 +78,17 @@ sub new {
 ###############################################################################
 sub mage {
   my $this = shift;
-
-  unless ($this->{mage}) {
-    require Image::Magick;
-    $this->{mage} = Image::Magick->new(@_);
-  }
+  
+  $this->{mage} = $this->createImage(@_) unless $this->{mage};
 
   return $this->{mage};
+}
+
+###############################################################################
+sub createImage {
+  my $this = shift;
+
+  return Image::Magick->new(@_);
 }
 
 ###############################################################################
@@ -510,7 +515,7 @@ sub processImage {
   my ($this, $imgWeb, $imgTopic, $imgFile, $params, $doRefresh) = @_;
 
   my $size = $params->{size} || '';
-  my $crop = $params->{crop} || '';
+  my $crop = $params->{crop} || 'off';
   my $zoom = $params->{zoom} || 'off';
   my $width = $params->{width} || '';
   my $height = $params->{height} || '';
@@ -1218,7 +1223,7 @@ sub isWebby {
 sub isFramish {
   my $file = shift;
 
-  return 1 if isVideo($file) || $file =~ /\.(tiff|pdf|ps|psd)$/i;
+  return 1 if isVideo($file) || $file =~ /\.(tiff?|pdf|ps|psd)$/i;
   return 0;
 }
 

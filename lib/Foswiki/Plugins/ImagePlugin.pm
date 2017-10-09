@@ -31,8 +31,8 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
   use Foswiki::Plugins::ImagePlugin::Core;
 
-our $VERSION = '8.00';
-our $RELEASE = '27 Jul 2017';
+our $VERSION = '8.01';
+our $RELEASE = '09 Sep 2017';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 our $core;
