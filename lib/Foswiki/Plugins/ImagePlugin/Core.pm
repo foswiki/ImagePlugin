@@ -157,6 +157,7 @@ sub handleREST {
       height => ($query->param('height') || ''),
       filter => ($query->param('filter') || ''),
       rotate => ($query->param('rotate') || ''),
+      transparent => ($query->param('transparent') || ''),
       type => "plain"
     },
     $refresh
@@ -522,8 +523,9 @@ sub processImage {
   my $output = $params->{output} || '';
   my $rotate = $params->{rotate} || '';
   my $filter = $params->{filter} || '';
+  my $transparent = $params->{transparent} || '';
 
-  writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, rotate=$rotate, refresh=$doRefresh, output=$output)");
+  writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, rotate=$rotate, refresh=$doRefresh, output=$output, transparent=$transparent)");
 
   $this->{errorMsg} = '';
 
@@ -554,7 +556,7 @@ sub processImage {
     $frame = '';
   }
 
-  if ($size || ($crop && $crop ne 'off') || $width || $height || $rotate || $doRefresh || !isWebby($imgFile) || $output || $filter || ($frame && $frame ne '')) {
+  if ($size || ($crop && $crop ne 'off') || $width || $height || $rotate || $doRefresh || !isWebby($imgFile) || $output || $filter || ($frame && $frame ne '') || $transparent) {
     if (!$size) {
       if ($width || $height) {
         $size = $width . 'x' . $height;
@@ -618,10 +620,32 @@ sub processImage {
         return undef if $1 >= 400;
       }
 
+      # set density in case we have an svg
+      if ($imgFile =~ /\.svg/i) {
+        writeDebug("upping the density to 200");
+        $error = $this->mage->Set(density => 200);
+        if ($error =~ /(\d+)/) {
+          $this->{errorMsg} = $error;
+          writeDebug("Error: $error");
+          return undef if $1 >= 400;
+        }
+      }
+
       # merge layers
       if ($imgFile =~ /\.(xcf|psd)$/i) {
         writeDebug("merge");
         $this->{mage} = $this->mage->Layers(method => 'merge');
+      }
+
+      # transparent background
+      if ($transparent) {
+        writeDebug("transparent=$transparent");
+        $error = $this->mage->Transparent(color => $transparent);
+        if ($error =~ /(\d+)/) {
+          $this->{errorMsg} = $error;
+          writeDebug("Error: $error");
+          return undef if $1 >= 400;
+        }
       }
 
       # scale
@@ -867,7 +891,11 @@ sub afterRenameHandler {
 sub flagThumbsForDeletion {
   my ($this, $web, $topic, $attachment) = @_;
 
-  $attachment //= ".*";
+  if (defined $attachment) {
+    $attachment = quotemeta($attachment);
+  } else {
+    $attachment = ".*";
+  }
 
   opendir(my $dh, $Foswiki::cfg{PubDir} . '/' . $web . '/' . $topic . '/') || return;
   my @thumbs = grep { /^igp_[0-9a-f]{32}_$attachment$/ } readdir $dh;
@@ -889,7 +917,11 @@ sub flagThumbsForDeletion {
 sub clearAllThumbs {
   my ($this, $web, $topic, $attachment) = @_;
 
-  $attachment //= ".*";
+  if (defined $attachment) {
+    $attachment = quotemeta($attachment);
+  } else {
+    $attachment = ".*";
+  }
   return $this->clearMatchingThumbs($web, $topic, $attachment, "igp_[0-9a-f]{32}_$attachment");
 }
 
@@ -897,7 +929,11 @@ sub clearAllThumbs {
 sub clearOutdatedThumbs {
   my ($this, $web, $topic, $attachment) = @_;
 
-  $attachment //= ".*";
+  if (defined $attachment) {
+    $attachment = quotemeta($attachment);
+  } else {
+    $attachment = ".*";
+  }
   return $this->clearMatchingThumbs($web, $topic, $attachment, "_igp_[0-9a-f]{32}_$attachment");
 }
 
@@ -907,7 +943,11 @@ sub clearMatchingThumbs {
 
   $web //= $this->{session}{webName};
   $topic //= $this->{session}{topicName};
-  $attachment //= ".*";
+  if (defined $attachment) {
+    $attachment = quotemeta($attachment);
+  } else {
+    $attachment = ".*";
+  }
   $pattern //= 'igp_[0-9a-f]{32}_'.$attachment;
 
   opendir(my $dh, $Foswiki::cfg{PubDir} . '/' . $web . '/' . $topic . '/') || return;

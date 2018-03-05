@@ -24,7 +24,7 @@ Short example:
 *You get:*
 
 <div style="margin:7px;_width:418px;max-width:418px;">
-<a href='%ATTACHURLPATH%/ImagePlugin/Westminstpalace.jpg' class='imageHref' title='caption text'>
+<a href='%ATTACHURLPATH%/Westminstpalace.jpg' class='imageHref' title='caption text'>
 <img src="%ATTACHURLPATH%/WestminstpalaceSample.png" alt="WestminstpalaceSample.png" width='416' height='339' />
 </a>
 </div>
@@ -98,6 +98,7 @@ The image name is mandatory.  Further arguments are optional.
 | =tooltipcrop= | on/northwest/north/northeast/west/center/east/southwest/south/southeast/off: same as =crop= but used for the tooltip | |
 | =tooltipwidth= | width of tooltip image | 300 |
 | =topic= | valid topic name | topic part of IMGALBUM value or current topic |
+| =transparent= | color to be converted to transparent | |
 | =type=  | simple, plain, link, thumb[nail], frame, float | plain  |
 | =warn= | on/off, surpress error warnings | on |
 | =web= | valid web name | web part of IMGALBUM value or current topic |
@@ -325,6 +326,7 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  05 Mar 2018 | fixed cleaning up old thumbnails of images with brackets in them; added =transparent= feature; up'ing density converting svg images |
 |  09 Sep 2017 | fixed filter api; really default crop to off |
 |  27 Jul 2017 | removed support for Graphics::Magick ... not worth it and not a 100% drop-in replacement; \
                  performance: don't deliver image blobs by itself, use a redirect instead; \
