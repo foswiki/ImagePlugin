@@ -2,6 +2,8 @@
 
 %TMPL:DEF{"image:link"}%<a href='$href' id='$id' class='imageLink' title='$title' style='$style'>$text</a>%TMPL:END%
 
+%TMPL:DEF{"image:href"}%$src%TMPL:END%
+
 %TMPL:DEF{"image:plain"}%<img class='imagePlain imagePlain_$align$class' src='$src' alt='$alt' title='$title' width='$width' height='$height' $mousein $mouseout style='$style' />%TMPL:END%
 
 %TMPL:DEF{"image:simple"}%<a href='$href' title='$title' id='$id' class='imageHref imageSimple imageSimple_$align$class' style='$style' data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout />$caption</a>%TMPL:END%

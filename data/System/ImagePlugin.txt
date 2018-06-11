@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1501145906" format="1.1"  version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1528719237" format="1.1"  version="1"}%
 ---+!! <nop>%TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -99,7 +99,7 @@ The image name is mandatory.  Further arguments are optional.
 | =tooltipwidth= | width of tooltip image | 300 |
 | =topic= | valid topic name | topic part of IMGALBUM value or current topic |
 | =transparent= | color to be converted to transparent | |
-| =type=  | simple, plain, link, thumb[nail], frame, float | plain  |
+| =type=  | simple, plain, link, thumb[nail], frame, float or src | plain  |
 | =warn= | on/off, surpress error warnings | on |
 | =web= | valid web name | web part of IMGALBUM value or current topic |
 | =width= | integer value | image width |
@@ -326,6 +326,7 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  11 Jun 2018 | add =src= option to type parameter to access the thumbnail source being generated |
 |  05 Mar 2018 | fixed cleaning up old thumbnails of images with brackets in them; added =transparent= feature; up'ing density converting svg images |
 |  09 Sep 2017 | fixed filter api; really default crop to off |
 |  27 Jul 2017 | removed support for Graphics::Magick ... not worth it and not a 100% drop-in replacement; \
@@ -427,6 +428,6 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 %META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%
 %META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/%25TOPIC%25"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/%25TOPIC%25"}%
-%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1501145906" size="107728" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1501145906" size="8558" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1501145906" size="737387" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1528719237" size="107728" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1528719237" size="8558" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1528719237" size="737387" user="ProjectContributor" version="1"}%
