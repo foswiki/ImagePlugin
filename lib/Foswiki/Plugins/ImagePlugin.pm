@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2018 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2019 Michael Daum http://michaeldaumconsulting.com
 #
 # Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -31,8 +31,8 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
   use Foswiki::Plugins::ImagePlugin::Core;
 
-our $VERSION = '8.11';
-our $RELEASE = '11 Jun 2018';
+our $VERSION = '9.00';
+our $RELEASE = '12 Nov 2019';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 our $core;
@@ -48,10 +48,7 @@ sub initPlugin {
 
   # register the tag handlers
   Foswiki::Func::registerTagHandler(
-    'IMAGE',
-    sub {
-      return getCore(shift)->handleIMAGE(@_);
-    }
+    'IMAGE', sub { return getCore(shift)->handleIMAGE(@_); }
   );
 
   # register process rest handler
@@ -70,6 +67,25 @@ sub initPlugin {
     'resize',
     sub {
       getCore(shift)->handleREST(@_);
+    },
+    authenticate => 0,
+    validate => 0,
+    http_allow => 'GET,POST',
+  );
+
+  Foswiki::Func::registerRESTHandler(
+    'purgeCache',
+    sub { 
+      getCore(shift)->purgeCache(@_); 
+    },
+    authenticate => 0,
+    validate => 0,
+    http_allow => 'GET,POST',
+  );
+
+  Foswiki::Func::registerRESTHandler(
+    'clearCache', sub { 
+      getCore(shift)->clearCache(@_); 
     },
     authenticate => 0,
     validate => 0,
@@ -123,6 +139,7 @@ sub beforeSaveHandler {
 sub commonTagsHandler {
 
   return unless Foswiki::Func::getContext()->{view};
+  return unless $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks} || $Foswiki::cfg{ImagePlugin}{RenderLocalImages} || $Foswiki::cfg{ImagePlugin}{ConvertInlineSVG};
 
   my ($text, $topic, $web) = @_;
 
@@ -130,20 +147,17 @@ sub commonTagsHandler {
   $text = takeOutBlocks($text, 'noautolink', $removed);
   $text = takeOutBlocks($text, 'literal', $removed);
 
-  if ($Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks} || $Foswiki::cfg{ImagePlugin}{RenderLocalImages}) {
 
-    if ($Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks}) {
-      $text =~ s/(^|(?<!url)[-*\s(|])
-                   (https?:
-                       ([^\s<>"]+[^\s*.,!?;:)<|][^\s]*\.(?:gif|jpe?g|png|bmp|svg)(?:\?.*)?(?=[^\w\-])))/
-                         renderExternalImage($web, $topic, $1, $2)/gieox;
+  if ($Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks}) {
+    $text =~ s/(^|(?<!url)[-*\s(|])
+		 (https?:
+		     ([^\s<>"]+[^\s*.,!?;:)<|][^\s]*\.(?:gif|jpe?g|png|bmp|svg)(?:\?.*)?(?=[^\w\-])))/
+		       renderExternalImage($web, $topic, $1, $2)/gieox;
 
-    }
+  }
 
-    if ($Foswiki::cfg{ImagePlugin}{RenderLocalImages}) {
-      $text =~ s/(<img ([^>]+)?\/>)/renderLocalImage($web, $topic, $1)/ge;
-    }
-
+  if ($Foswiki::cfg{ImagePlugin}{RenderLocalImages}) {
+    $text =~ s/(<img ([^>]+)?\/>)/renderLocalImage($web, $topic, $1)/ge;
   }
 
   if ($Foswiki::cfg{ImagePlugin}{ConvertInlineSVG}) {

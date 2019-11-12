@@ -8,7 +8,7 @@ $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks} = 0;
 
 # **BOOLEAN**
 # Activate this flag to process HTML <code>img</code> markup to local images
-$Foswiki::cfg{ImagePlugin}{RenderLocalImages} = 1;
+$Foswiki::cfg{ImagePlugin}{RenderLocalImages} = 0;
 
 # **BOOLEAN**
 # Activate this flag to convert inline-svg to png

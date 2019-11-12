@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1528719237" format="1.1"  version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1573559340" format="1.1" version="1"}%
 ---+!! <nop>%TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -70,10 +70,10 @@ Wikipedia:Wikipedia:Extended_image_syntax.
 The image name is mandatory.  Further arguments are optional.
 
 | *Name* |  *Values*  |  *Default*  |
-| =align=  | left&#124;center&#124;right&#124;none  | right |
+| =align=  | left&#124;center&#124;right&#124;none  | none |
 | =alt= | alt text | image filename |
 | =caption=  | caption text  | empty  |
-| =class= | (see html specs) | imageFrame, imageFloat, ... depending on the type |
+| =class= | (see html specs) | imageFrame, imageFloat, imageResponsive, ... depending on the type |
 | =crop=  | on/northwest/north/northeast/west/center/east/southwest/south/southeast/off: scrop the image to fit the image into the given aspect ratio; other values than on/off specify the area the croped image gravitates to relative to the original (on=center) | off |
 | =data= | json added to the image class used by the jquery stub | empty |
 | =desc= | description text | title text |
@@ -326,6 +326,12 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  12 Nov 2019 | performance fixes, i.e. caching ping results; \
+                 don't render local images by default; \
+                 fixed processing transparent background; \
+                 fix file permissions of thumbnails; \
+                 svgs are images too; pptx, docx, odt and xlsx files are "frameish" as well to ease thumbnailing them; \
+                 use svgs in tooltips as is, don't resize them |
 |  11 Jun 2018 | add =src= option to type parameter to access the thumbnail source being generated |
 |  05 Mar 2018 | fixed cleaning up old thumbnails of images with brackets in them; added =transparent= feature; up'ing density converting svg images |
 |  09 Sep 2017 | fixed filter api; really default crop to off |
@@ -424,10 +430,10 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 %META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ImagePlugin"}%
-%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, &copy; 2006-2018 Michael Daum http://michaeldaumconsulting.com"}%
+%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, &copy; 2006-2019 Michael Daum http://michaeldaumconsulting.com"}%
 %META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%
 %META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/%25TOPIC%25"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/%25TOPIC%25"}%
-%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1528719237" size="107728" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1528719237" size="8558" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1528719237" size="737387" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1573559340" size="107728" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1573559340" size="8558" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1573559340" size="737387" user="ProjectContributor" version="1"}%
