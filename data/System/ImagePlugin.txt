@@ -75,12 +75,13 @@ The image name is mandatory.  Further arguments are optional.
 | =caption=  | caption text  | empty  |
 | =class= | (see html specs) | imageFrame, imageFloat, imageResponsive, ... depending on the type |
 | =crop=  | on/northwest/north/northeast/west/center/east/southwest/south/southeast/off: scrop the image to fit the image into the given aspect ratio; other values than on/off specify the area the croped image gravitates to relative to the original (on=center) | off |
-| =data= | json added to the image class used by the jquery stub | empty |
+| =data_&lt;key;= | html5 data added to the image | empty |
 | =desc= | description text | title text |
 | =footer= | text to be appended to the html output | empty |
 | =format= | image layout format string | set by type argument |
 | =frame= | extract a specific frame or layer from the source file; this comes in handy when rendering a thumbnail for a video clip | |
 | =layer= | alias for =frame= | |
+| =lazyload= | boolean switch to enable/disable loading images lazy (if supported by the browser) | off |
 | =header= | text to be prepended to the html output | empty |
 | =height= | integer value | image width |
 | =output= | image format to convert the input source to | same as source image, except tiff and svg being converted to png |
@@ -326,6 +327,8 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  26 Oct 2020 | added support for native lazy loading of images; \
+                 rewrite caching of image metadata using Foswiki:Extensions/CacheContrib |
 |  12 Nov 2019 | performance fixes, i.e. caching ping results; \
                  don't render local images by default; \
                  fixed processing transparent background; \
@@ -430,7 +433,7 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 %META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ImagePlugin"}%
-%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, &copy; 2006-2019 Michael Daum http://michaeldaumconsulting.com"}%
+%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, &copy; 2006-2020 Michael Daum"}%
 %META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%
 %META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/%25TOPIC%25"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/%25TOPIC%25"}%

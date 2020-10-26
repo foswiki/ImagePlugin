@@ -1,7 +1,7 @@
 /*
  * jQuery image tooltip - helper to display an image preview in a tooltip
  *
- * Copyright (c) 2018-2019 Michael Daum http://michaeldaumconsulting.com
+ * Copyright (c) 2018-2020 Michael Daum http://michaeldaumconsulting.com
  *
  * Licensed under the GPL license http://www.gnu.org/licenses/gpl.html
  *
@@ -17,11 +17,11 @@ jQuery(function($) {
     showURL:false
   };
 
-  $(".jqImageTooltip:not(.jqInitedImageTooltip)").livequery(function() {
+  $(".jqImageTooltip:not(.inited)").livequery(function() {
     var $this = $(this),
-        opts = $.extend({}, defaults, $this.data(), $this.metadata());
+        opts = $.extend({}, defaults, $this.data());
 
-    $this.addClass("jqInitedImageTooltip");
+    $this.addClass("inited");
 
     if (typeof(opts.image) !== 'undefined' && opts.image.match(/\.(jpe?g|gif|png|bmp|svgz?|xcf|psd|tiff?|ico|pdf|psd|ps|mp4|avi|mov|webp)$/i)) { // SMELL: yet another list of webby images
       $this.tooltip({
@@ -36,27 +36,25 @@ jQuery(function($) {
           collision: "flipfit"
         },
         content: function() {
-          var src, img;
+          var src, img, params;
+
+          params = {
+            "topic": opts.web+"."+opts.topic,
+            "file": encodeURIComponent(opts.image),
+            "crop": opts.crop,
+            "width": opts.width,
+            "height": opts.height
+          };
 
           if (/\.svgz?$/.test(opts.image)) {
-            src = foswiki.getPubUrlPath(opts.web, opts.topic, opts.image);
-            img = $("<img/>").attr({
-              'src': src,
-              'width': opts.width,
-              'height': opts.height
-            });
-          } else {
-            src = foswiki.getScriptUrlPath("rest", "ImagePlugin", "resize", {
-                "topic": opts.web+"."+opts.topic,
-                "file": opts.image,
-                "crop": opts.crop,
-                "width": opts.width,
-                "height": opts.height
-              });
-            img = $("<img/>").attr({
-              'src': src
-            });
+            params.output = "png";
           }
+
+          src = foswiki.getScriptUrlPath("rest", "ImagePlugin", "process", params);
+          img = $("<img/>").attr({
+            'src': src
+          });
+
           return img;
         }
       });

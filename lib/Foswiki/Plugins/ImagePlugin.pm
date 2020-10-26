@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2019 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2020 Michael Daum http://michaeldaumconsulting.com
 #
 # Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -29,10 +29,10 @@ use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
-  use Foswiki::Plugins::ImagePlugin::Core;
+use Foswiki::Plugins::ImagePlugin::Core ();
 
-our $VERSION = '9.00';
-our $RELEASE = '12 Nov 2019';
+our $VERSION = '10.00';
+our $RELEASE = '26 Oct 2020';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 our $core;
@@ -67,25 +67,6 @@ sub initPlugin {
     'resize',
     sub {
       getCore(shift)->handleREST(@_);
-    },
-    authenticate => 0,
-    validate => 0,
-    http_allow => 'GET,POST',
-  );
-
-  Foswiki::Func::registerRESTHandler(
-    'purgeCache',
-    sub { 
-      getCore(shift)->purgeCache(@_); 
-    },
-    authenticate => 0,
-    validate => 0,
-    http_allow => 'GET,POST',
-  );
-
-  Foswiki::Func::registerRESTHandler(
-    'clearCache', sub { 
-      getCore(shift)->clearCache(@_); 
     },
     authenticate => 0,
     validate => 0,
@@ -164,8 +145,8 @@ sub commonTagsHandler {
     getCore->takeOutSVG($text);
   }
 
-  putBackBlocks(\$text, $removed, 'literal');
-  putBackBlocks(\$text, $removed, 'noautolink');
+  putBackBlocks(\$text, 'literal', $removed);
+  putBackBlocks(\$text, 'noautolink', $removed);
 
   # restore the text
   $_[0] = $text;
@@ -177,6 +158,7 @@ sub takeOutBlocks {
   my ($text, $tag, $map) = @_;
 
   return '' unless $text;
+  return $text unless $text =~ /\b$tag\b/;
 
   return Foswiki::takeOutBlocks($text, $tag, $map) if defined &Foswiki::takeOutBlocks;
   return $Foswiki::Plugins::SESSION->renderer->takeOutBlocks($text, $tag, $map);
@@ -185,8 +167,10 @@ sub takeOutBlocks {
 ###############################################################################
 # compatibility wrapper 
 sub putBackBlocks {
-  return Foswiki::putBackBlocks(@_) if defined &Foswiki::putBackBlocks;
-  return $Foswiki::Plugins::SESSION->renderer->putBackBlocks(@_);
+  my ($text, $tag, $map) = @_;
+
+  return Foswiki::putBackBlocks($text, $map, $tag) if defined &Foswiki::putBackBlocks;
+  return $Foswiki::Plugins::SESSION->renderer->putBackBlocks($text, $map, $tag);
 }
 
 ###############################################################################
