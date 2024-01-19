@@ -48,7 +48,7 @@ text__, an embedded image is rendered inline.
 text text text text text text
 =%<nop>IMAGE{"Westminstpalace.jpg" size="150" caption="The Palace of Westminster"}%=
 text text text text text
-=%<nop>IMAGE{"Tst.png" size="100" caption="This is a globe."}%=
+=%<nop>IMAGE{"Tst.png" size="100^" caption="This is a globe."}%=
 text text text text
 </pre>
 
@@ -57,7 +57,7 @@ gives
 text text text text text text
 %IMAGE{"Westminstpalace.jpg" size="150" caption="The Palace of Westminster"}%
 text text text text text
-%IMAGE{"Tst.png" size="100" caption="This is a globe."}%
+%IMAGE{"Tst.png" size="100^" caption="This is a globe."}%
 text text text text
 %CLEAR%
 

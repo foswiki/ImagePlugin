@@ -100,6 +100,7 @@ The image name is mandatory.  Further arguments are optional.
 | =tooltipwidth= | width of tooltip image | 300 |
 | =topic= | valid topic name | topic part of IMGALBUM value or current topic |
 | =transparent= | color to be converted to transparent | |
+| =quality= | compression level for JPEG/MIFF/PNG images | |
 | =type=  | simple, plain, link, thumb[nail], frame, float or src | plain  |
 | =warn= | on/off, surpress error warnings | on |
 | =web= | valid web name | web part of IMGALBUM value or current topic |
@@ -327,6 +328,13 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  19 Jan 2024 | added =quality= parameter; properly integrate js and css into Foswiki's javascript framework; \
+                 prevent autolinking within image formats; \
+                 improved api documentation; \
+                 initial support for %IMAGE in wysiwyg editing |
+|  07 Jul 2022 | fixed handling of images with atypical orientations stored in exif |
+|  03 Jun 2021 | moved auto-attach inline images into afterSave handler |
+|  05 Jan 2021 | fixed method for cropping to retain transparency; make sure captions are shown if specified |
 |  26 Oct 2020 | added support for native lazy loading of images; \
                  rewrite caching of image metadata using Foswiki:Extensions/CacheContrib |
 |  12 Nov 2019 | performance fixes, i.e. caching ping results; \
@@ -433,7 +441,7 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 %META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ImagePlugin"}%
-%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, &copy; 2006-2020 Michael Daum"}%
+%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, &copy; 2006-2024 Michael Daum"}%
 %META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%
 %META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/%25TOPIC%25"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/%25TOPIC%25"}%

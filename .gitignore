@@ -3,7 +3,7 @@
 igp_*
 *.gz
 *.swp
-pub/System/ImagePlugin/style.css
+pub/System/ImagePlugin/image.css
 pub/System/ImagePlugin/jquery.imagetooltip.js
 /ImagePlugin.md5
 /ImagePlugin.sha1

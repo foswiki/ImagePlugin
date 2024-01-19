@@ -1,4 +1,4 @@
-Image::Magick,>=6.2.4.5,cpan,Required
+Image::Magick,>=7,cpan,Required
 LWP::UserAgent,>=0,cpan,Required
 Foswiki::Plugins::JQueryPlugin,>=4.90,perl,Required
 Foswiki::Contrib::CacheContrib,>=0,perl,Required

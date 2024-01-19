@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# Copyright (C) 2016-2019 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2016-2024 Michael Daum http://michaeldaumconsulting.com
 #
 # and Foswiki Contributors. All Rights Reserved. Foswiki Contributors
 # are listed in the AUTHORS file in the root of this distribution.
@@ -17,7 +17,17 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
 # For licensing info read LICENSE file in the Foswiki root.
+
 package Foswiki::Plugins::ImagePlugin::Filter;
+
+=begin TML
+
+---+ package Foswiki::Plugins::ImagePlugin::Filter
+
+This class implements ways to manipulate images using filers,
+i.e. it tries to mimik commonly known instagram filters
+
+=cut
 
 use strict;
 use warnings;
@@ -25,9 +35,14 @@ use POSIX;
 
 use constant TRACE => 0;    # toggle me
 
-sub writeDebug {
-  print STDERR "ImagePlugin::Filter - $_[0]\n" if TRACE;
-}
+=begin TML
+
+---++ ClassMethod new($core) -> $filterService
+
+Note that a filter service is cerated by the image core delegating
+operations on images down to this class.
+
+=cut
 
 sub new {
   my $class = shift;
@@ -47,23 +62,47 @@ sub new {
   return $this;
 }
 
-sub currentImage {
-  my ($this, $image) = @_;
+=begin TML
 
-  $this->{image} = $image;
-}
+---++ ObjectMethod mage() -> $imageMagick
+
+returns a delegate of the main Image::Magick object in the core
+
+See Foswiki::Plugins::ImagePlugin::Core::mage()
+
+=cut
 
 sub mage {
   my $this = shift;
 
-  return $this->{image} if defined $this->{image};
   return $this->{core}->mage;
 }
+
+=begin TML
+
+---++ ObjectMethod createImage() -> $imageMagick
+
+returns a fresh Image::Magick object
+
+See Foswiki::Plugins::ImagePlugin::Core::createImage()
+
+=cut
 
 sub createImage {
   my $this = shift;
   return $this->{core}->createImage(@_);
 }
+
+=begin TML
+
+---++ ObjectMethod apply($filterName) -> $result
+
+calls the appropriate =filter_...= method. The special
+filter name "none" does nothing. Note that filter aliases may
+be specified such as "negative" actually is "negate", "saturation" is "saturate"
+as configured in the class constructor.
+
+=cut
 
 sub apply {
   my $this = shift;
@@ -76,21 +115,44 @@ sub apply {
 
   return "unknown filter '$filter'" unless $this->can($sub);
 
-  writeDebug("applying filter='$filter' params=".join(",",@_));
+  _writeDebug("applying filter='$filter' params=".join(",",@_));
 
   return $this->$sub(@_);
 } 
 
-### low-level filters
+=begin TML
+
+---++ ObjectMethod filter_autogamma()
+
+low-level filter AutoGamma
+
+=cut
+
 sub filter_autogamma {
   my $this = shift;
   return $this->mage->AutoGamma();
 }
 
+=begin TML
+
+---++ ObjectMethod filter_autolevel()
+
+low-level filter AutoLevel
+
+=cut
+
 sub filter_autolevel {
   my $this = shift;
   return $this->mage->AutoLevel();
 }
+
+=begin TML
+
+---++ ObjectMethod filter_background($color)
+
+low-level filter AutoLevel
+
+=cut
 
 sub filter_background {
   my ($this, $color) = @_;
@@ -98,11 +160,25 @@ sub filter_background {
   return $this->mage->Set(background => $color);
 }
 
+=begin TML
+
+---++ ObjectMethod filter_blueshift($fractor)
+
+default 1.5
+
+=cut
+
 sub filter_blueshift {
   my ($this, $factor) = @_;
   $factor //= 1.5;
   return $this->mage->BlueShift(factor => $factor);
 }
+
+=begin TML
+
+---++ ObjectMethod filter_blur($radius, $sigma)
+
+=cut
 
 sub filter_blur {
   my ($this, $radius, $sigma) = @_;
@@ -114,11 +190,25 @@ sub filter_blur {
   return $this->mage->Blur(%p);
 }
 
+=begin TML
+
+---++ ObjectMethod filter_brightness($brightness)
+
+default 150
+
+=cut
+
 sub filter_brightness {
   my ($this, $brightness) = @_;
   $brightness //= 150;
   return $this->mage->Modulate(brightness => $brightness);
 }
+
+=begin TML
+
+---++ ObjectMethod filter_charcoal($radius, $sigma)
+
+=cut
 
 sub filter_charcoal {
   my ($this, $radius, $sigma) = @_;
@@ -130,6 +220,14 @@ sub filter_charcoal {
   return $this->mage->Charcoal(%p);
 }
 
+=begin TML
+
+---++ ObjectMethod filter_colorize($fill, $blend)
+
+default blend 50%
+
+=cut
+
 sub filter_colorize {
   my ($this, $fill, $blend) = @_;
 
@@ -137,6 +235,14 @@ sub filter_colorize {
 
   return $this->mage->Colorize(fill=>$fill, blend=>$blend);
 }
+
+=begin TML
+
+---++ ObjectMethod filter_contrast(@contrasts)
+
+default contrast 5
+
+=cut
 
 sub filter_contrast {
   my ($this, @params) = @_;
@@ -146,6 +252,12 @@ sub filter_contrast {
 
   return $this->mage->SigmoidalContrast(geometry=>$contrast);
 }
+
+=begin TML
+
+---++ ObjectMethod filter_emboss($radius, $sigma)
+
+=cut
 
 sub filter_emboss {
   my ($this, $radius, $sigma) = @_;
@@ -157,17 +269,41 @@ sub filter_emboss {
   return $this->mage->Emboss(%p);
 }
 
+=begin TML
+
+---++ ObjectMethod filter_equalize($channel)
+
+default channel: all
+
+=cut
+
 sub filter_equalize {
   my ($this, $channel) = @_;
   $channel //= 'all';
   return  $this->mage->Equalize(channel=>$channel);
 }
 
+=begin TML
+
+---++ ObjectMethod filter_gamma($gamma)
+
+default gamma: 2.2
+
+=cut
+
 sub filter_gamma {
   my ($this, $gamma) = @_;
   $gamma //= 2.2;
   return $this->mage->Gamma(gamma=>$gamma);
 }
+
+=begin TML
+
+---++ ObjectMethod filter_grayscale($factor)
+
+default 100%
+
+=cut
 
 sub filter_grayscale {
   my ($this, $factor) = @_;
@@ -183,6 +319,14 @@ sub filter_grayscale {
   return $error;
 }
 
+=begin TML
+
+---++ ObjectMethod filter_hue($hue)
+
+default 150
+
+=cut
+
 sub filter_hue {
   my ($this, $hue) = @_;
 
@@ -190,16 +334,28 @@ sub filter_hue {
   return $this->mage->Modulate(hue => $hue);
 }
 
+=begin TML
+
+---++ ObjectMethod filter_level(@levels)
+
+=cut
+
 sub filter_level {
   my ($this, @params) = @_;
 
   my $levels = join(",", @params);
  
-  writeDebug("filter_level(levels=$levels)");
+  _writeDebug("filter_level(levels=$levels)");
 
  
   return $this->mage->Level(levels=>$levels);
 }
+
+=begin TML
+
+---++ ObjectMethod filter_levelcolors($color1, $color2, $invert)
+
+=cut
 
 sub filter_levelcolors {
   my ($this, $color1, $color2, $invert) = @_;
@@ -209,16 +365,30 @@ sub filter_levelcolors {
   $p{'black-point'} = $color1 if defined $color1 && $color1 ne "";
   $p{'white-point'} = $color2 if defined $color2 && $color2 ne "";
 
-  writeDebug("filter_levelcolors(".join(", ", map {$_."=".$p{$_}} sort keys %p).")");
+  _writeDebug("filter_levelcolors(".join(", ", map {$_."=".$p{$_}} sort keys %p).")");
 
   return $this->mage->LevelColors(%p);
 }
+
+=begin TML
+
+---++ ObjectMethod filter_negate()
+
+=cut
 
 sub filter_negate {
   my ($this) = @_;
 
   return $this->mage->Negate();
 }
+
+=begin TML
+
+---++ ObjectMethod filter_noise($noise, $attenuate)
+
+default noise: Uniform
+
+=cut
 
 sub filter_noise {
   my ($this, $noise, $attenuate) = @_;
@@ -231,11 +401,27 @@ sub filter_noise {
 }
 
 
+=begin TML
+
+---++ ObjectMethod filter_normalize($channel)
+
+default channel: all
+
+=cut
+
 sub filter_normalize {
   my ($this, $channel) = @_;
   $channel //= 'all';
   return $this->mage->Normalize(channel => $channel);
 }
+
+=begin TML
+
+---++ ObjectMethod filter_oilpaint($radius)
+
+default radius: 1
+
+=cut
 
 sub filter_oilpaint {
   my ($this, $radius) = @_;
@@ -243,17 +429,41 @@ sub filter_oilpaint {
   return $this->mage->OilPaint(radius => $radius);
 }
 
+=begin TML
+
+---++ ObjectMethod filter_posterize($levels)
+
+default levels: 1
+
+=cut
+
 sub filter_posterize {
   my ($this, $levels) = @_;
   $levels //= 1;
   return $this->mage->Posterize(levels => $levels);
 }
 
+=begin TML
+
+---++ ObjectMethod filter_saturate($saturation)
+
+default saturation: 150
+
+=cut
+
 sub filter_saturate {
   my ($this, $saturation) = @_;
   $saturation //= 150;
   return $this->mage->Modulate(saturation => $saturation);
 }
+
+=begin TML
+
+---++ ObjectMethod filter_sepia($factor)
+
+default factor: 100%
+
+=cut
 
 sub filter_sepia {
   my ($this, $factor) = @_;
@@ -280,11 +490,29 @@ sub filter_sharpen {
   return $this->mage->Sharpen(%p);
 }
 
+=begin TML
+
+---++ ObjectMethod filter_tint($fill)
+
+default fill: wheat
+
+=cut
+
 sub filter_tint {
   my ($this, $fill) = @_;
   $fill //= 'wheat';
   return $this->mage->Tint(fill => $fill);
 }
+
+=begin TML
+
+---++ ObjectMethod filter_vignette($factor, $color)
+
+default factor: 1
+
+default color: "black"
+
+=cut
 
 sub filter_vignette {
   my ($this, $factor, $color) = @_;
@@ -304,7 +532,16 @@ sub filter_vignette {
   return $error;
 }
 
-# instagram look-alike filters
+=begin TML
+
+---++ ObjectMethod filter_1977($factor)
+
+instagram look-alike filters
+
+default factor: 100%
+
+=cut
+
 sub filter_1977 {
   my ($this, $factor) = @_;
 
@@ -330,6 +567,14 @@ sub filter_1977 {
 
   return $error;
 }
+
+=begin TML
+
+---++ ObjectMethod filter_gotham($factor)
+
+default factor: 100%
+
+=cut
 
 sub filter_gotham {
   my ($this, $factor) = @_;
@@ -363,6 +608,12 @@ sub filter_gotham {
   return $error;
 }
 
+=begin TML
+
+---++ ObjectMethod filter_inkwell($factor)
+
+=cut
+
 sub filter_inkwell {
   my ($this, $factor) = @_;
 
@@ -383,6 +634,12 @@ sub filter_inkwell {
 
   return $error;
 }
+
+=begin TML
+
+---++ ObjectMethod filter_kelvin($factor)
+
+=cut
 
 sub filter_kelvin {
   my ($this, $factor) = @_;
@@ -407,6 +664,12 @@ sub filter_kelvin {
   return $error;
 }
 
+=begin TML
+
+---++ ObjectMethod filter_moon($factor)
+
+=cut
+
 sub filter_moon {
   my ($this, $factor) = @_;
 
@@ -426,6 +689,12 @@ sub filter_moon {
   return $error;
 }
 
+=begin TML
+
+---++ ObjectMethod filter_lomo($factor)
+
+=cut
+
 sub filter_lomo {
   my ($this, $factor) = @_;
 
@@ -444,6 +713,12 @@ sub filter_lomo {
 
   return $error;
 }
+
+=begin TML
+
+---++ ObjectMethod filter_nashville($factor)
+
+=cut
 
 sub filter_nashville {
   my ($this, $factor) = @_;
@@ -471,6 +746,12 @@ sub filter_nashville {
   return $error;
 }
 
+=begin TML
+
+---++ ObjectMethod filter_toaster($factor)
+
+=cut
+
 sub filter_toaster {
   my ($this, $factor) = @_;
 
@@ -494,6 +775,12 @@ sub filter_toaster {
 
   return $error;
 }
+
+=begin TML
+
+---++ ObjectMethod filter_hudson($factor)
+
+=cut
 
 sub filter_hudson {
   my ($this, $factor) = @_;
@@ -521,5 +808,11 @@ sub filter_hudson {
 
   return $error;
 }
+
+### static helpers
+sub _writeDebug {
+  print STDERR "ImagePlugin::Filter - $_[0]\n" if TRACE;
+}
+
 
 1;

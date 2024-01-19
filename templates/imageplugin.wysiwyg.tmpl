@@ -1,0 +1,11 @@
+%TMPL:INCLUDE{"imageplugin"}%
+
+%TMPL:DEF{"image:plain"}%%TMPL:P{"image:wysiwyg" type="plain" class="imagePlain imagePlain_$align"}%%TMPL:END%
+%TMPL:DEF{"image:frame"}%%TMPL:P{"image:wysiwyg" type="frame" class="imageFrame imageFrame_$align"}%%TMPL:END%
+%TMPL:DEF{"image:simple"}%%TMPL:P{"image:wysiwyg" type="simple" class="imageSimple imageSimple_$align"}%%TMPL:END%
+%TMPL:DEF{"image:photoswipe"}%%TMPL:P{"image:wysiwyg" type="photoswipe" class="imageSimple imageSimple_$align"}%%TMPL:END%
+%TMPL:DEF{"image:float"}%%TMPL:P{"image:wysiwyg" type="float" class="imageFloat imageFloat_$align"}%%TMPL:END%
+%TMPL:DEF{"image:thumb"}%%TMPL:P{"image:wysiwyg" type="thumb" class="imageThumb imageThumb_$align"}%%TMPL:END%
+
+%TMPL:DEF{"image:wysiwyg"}%<noautolink><img src='$origsrc' class='%class%$class' data-type='%type%' data-caption='$caption' width='$width' height='$height' align='$align' alt='$alt' title='$title' id='$id'/></noautolink>%TMPL:END%
+%TMPL:DEF{"image:caption"}%$caption%TMPL:END%

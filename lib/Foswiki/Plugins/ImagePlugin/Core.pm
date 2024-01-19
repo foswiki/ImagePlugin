@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2020 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2024 Michael Daum http://michaeldaumconsulting.com
 #
 # Early version Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -24,6 +24,15 @@
 
 package Foswiki::Plugins::ImagePlugin::Core;
 
+=begin TML
+
+---+ package Foswiki::Plugins::ImagePlugin::Core
+
+Core class for the image service. A singleton instance is created by
+Foswiki::Plugins::ImagePlugin::getCore()
+
+=cut
+
 use strict;
 use warnings;
 
@@ -43,13 +52,17 @@ use Foswiki::Contrib::CacheContrib ();
 
 use constant TRACE => 0;    # toggle me
 
-###############################################################################
-# ImageCore constructor
+=begin TML
+
+---++ ClassMethod new($session) -> $core
+
+constructor
+
+=cut
+
 sub new {
   my $class = shift;
   my $session = shift;
-
-  $session ||= $Foswiki::Plugins::SESSION;
 
   my $this = bless({
       session => $session || $Foswiki::Plugins::SESSION,
@@ -65,6 +78,8 @@ sub new {
     $class
   );
 
+  Foswiki::Plugins::JQueryPlugin::createPlugin("image");
+
   $this->{errorMsg} = '';    # from image mage
 
   #_writeDebug("done");
@@ -72,7 +87,71 @@ sub new {
   return $this;
 }
 
-###############################################################################
+
+=begin TML
+
+---++ ObjectMethod cache() -> $chiCache
+
+returns a cache object. See Foswiki::Contrib::CacheContrib::getCache()
+
+=cut
+
+sub cache {
+  my $this = shift;
+
+  $this->{cache} = Foswiki::Contrib::CacheContrib::getCache("ImagePlugin")
+    unless defined $this->{cache};
+
+  return $this->{cache};
+}
+
+=begin TML
+
+---++ ObjectMethod json() -> $json
+
+returns a JSON object 
+
+=cut
+
+sub json {
+  my $this = shift;
+
+  unless (defined $this->{json}) {
+    $this->{json} = JSON->new->allow_nonref(1);
+  }
+
+  return $this->{json};
+}
+
+=begin TML
+
+---++ ObjectMethod formatHtml5Data($key, $val) -> $dataAttr
+
+converts the given key-value pair into a proper HTML5 data attribute
+
+=cut
+
+sub formatHtml5Data {
+  my ($this, $key, $val) = @_;
+
+  if (ref($val)) {
+    $val = $this->json->encode($val);
+  } else {
+    $val = Foswiki::entityEncode($val);
+  }
+  return "data-$key='$val'";
+}
+
+=begin TML
+
+---++ ObjectMethod mage() -> $imageMagick
+
+returns a cached Image::Magick object. Note that this class maintains an
+image magick object using this methid used for the bulk of operations.
+Additional uncached Image::Magick object can be created using =createImage()=.
+
+=cut
+
 sub mage {
   my $this = shift;
   
@@ -81,14 +160,28 @@ sub mage {
   return $this->{mage};
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod createImage() -> $imageMagick
+
+allocates a new Image::Magick object. Make sure you deallocate it on your own
+
+=cut
+
 sub createImage {
   my $this = shift;
-
+  
   return Image::Magick->new(@_);
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod filter() -> $filterService
+
+returns a cached filter object. See Foswiki::Plugins::ImagePlugin::Filter.
+
+=cut
+
 sub filter {
   my $this = shift;
 
@@ -101,7 +194,17 @@ sub filter {
 }
 
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod finishPlugin()
+
+deallocates all delegates cached within this core object, i.e. cache, image magick, json
+and filter objects.
+
+It also clears any outdated thumbnails left behind by image operations.
+
+=cut
+
 sub finishPlugin {
   my $this = shift;
 
@@ -113,9 +216,31 @@ sub finishPlugin {
   undef $this->{filter};
   undef $this->{types};
   undef $this->{imageplugin};
+  undef $this->{cache};
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod handleREST($subject, $verb, $response) -> $result
+
+impements the =process= REST handler. available url parameters:
+
+   * web
+   * topic
+   * file
+   * refresh
+   * size
+   * zoom
+   * width
+   * height
+   * filter
+   * rotate
+   * transparent
+   * quality
+   * output
+
+=cut
+
 sub handleREST {
   my ($this, $subject, $verb, $response) = @_;
 
@@ -129,8 +254,9 @@ sub handleREST {
   my $refresh = $query->param('refresh') || '';
   $refresh = ($refresh =~ /^(on|1|yes|img|image)$/g) ? 1 : 0;
 
-  $this->clearCache() if $refresh;
+  $this->cache->clear() if $refresh;
 
+  $imgFile = _urlDecode($imgFile);
   $imgFile =~ s/^$Foswiki::cfg{DefaultUrlHost}$Foswiki::cfg{PubUrlPath}//;
   $imgFile =~ s/^$Foswiki::cfg{PubUrlPath}//;
   $imgFile =~ s/^\///;
@@ -141,7 +267,6 @@ sub handleREST {
     $imgFile = $3;
   } 
 
-  _writeDebug("processing image");
   my $imgInfo = $this->processImage(
     $imgWeb, $imgTopic, $imgFile, {
       size => ($query->param('size') || ''),
@@ -152,6 +277,7 @@ sub handleREST {
       filter => ($query->param('filter') || ''),
       rotate => ($query->param('rotate') || ''),
       transparent => ($query->param('transparent') || ''),
+      quality => ($query->param('quality') || ''),
       output => ($query->param('output') || ''),
       type => "plain"
     },
@@ -159,7 +285,6 @@ sub handleREST {
   );
   unless ($imgInfo) {
     $imgInfo->{file} = 'pixel.gif';
-    $imgInfo->{filesize} = '807';
     $imgWeb = $Foswiki::cfg{SystemWebName};
     $imgTopic = 'ImagePlugin';
   }
@@ -173,7 +298,14 @@ sub handleREST {
   return "";
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod handleIMAGE($paramas, $topic, $web) -> $result
+
+impements the =%IMAGE= macro
+
+=cut
+
 sub handleIMAGE {
   my ($this, $params, $theTopic, $theWeb) = @_;
 
@@ -203,9 +335,9 @@ sub handleIMAGE {
   $params->{caption} ||= '';
   $params->{align} ||= 'none';
   $params->{class} ||= '';
+  $params->{id} ||= '';
   $params->{footer} ||= '';
   $params->{header} ||= '';
-  $params->{id} ||= '';
   $params->{mousein} ||= '';
   $params->{mouseout} ||= '';
   $params->{style} ||= '';
@@ -215,6 +347,7 @@ sub handleIMAGE {
   $params->{tooltipcrop} ||= 'off';
   $params->{tooltipwidth} ||= '300';
   $params->{tooltipheight} ||= '300';
+  $params->{quality} ||= '';
   $params->{lazyload} = Foswiki::Func::isTrue($params->{lazyload}, 0);
 
   $params->{class} =~ s/'/"/g;
@@ -225,7 +358,7 @@ sub handleIMAGE {
   $params->{size} ||= '';
 
   unless ($params->{type}) {
-    if ($params->{href} || $params->{width} || $params->{height} || $params->{size}) {
+    if ($params->{href} || $params->{width} || $params->{height} || $params->{size} || $params->{caption}) {
       $params->{type} = 'simple';
     } else {
       $params->{type} = 'plain';
@@ -257,7 +390,7 @@ sub handleIMAGE {
   my $doRefresh = $query->param('refresh') || 0;
   $doRefresh = ($doRefresh =~ /^(on|1|yes|img)$/g) ? 1 : 0;
 
-  $this->clearCache() if $doRefresh;
+  $this->cache->clear() if $doRefresh;
 
   # strip off prefix pointing to self
   my $selfUrl = $Foswiki::cfg{DefaultUrlHost} . $Foswiki::cfg{PubUrlPath};
@@ -449,25 +582,27 @@ sub handleIMAGE {
   }
 
   my $html5Data = join(" ", @html5Data);
-  $result =~ s/\$data/$html5Data/g;
-  $result =~ s/\$class/ $params->{class}/g;
-  $result =~ s/\$href/$params->{href}/g;
-  $result =~ s/\$src/$thumbFileUrl/g;
-  $result =~ s/\$thumbfile/$imgInfo->{file}/g;
-  $result =~ s/\$width/($this->pingImage($imgInfo))[0]/ge;
-  $result =~ s/\$height/($this->pingImage($imgInfo))[1]/ge;
-  $result =~ s/\$framewidth/($this->pingImage($imgInfo))[0]-1/ge;
-  $result =~ s/\$origsrc/$origFileUrl/g;
-  $result =~ s/\$origwidth/(pingOrigImage($this, $imgInfo))[0]/ge;
-  $result =~ s/\$origheight/(pingOrigImage($this, $imgInfo))[1]/ge;
-  $result =~ s/\$text/$origFile/g;
-  $result =~ s/\$id/$params->{id}/g;
-  $result =~ s/\$style/$params->{style}/g;
-  $result =~ s/\$align/$params->{align}/g;
-  $result =~ s/\$alt/_plainify($params->{alt})/ge;
-  $result =~ s/\$title/_plainify($params->{title})/ge;
-  $result =~ s/\$desc/_plainify($params->{desc})/ge;
-  $result =~ s/\$lazyload/$params->{lazyload}?"loading='lazy' ":""/ge;
+  $result =~ s/\$data\b/$html5Data/g;
+  $result =~ s/\$class\b/ $params->{class}/g;
+  $result =~ s/\$href\b/$params->{href}/g;
+  $result =~ s/\$src\b/$thumbFileUrl/g;
+  $result =~ s/\$thumbfile\b/$imgInfo->{file}/g;
+  $result =~ s/\$width\b/($this->pingImage($imgInfo))[0]/ge;
+  $result =~ s/\$height\b/($this->pingImage($imgInfo))[1]/ge;
+  $result =~ s/\$type\b/($this->pingImage($imgInfo))[3]/ge;
+  $result =~ s/\$framewidth\b/($this->pingImage($imgInfo))[0]-1/ge;
+  $result =~ s/\$origsrc\b/$origFileUrl/g;
+  $result =~ s/\$origwidth\b/($this->pingOrigImage($imgInfo))[0]/ge;
+  $result =~ s/\$origheight\b/($this->pingOrigImage($imgInfo))[1]/ge;
+  $result =~ s/\$text\b/$origFile/g;
+  $result =~ s/\$id\b/$params->{id}/g;
+  $result =~ s/\$style\b/$params->{style}/g;
+  $result =~ s/\$align\b/$params->{align}/g;
+  $result =~ s/\$alt\b/_plainify($params->{alt})/ge;
+  $result =~ s/\$title\b/_plainify($params->{title})/ge;
+  $result =~ s/\$desc\b/_plainify($params->{desc})/ge;
+  $result =~ s/\$lazyload\b/$params->{lazyload}?"loading='lazy' ":""/ge;
+  $result =~ s/\$base64\b/_encodeBase64($imgInfo)/ge;
 
   $result =~ s/\$perce?nt/\%/g;
   $result =~ s/\$nop//g;
@@ -475,27 +610,115 @@ sub handleIMAGE {
   $result =~ s/\$dollar/\$/g;
 
   # clean up empty 
-  $result =~ s/(style|width|height|class|alt|id)=''//g;
+  $result =~ s/(style|width|height|class|alt|id)=(''|"")//g;
 
   # recursive call for delayed TML expansion
-  return '<noautolink>'.$result.'</noautolink>';
+  return $result;
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod parseMediawikiParams($params)
+
+This is a convenience method that tries to mimik image parameters as in
+MediaWiki. So instead of using individual parameters to the =%IMAGE= macro
+
+   * type (link,frame,thumb)
+   * file
+   * width
+   * height
+   * size and 
+   * caption
+
+caption are extracted from the =%IMAGE= default parameter.
+
+=cut
+
+sub parseMediawikiParams {
+  my ($this, $params) = @_;
+
+  my $argStr = $params->{_DEFAULT} || '';
+  return unless $argStr =~ /\|/g;
+
+  $argStr =~ s/^\[\[//o;
+  $argStr =~ s/\]\]$//o;
+
+  my ($file, @args) = split(/\|/, $argStr);
+  $params->{type} = 'link' if $file =~ s/^://o;
+  $params->{file} = $params->{_DEFAULT} = $file;
+
+  foreach my $arg (@args) {
+    $arg =~ s/^\s+//o;
+    $arg =~ s/\s+$//o;
+    if ($arg =~ /^(right|left|center|none)$/i) {
+      $params->{align} = $1 unless $params->{align};
+    } elsif ($arg =~ /^frame$/i) {
+      $params->{type} = 'frame';
+    } elsif ($arg =~ m/^thumb(nail)?$/i) {
+      $params->{type} = 'thumb' unless $params->{type};
+    } elsif ($arg =~ /^(\d+)(px)?$/i) {
+      $params->{size} = $1 unless $params->{size};
+    } elsif ($arg =~ /^w(\d+)(px)=$/i) {
+      $params->{width} = $1 unless $params->{width};
+    } elsif ($arg =~ /^h(\d+)(px)?$/i) {
+      $params->{height} = $1 unless $params->{height};
+    } else {
+      $params->{caption} = $arg unless $params->{caption};
+    }
+  }
+}
+
+
+=begin TML
+
+---++ ObjectMethod pingImage($imgInfo) -> ($width, $height)
+
+returns geometry info for the given info record. The =$imgInfo= parameter
+is a has reference that is enriched with the found width and height so
+that this method is safe to be called multiple times on the same image
+thus caching results within the =$imgInfo= record.
+
+It processes the image in
+
+   * imgPath
+
+results are cached in 
+
+   * width
+   * height
+
+=cut
+
 sub pingImage {
   my ($this, $imgInfo) = @_;
 
   unless (defined $imgInfo->{width}) {
     _writeDebug("pinging $imgInfo->{imgPath}");
-    ($imgInfo->{width}, $imgInfo->{height}, $imgInfo->{filesize}, $imgInfo->{format}) = $this->pingCached($imgInfo->{imgPath});
+    ($imgInfo->{width}, $imgInfo->{height}) = $this->ping($imgInfo->{imgPath});
     $imgInfo->{width} ||= 0;
     $imgInfo->{height} ||= 0;
   }
 
-  return ($imgInfo->{width}, $imgInfo->{height}, $imgInfo->{filesize}, $imgInfo->{format});
+  return ($imgInfo->{width}, $imgInfo->{height});
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod pingOrigImage($imgInfo) -> ($width, $height, $fileSize)
+
+same as =pingImage()= but adding infos about the original image. results are cached in
+
+It processes the image in 
+
+   * origImgPath
+
+and stores results in 
+
+   * origWidth
+   * origHeight
+
+=cut
+
 sub pingOrigImage {
   my ($this, $imgInfo) = @_;
 
@@ -504,63 +727,105 @@ sub pingOrigImage {
       _writeDebug("not pinging $imgInfo->{origImgPath} ... potentially large files consisting of frames");
     } else {
       _writeDebug("pinging orig $imgInfo->{origImgPath}");
-      ($imgInfo->{origWidth}, $imgInfo->{origHeight}, $imgInfo->{origFilesize}, $imgInfo->{origFormat}) = $this->pingCached($imgInfo->{origImgPath});
+      ($imgInfo->{origWidth}, $imgInfo->{origHeight}) = $this->ping($imgInfo->{origImgPath});
     }
     $imgInfo->{origWidth} ||= 0;
     $imgInfo->{origHeight} ||= 0;
   }
 
-  return ($imgInfo->{origWidth}, $imgInfo->{origHeight}, $imgInfo->{origFilesize}, $imgInfo->{origFormat});
+  return ($imgInfo->{origWidth}, $imgInfo->{origHeight});
 }
 
-###############################################################################
-sub pingCached {
+
+=begin TML
+
+---++ ObjectMethod ping($path) -> ($width, $height)
+
+reads image information for a file at =$path=. Note that other than the two above
+methods =pingImage()= and =pingOrigImage()= results are _not_ cached whatsoever.
+
+=cut
+
+sub ping {
   my ($this, $imgPath) = @_;
 
   my $width;
   my $height;
-  my $size;
-  my $format;
-  my $cache = Foswiki::Contrib::CacheContrib::getCache("ImagePlugin");
-  my $entry = $cache->get($imgPath);
+  my $entry = $this->cache->get($imgPath);
 
-  #print STDERR "looking up cache for $imgPath\n";
+  #print STDERR "called ping for $imgPath\n";
 
-  if ($entry && $entry =~ /^(.*)::(.*)::(.*)::(.*)$/) {
+  if ($entry && $entry =~ /^(\d+)::(\d+)$/) {
     $width = $1;
     $height = $2;
-    $size = $3;
-    $format = $4;
-    #print STDERR "... found. width=$width, height=$height, size=$size, format=$format\n";
+    #print STDERR "ping image ... found in cache: width=$width, height=$height\n";
   } else {
-    ($width, $height, $size, $format) = $this->mage->Ping($imgPath);
-    $entry = $width.'::'.$height.'::'.$size.'::'.$format;
-    $cache->set($imgPath, $entry);
-    #print STDERR "... pinging image. width=$width, height=$height, size=$size, format=$format\n";
+
+    if (1) {
+      $this->mage->Read($imgPath);
+      $this->mage->AutoOrient();
+      ($width, $height) = $this->mage->Get('width', 'height');
+      $width //= 0;
+      $height //= 0;
+
+      undef $this->{mage}; # unload again
+    } else {
+
+      # this does not respect image orientation
+      ($width, $height) = $this->mage->Ping($imgPath);
+    }
+
+    #print STDERR "ping image ... computed: width=$width, height=$height\n";
+    
+    $entry = $width.'::'.$height;
+    $this->cache->set($imgPath, $entry);
   }
 
-  return ($width, $height, $size, $format);
+  return ($width, $height);
 }
 
-###############################################################################
-sub clearCache {
-  my $this = shift;
-  return Foswiki::Contrib::CacheContrib::clearCache("ImagePlugin");
-}
+=begin TML
 
-###############################################################################
+---++ ObjectMethod processImage($web, $topic, $file, $params, $doRefresh) -> $imgInfo
+
+This is the central method that processes image within this core. It calculates
+the derived image or thumbnail based on the parameters given. The name of the resulting image file
+encodes information about the parameters being used to compute it encoded in md5. So this
+method will look out for an existing target and will only compute it if it doesn't exist yet
+or the boolean flag =$doRefresh= has been specified. 
+
+The =$params= hash may contain the following properties:
+
+   * crop
+   * filter
+   * frame or layer
+   * height
+   * output
+   * quality
+   * rotate
+   * size
+   * transparent
+   * type
+   * width
+   * zoom
+
+Note that any =filter= parameter will be delegated to the Filter service at 
+Foswiki::Plugins::ImagePlugin::Filter
+
+=cut
+
 sub processImage {
   my ($this, $imgWeb, $imgTopic, $imgFile, $params, $doRefresh) = @_;
 
-  my $size = $params->{size} || '';
   my $crop = $params->{crop} || 'off';
-  my $zoom = $params->{zoom} || 'off';
-  my $width = $params->{width} || '';
+  my $filter = $params->{filter} || '';
   my $height = $params->{height} || '';
   my $output = $params->{output} || '';
   my $rotate = $params->{rotate} || '';
-  my $filter = $params->{filter} || '';
+  my $size = $params->{size} || '';
   my $transparent = $params->{transparent} || '';
+  my $width = $params->{width} || '';
+  my $zoom = $params->{zoom} || 'off';
 
   _writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, rotate=$rotate, refresh=$doRefresh, output=$output, transparent=$transparent)");
 
@@ -593,7 +858,7 @@ sub processImage {
     $frame = '';
   }
 
-  if ($size || ($crop && $crop ne 'off') || $width || $height || $rotate || $doRefresh || !_isWebby($imgFile) || $output || $filter || ($frame && $frame ne '') || $transparent) {
+  if ($size || ($crop && $crop ne 'off') || $width || $height || $rotate || $doRefresh || !_isWebby($imgFile) || $output || $filter || ($frame && $frame ne '') || $transparent || $params->{quality}) {
     if (!$size) {
       if ($width || $height) {
         $size = $width . 'x' . $height;
@@ -609,7 +874,7 @@ sub processImage {
         $size .= '^';
       }
     }
-    #_writeDebug("size=$size");
+    _writeDebug("size=$size");
 
     $imgInfo{file} = $this->getImageFile(
       $imgWeb, $imgTopic, $imgFile, {
@@ -630,7 +895,7 @@ sub processImage {
 
     $imgInfo{oldImgPath} = $Foswiki::cfg{PubDir} . '/' . $imgWeb . '/' . $imgTopic . '/_' . $imgInfo{file};
 
-    #_writeDebug("checking for $imgInfo{imgFile}");
+    _writeDebug("checking for $imgInfo{imgPath}");
 
     # compare file modification times
     $doRefresh = 1
@@ -691,16 +956,9 @@ sub processImage {
           return if $1 >= 400;
         }
 
-        # gravity
+        # gravity crop
         if ($crop =~ /^(on|northwest|north|northeast|west|center|east|southwest|south|southeast)$/i) {
           $crop = "center" if $crop eq 'on';
-          _writeDebug("Set(Gravity=>$crop)");
-          $error = $this->mage->Set(Gravity => "$crop");
-          if ($error =~ /(\d+)/) {
-            $this->{errorMsg} = $error;
-            _writeDebug("Error: $error");
-            return if $1 >= 400;
-          }
 
           my $geometry = '';
           if ($size) {
@@ -713,9 +971,7 @@ sub processImage {
             $geometry = $width . 'x' . $height . '+0+0';
           }
 
-          # new method
-          _writeDebug("extent(geometry=>$geometry)");
-          $error = $this->mage->Extent($geometry);
+          $error = $this->mage->Crop(geometry => $geometry, gravity => $crop);
           if ($error =~ /(\d+)/) {
             $this->{errorMsg} = $error;
             _writeDebug("Error: $error");
@@ -800,6 +1056,16 @@ sub processImage {
         }
       }
 
+      # quality
+      if ($params->{quality}) {
+        _writeDebug("quality=$params->{quality}");
+        $error = $this->mage->Set(quality => $params->{quality});
+        if ($error =~ /(\d+)/) {
+          $this->{errorMsg} = $error;
+          _writeDebug("Error: $error");
+          return if $1 >= 400;
+        }
+      }
 
       # write
       _writeDebug("writing to $imgInfo{imgPath}");
@@ -813,7 +1079,7 @@ sub processImage {
       # fix file perms
       chmod($Foswiki::cfg{Store}{filePermission}, $imgInfo{imgPath});
 
-      ($imgInfo{width}, $imgInfo{height}, $imgInfo{filesize}, $imgInfo{format}) = $this->mage->Get('width', 'height', 'filesize', 'format');
+      ($imgInfo{width}, $imgInfo{height}) = $this->mage->Get('width', 'height');
       $imgInfo{width} ||= 0;
       $imgInfo{height} ||= 0;
     }
@@ -830,9 +1096,17 @@ sub processImage {
   return \%imgInfo;
 }
 
-###############################################################################
-sub beforeSaveHandler {
-  my ($this, undef, $topic, $web, $meta) = @_;
+=begin TML
+
+---++ ObjectMethod afterSaveHandler(undef, $topic, $web, $error, $meta)
+
+extracts inline data images if configured so in the =AutoAttachInlineImages=
+setting of the plugin
+
+=cut
+
+sub afterSaveHandler {
+  my ($this, undef, $topic, $web, $error, $meta) = @_;
 
   # clear all thumbs on save
   $this->flagThumbsForDeletion($web, $topic);
@@ -844,13 +1118,42 @@ sub beforeSaveHandler {
   my $wikiName = Foswiki::Func::getWikiName();
   return unless Foswiki::Func::checkAccessPermission("CHANGE", $wikiName, undef, $topic, $web);
 
-  $meta = Foswiki::Func::readTopic($web, $topic) unless defined $meta;
+  ($meta) = Foswiki::Func::readTopic($web, $topic) unless defined $meta;
   my $text = $meta->text() // '';
+
+  if ($this->extractInlineImages($meta, $text)) {
+    $meta->text($text);
+    $meta->saveAs(
+      minor => 1,
+      dontlog => 1,
+    );
+  }
+}
+
+=begin TML
+
+---++ ObjectMethod extractInlineImages($meta, $text) -> $numImages
+
+Extracts any inline data images within =$text= and returns the number of images 
+found. These will be attached to an existing =$meta= object. 
+
+Note that =$text= is modified in place, replacing any found data with an appropriate
+markup to render the newly attached image. See the =InlineImageTemplate= plugin configuration.
+
+=cut
+
+sub extractInlineImages {
+  #my ($this, $meta, $text) = @_;
+
+  my $this = shift;
+  my $meta = shift;
 
   my $i = 0;
   my @images = ();
+  my $web = $meta->web;
+  my $topic = $meta->topic;
 
-  while ($text =~ s/<img\s+([^>]*?)\s*src=["']data:([a-z]+\/[a-z\-\.\+]+)?(;[a-z\-]+\=[a-z\-]+)?;base64,(.*?)["']\s*([^>]*?)\s*\/?>/_IMAGE_$i/i) {
+  while ($_[0] =~ s/<img\s+([^>]*?)\s*src=["']data:([a-z]+\/[a-z\-\.\+]+)?(;[a-z\-]+\=[a-z\-]+)?;base64,(.*?)["']\s*([^>]*?)\s*\/?>/_IMAGE_$i/i) {
 
     my $before = $1 || '';
     my $mimeType = $2;
@@ -888,7 +1191,7 @@ sub beforeSaveHandler {
       filesize => $size,
       minor => 1,
       dontlog => 1,
-      comment => 'Auto-attached by ImagePlugin',
+      comment => 'Auto-attached by <nop>ImagePlugin',
     );
 
     my $image = $this->{inlineImageTemplate};
@@ -906,14 +1209,21 @@ sub beforeSaveHandler {
 
   # patch in the markup
   foreach my $image (@images) {
-    $text =~ s/_IMAGE_$i/$image/ or print STDERR "WOOPS not found\n";
+    $_[0] =~ s/_IMAGE_$i/$image/ or print STDERR "WOOPS not found\n";
     $i++;
   }
 
-  $meta->text($text) if $i;
+  return $i;
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod afterRenameHandler($oldWeb, $oldTopic, $oldAttachment, $newWeb, $newTopic, $newAttachment)
+
+afterRename operations: flags old thumbnails as deleteable.
+
+=cut
+
 sub afterRenameHandler {
   my ($this, $oldWeb, $oldTopic, $oldAttachment, $newWeb, $newTopic, $newAttachment) = @_;
 
@@ -936,7 +1246,18 @@ sub afterRenameHandler {
   $this->flagThumbsForDeletion($oldWeb, $oldTopic, $oldAttachment);
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod flagThumbsForDeletion($web, $topic, $attachment)
+
+This method reads all thumbnails on the given web.topic. These are the =igp_md5...=
+files which are then renamed by prepending the filename with an underscore (_).
+
+If this thumbnail has to be recomputed yet again, it is re-renamed removing the underscore
+again. Any =_igp_md5...= files left are considered old and are deleted later on.
+
+=cut
+
 sub flagThumbsForDeletion {
   my ($this, $web, $topic, $attachment) = @_;
 
@@ -962,7 +1283,14 @@ sub flagThumbsForDeletion {
   }
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod clearAllThumbs($web, $topic, $attachment)
+
+deletes all thumbnail files at the given web.topic, those named =igp_md5...=
+
+=cut
+
 sub clearAllThumbs {
   my ($this, $web, $topic, $attachment) = @_;
 
@@ -974,7 +1302,15 @@ sub clearAllThumbs {
   return $this->clearMatchingThumbs($web, $topic, $attachment, "igp_[0-9a-f]{32}_$attachment");
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod clearOutdatedThumbs($web, $topic, $attachment)
+
+deletes all outdated thumbnail files at the given web.topic, those named =_igp_md5...=.
+Note the underscore infront of the name.
+
+=cut
+
 sub clearOutdatedThumbs {
   my ($this, $web, $topic, $attachment) = @_;
 
@@ -986,7 +1322,14 @@ sub clearOutdatedThumbs {
   return $this->clearMatchingThumbs($web, $topic, $attachment, "_igp_[0-9a-f]{32}_$attachment");
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod clearMatchingThumbs($web, $topic, $attachment, $pattern)
+
+delets all thumbnails for a given pattern
+
+=cut
+
 sub clearMatchingThumbs {
   my ($this, $web, $topic, $attachment, $pattern) = @_;
 
@@ -1013,7 +1356,14 @@ sub clearMatchingThumbs {
   }
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod takeOutSVG($text)
+
+takes out all inline SVG files. Note that =$text= is modified in place.
+
+=cut
+
 sub takeOutSVG {
   my $this = shift;
   #my $text = $_[0];
@@ -1021,7 +1371,15 @@ sub takeOutSVG {
   $_[0] =~ s/(<svg.*?<\/svg>)/$this->processInlineSvg($1)/geims;
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod processInlineSvg($data) -> $markup
+
+processes any SVG file encoded in =$data= found by =takeOutSVG()=, attaches them to the current topic
+and returns appropriate markup to render it otherwise.
+
+=cut
+
 sub processInlineSvg {
   my ($this, $data) = @_;
 
@@ -1117,55 +1475,34 @@ sub processInlineSvg {
   return $result;
 }
 
-###############################################################################
-# sets type (link,frame,thumb), file, width, height, size, caption
-sub parseMediawikiParams {
-  my ($this, $params) = @_;
+=begin TML
 
-  my $argStr = $params->{_DEFAULT} || '';
-  return unless $argStr =~ /\|/g;
+---++ ObjectMethod inlineError($params)
 
-  $argStr =~ s/^\[\[//o;
-  $argStr =~ s/\]\]$//o;
+creates an inline html alert message using the =errorMsg= property
+of this class. Warnings may be suppressed if =$params->{warn}= is
+switched off.
 
-  my ($file, @args) = split(/\|/, $argStr);
-  $params->{type} = 'link' if $file =~ s/^://o;
-  $params->{file} = $params->{_DEFAULT} = $file;
+=cut
 
-  foreach my $arg (@args) {
-    $arg =~ s/^\s+//o;
-    $arg =~ s/\s+$//o;
-    if ($arg =~ /^(right|left|center|none)$/i) {
-      $params->{align} = $1 unless $params->{align};
-    } elsif ($arg =~ /^frame$/i) {
-      $params->{type} = 'frame';
-    } elsif ($arg =~ m/^thumb(nail)?$/i) {
-      $params->{type} = 'thumb' unless $params->{type};
-    } elsif ($arg =~ /^(\d+)(px)?$/i) {
-      $params->{size} = $1 unless $params->{size};
-    } elsif ($arg =~ /^w(\d+)(px)=$/i) {
-      $params->{width} = $1 unless $params->{width};
-    } elsif ($arg =~ /^h(\d+)(px)?$/i) {
-      $params->{height} = $1 unless $params->{height};
-    } else {
-      $params->{caption} = $arg unless $params->{caption};
-    }
-  }
-}
-
-###############################################################################
 sub inlineError {
   my ($this, $params) = @_;
 
   return '' if $params && $params->{warn} eq 'off';
-  return "<span class=\"foswikiAlert\">Error: $this->{errorMsg}</span>"
+  return "<span class='foswikiAlert'>Error: $this->{errorMsg}</span>"
     if !$params || $params->{warn} eq 'on' || $params->{warn} eq '';
   return $params ? $params->{warn} : 'undefined warning';
 }
 
-###############################################################################
-# mirrors an image and attach it to the given web.topic
-# turns true on success; on false errorMsg is set
+=begin TML
+
+---++ ObjectMethod mirrorImage($web, $topic, $url, $fileName, $force)
+
+Downloads and mirrors an image and attach it to the given web.topic turns true
+on success. On false the =errorMsg= property is set.
+
+=cut
+
 sub mirrorImage {
   my ($this, $web, $topic, $url, $fileName, $force) = @_;
 
@@ -1251,7 +1588,15 @@ sub mirrorImage {
   return 1;
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod getImageFile($web, $topic, $topic, $params) -> $fileName
+
+returns an =igp_md5...= image name for the thumbnail to be processed based on the
+=$params=. 
+
+=cut
+
 sub getImageFile {
   my ($this, $web, $topic, $file, $params) = @_;
 
@@ -1286,7 +1631,16 @@ sub getImageFile {
   }
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod updateAttachment($web, $topic, $fileName, $params)
+
+saves the given file as an attachment to the web.topic 
+
+See Foswiki::Func::saveAttachment()
+
+=cut
+
 sub updateAttachment {
   my ($this, $web, $topic, $filename, $params) = @_;
 
@@ -1298,7 +1652,7 @@ sub updateAttachment {
   $baseFilename =~ s/^(.*)[\/\\](.*?)$/$2/;
 
   my $args = {
-    comment => 'Auto-attached by ImagePlugin',
+    comment => 'Auto-attached by <nop>ImagePlugin',
     dontlog => 1,
     filedate => time(),
     #hide=>1,
@@ -1329,7 +1683,15 @@ sub updateAttachment {
   };
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod getTemplate($name) -> $tmpl
+
+loads the named foswiki template or the default template "imageplugin".
+results are cached for performance reasons
+
+=cut
+
 sub getTemplate {
   my ($this, $name) = @_;
 
@@ -1346,7 +1708,14 @@ sub getTemplate {
   return $this->{$name};
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod readMimeTypes() -> $types
+
+reads and caches the content of the =MimeTypesFileName=.
+
+=cut
+
 sub readMimeTypes {
   my $this = shift;
 
@@ -1357,7 +1726,14 @@ sub readMimeTypes {
   return $this->{types};
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod mimeTypeToSuffix($mimeType) -> $suffix
+
+derives the appropriate file suffix for a given mime type
+
+=cut
+
 sub mimeTypeToSuffix {
   my ($this, $mimeType) = @_;
 
@@ -1375,7 +1751,14 @@ sub mimeTypeToSuffix {
   return $suffix;
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod suffixToMimeType($suffix) -> $mimeType
+
+returns the matching mime type for a given file extension
+
+=cut
+
 sub suffixToMimeType {
   my ($this, $suffix) = @_;
 
@@ -1393,8 +1776,8 @@ sub suffixToMimeType {
 
 ##############################################################################
 # static functions
+##############################################################################
 
-###############################################################################
 # returns true if image can be displayed as is,
 # returns false if we want to force conversion to png
 sub _isWebby {
@@ -1404,7 +1787,6 @@ sub _isWebby {
   return 0;
 }
 
-###############################################################################
 # returns true if file format may contain more than one frame and thus
 # we default to extracting the first one 
 sub _isFramish {
@@ -1414,7 +1796,7 @@ sub _isFramish {
   return 0;
 }
 
-###############################################################################
+# returns true if the file is a kind of video
 sub _isVideo {
   my $file = shift;
 
@@ -1422,7 +1804,7 @@ sub _isVideo {
   return 0;
 }
 
-###############################################################################
+# returns a flat version of the given text
 sub _plainify {
   my $text = shift;
 
@@ -1441,18 +1823,26 @@ sub _plainify {
   return $text;
 }
 
-###############################################################################
 # from Foswiki.pm
 sub _urlEncode {
   my $text = shift;
 
-  $text = Encode::encode_utf8($text) if $Foswiki::UNICODE;
+  $text = Encode::encode_utf8($text);
   $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/sprintf('%%%02x',ord($1))/ge;
 
   return $text;
 }
 
-###############################################################################
+sub _urlDecode {
+  my $text = shift;
+
+  $text =~ s/%([\da-fA-F]{2})/chr(hex($1))/ge;
+  #$text = Encode::decode_utf8($text); disabled to make unicode attachments work in image gallery
+
+  return $text;
+}
+
+# returns the modification time of a file as stored on disk
 sub _getModificationTime {
   my $file = shift;
   return 0 unless $file;
@@ -1460,7 +1850,7 @@ sub _getModificationTime {
   return $stat[9] || $stat[10] || 0;
 }
 
-##############################################################################
+# returns a secured version of the given =$fileName= 
 sub _sanitizeAttachmentName {
   my $fileName = shift;
 
@@ -1474,37 +1864,32 @@ sub _sanitizeAttachmentName {
   $fileName =~ s{[\\/]+$}{};    # Get rid of trailing slash/backslash (unlikely)
   $fileName =~ s!^.*[\\/]!!;    # Get rid of leading directory components
   $fileName =~ s/$filter+//g;
-  $fileName =~ s/[{},\(\)]/_/g;    # some more
+  $fileName =~ s/[{},\(\)]+/_/g;    # some more
 
   return Foswiki::Sandbox::untaintUnchecked($fileName);
 }
 
-###############################################################################
+sub _encodeBase64 {
+  my $imgInfo = shift;
+
+  my $result = "";
+  my $buffer;
+  my $FILE;
+
+  open($FILE, "<", $imgInfo->{imgPath}) or return "";
+
+  while (read($FILE, $buffer, 60*57)) {
+    $result .= MIME::Base64::encode_base64($buffer);
+  }
+
+  close($FILE);
+
+  return $result;
+}
+
 sub _writeDebug {
   print STDERR "ImagePlugin - $_[0]\n" if TRACE;
 }
 
-###############################################################################
-sub json {
-  my $this = shift;
-
-  unless (defined $this->{json}) {
-    $this->{json} = JSON->new->allow_nonref(1);
-  }
-
-  return $this->{json};
-}
-
-###############################################################################
-sub formatHtml5Data {
-  my ($this, $key, $val) = @_;
-
-  if (ref($val)) {
-    $val = $this->_json->encode($val);
-  } else {
-    $val = Foswiki::entityEncode($val);
-  }
-  return "data-$key='$val'";
-}
 
 1;

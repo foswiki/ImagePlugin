@@ -13,13 +13,13 @@
 # GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
 
-package Foswiki::Plugins::ImagePlugin::IMAGETOOLTIP;
+package Foswiki::Plugins::ImagePlugin::IMAGE;
 
 =begin TML
 
----+ package Foswiki::Plugins::ImagePlugin::IMAGETOOLTIP
+---+ package Foswiki::Plugins::ImagePlugin::IMAGE
 
-This is the perl stub for the jquery.imagetooltip plugin.
+This is the perl stub for the image plugin.
 
 =cut
 
@@ -44,18 +44,18 @@ sub new {
 
   my $this = bless($class->SUPER::new( 
     $session,
-    name => 'ImageTooltip',
+    name => 'Image',
     version => $Foswiki::Plugins::ImagePlugin::VERSION,
     author => 'Michael Daum',
     homepage => 'http://foswiki.org/Extensions/ImagePlugin',
     puburl => '%PUBURLPATH%/%SYSTEMWEB%/ImagePlugin',
     documentation => "$Foswiki::cfg{SystemWebName}.ImagePlugin",
-    javascript => ['jquery.imagetooltip.js'],
-    dependencies => ['metadata', 'ui', 'image'], 
+    css => ['image.css'],
   ), $class);
 
   return $this;
 }
 
 1;
+
 

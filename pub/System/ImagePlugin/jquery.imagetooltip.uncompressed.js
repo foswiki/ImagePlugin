@@ -1,7 +1,7 @@
 /*
  * jQuery image tooltip - helper to display an image preview in a tooltip
  *
- * Copyright (c) 2018-2020 Michael Daum http://michaeldaumconsulting.com
+ * Copyright (c) 2018-2024 Michael Daum http://michaeldaumconsulting.com
  *
  * Licensed under the GPL license http://www.gnu.org/licenses/gpl.html
  *
@@ -23,7 +23,7 @@ jQuery(function($) {
 
     $this.addClass("inited");
 
-    if (typeof(opts.image) !== 'undefined' && opts.image.match(/\.(jpe?g|gif|png|bmp|svgz?|xcf|psd|tiff?|ico|pdf|psd|ps|mp4|avi|mov|webp)$/i)) { // SMELL: yet another list of webby images
+    if (typeof(opts.image) !== 'undefined' && opts.image.match(/\.(avif|jpe?g|gif|png|bmp|svgz?|xcf|psd|tiff?|ico|pdf|psd|ps|mp4|avi|mov|webp|heic|heif)$/i)) { // SMELL: yet another list of webby images
       $this.tooltip({
         show: {
           delay: 350

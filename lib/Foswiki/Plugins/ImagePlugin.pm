@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2020 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2024 Michael Daum http://michaeldaumconsulting.com
 #
 # Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -24,20 +24,37 @@
 
 package Foswiki::Plugins::ImagePlugin;
 
+=begin TML
+
+---+ package Foswiki::Plugins::ImagePlugin
+
+base class to hook into the foswiki core
+
+=cut
+
 use strict;
 use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
+use Foswiki::Plugins::JQueryPlugin ();
 use Foswiki::Plugins::ImagePlugin::Core ();
 
-our $VERSION = '10.00';
-our $RELEASE = '26 Oct 2020';
+our $VERSION = '11.30';
+our $RELEASE = '%$RELEASE%';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
+our $LICENSECODE = '%$LICENSECODE%';
 our $core;
 
-###############################################################################
+=begin TML
+
+---++ initPlugin($topic, $web, $user) -> $boolean
+
+initialize the plugin, automatically called during the core initialization process
+
+=cut
+
 sub initPlugin {
 
   # check for Plugins.pm versions
@@ -76,6 +93,7 @@ sub initPlugin {
   # register jquery.imagetooltip plugin if jquery is isntalled
   if ($Foswiki::cfg{Plugins}{JQueryPlugin}{Enabled}) {
     require Foswiki::Plugins::JQueryPlugin;
+    Foswiki::Plugins::JQueryPlugin::registerPlugin("Image", 'Foswiki::Plugins::ImagePlugin::IMAGE');
     Foswiki::Plugins::JQueryPlugin::registerPlugin("ImageTooltip", 'Foswiki::Plugins::ImagePlugin::IMAGETOOLTIP');
   }
 
@@ -83,40 +101,66 @@ sub initPlugin {
   return 1;
 }
 
-###############################################################################
+=begin TML
+
+---++ ClassMethod getCore() -> $core
+
+returns a singleton Foswiki::Plugins::ImagePlugin::Core
+
+=cut
+
 sub getCore {
-  return $core if $core;
 
-  Foswiki::Func::addToZone("head", "IMAGEPLUGIN", <<'HERE');
-<link rel="stylesheet" href="%PUBURLPATH%/%SYSTEMWEB%/ImagePlugin/style.css" type="text/css" media="all" />
-HERE
+  unless ($core) {
+    require Foswiki::Plugins::ImagePlugin::Core;
+    $core = Foswiki::Plugins::ImagePlugin::Core->new(@_);
+  }
 
-  require Foswiki::Plugins::ImagePlugin::Core;
-  $core = Foswiki::Plugins::ImagePlugin::Core->new(@_);
   return $core;
 }
 
-###############################################################################
+=begin TML
+
+---++ ClassMethod finishPlugin()
+
+finish the plugin and the core if it has been used,
+automatically called during the core initialization process
+
+=cut
+
 sub finishPlugin {
+
   $core->finishPlugin if defined $core;
 
   undef $core;
 }
 
-###############################################################################
-sub afterRenameHandler {
+=begin TML
 
+---++ ClassMethod ObjectMethod afterRenameHandler()
+
+=cut
+
+sub afterRenameHandler {
   getCore->afterRenameHandler(@_);
 }
 
-###############################################################################
-sub beforeSaveHandler {
-  #my ($text, $topic, $web, $meta) = @_;
+=begin TML
 
-  getCore->beforeSaveHandler(@_);
+---++ ClassMethod afterSaveHandler()
+
+=cut
+
+sub afterSaveHandler {
+  getCore->afterSaveHandler(@_);
 }
 
-###############################################################################
+=begin TML
+
+---++ ClassMethod commonTagsHandler()
+
+=cut
+
 sub commonTagsHandler {
 
   return unless Foswiki::Func::getContext()->{view};
@@ -152,20 +196,32 @@ sub commonTagsHandler {
   $_[0] = $text;
 }
 
-###############################################################################
-# compatibility wrapper 
+=begin TML
+
+---++ ClassMethod takeOutBlocks($text, $tag, $map) -> $processedText
+
+compatibility wrapper 
+
+=cut
+
 sub takeOutBlocks {
   my ($text, $tag, $map) = @_;
 
-  return '' unless $text;
+  return '' unless defined $text;
   return $text unless $text =~ /\b$tag\b/;
 
   return Foswiki::takeOutBlocks($text, $tag, $map) if defined &Foswiki::takeOutBlocks;
   return $Foswiki::Plugins::SESSION->renderer->takeOutBlocks($text, $tag, $map);
 }
 
-###############################################################################
-# compatibility wrapper 
+=begin TML
+
+---++ ClassMethod putBackBlocks($text, $tag, $map) -> $processedText
+
+compatibility wrapper 
+
+=cut
+
 sub putBackBlocks {
   my ($text, $tag, $map) = @_;
 
@@ -173,7 +229,14 @@ sub putBackBlocks {
   return $Foswiki::Plugins::SESSION->renderer->putBackBlocks($text, $map, $tag);
 }
 
-###############################################################################
+=begin TML
+
+---++ ClassMethod renderLocalImage($web, $topic, $text) -> $result
+
+handles local images, called by commonTagsHandler()
+
+=cut
+
 sub renderLocalImage {
   my ($web, $topic, $text) = @_;
 
@@ -225,7 +288,14 @@ sub renderLocalImage {
   return $result;
 }
 
-###############################################################################
+=begin TML
+
+---++ ObjectMethod renderExternalImage(web, $topic, $prefix, $url) -> $result
+
+handles external images, called by commonTagsHandler()
+
+=cut
+
 sub renderExternalImage {
   my ($web, $topic, $prefix, $url) = @_;
 
@@ -261,7 +331,14 @@ sub renderExternalImage {
   return $prefix.$url;
 }
 
-###############################################################################
+=begin TML
+
+---++ ClassMethod getPubUrl()
+
+compatibility wrapper, returns the absolute pub url
+
+=cut
+
 sub getPubUrl {
   my $session = $Foswiki::Plugins::SESSION;
 
@@ -275,4 +352,3 @@ sub getPubUrl {
 }
 
 1;
-
