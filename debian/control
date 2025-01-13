@@ -1,19 +1,18 @@
-Source: foswiki-imageplugin
+Source: foswiki-image-plugin
 Section: web
-Priority: extra
+Priority: optional
 Maintainer: Michael Daum <debian@michaeldaumconsulting.com>
 Build-Depends: debhelper (>= 8)
-Standards-Version: 3.9.3
+Standards-Version: 3.9.2
 Homepage: http://foswiki.org/Extensions/ImagePlugin
+#Vcs-Git: git://git.debian.org/collab-maint/foswiki.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/foswiki.git;a=summary
 
-Package: foswiki-imageplugin
+Package: foswiki-image-plugin
 Architecture: all
-Depends: ${perl:Depends}, ${misc:Depends}, foswiki-jqueryplugin, libwww-perl, perlmagick
-Suggests: foswiki-xsendfilecontrib, libgraphics-magick-perl
-Description: Image and thumbnail services to display and alignment images 
- Use this plugin to control the display and alignment of images using an easy
- syntax and support for server-side resizing and thumbnailing. There are a set
- of pre-defined layout formats for images as well as a free layout
- configurability.
+Depends: ${misc:Depends}, foswiki-cache-contrib, foswiki-core, foswiki-j-query-plugin, libimage-magick-perl, libwww-perl 
+Suggests: foswiki-x-send-file-contrib
+Description: Image and thumbnail services 
+ (...add your text here...)
  .
  See http://foswiki.org/Extensions/ImagePlugin for more.

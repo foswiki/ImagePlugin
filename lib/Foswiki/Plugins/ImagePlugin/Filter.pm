@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# Copyright (C) 2016-2024 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2016-2025 Michael Daum http://michaeldaumconsulting.com
 #
 # and Foswiki Contributors. All Rights Reserved. Foswiki Contributors
 # are listed in the AUTHORS file in the root of this distribution.

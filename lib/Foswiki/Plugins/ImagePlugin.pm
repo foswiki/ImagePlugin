@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2024 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2025 Michael Daum http://michaeldaumconsulting.com
 #
 # Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -40,7 +40,7 @@ use Foswiki::Plugins ();
 use Foswiki::Plugins::JQueryPlugin ();
 use Foswiki::Plugins::ImagePlugin::Core ();
 
-our $VERSION = '11.30';
+our $VERSION = '11.40';
 our $RELEASE = '%$RELEASE%';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
@@ -90,7 +90,7 @@ sub initPlugin {
     http_allow => 'GET,POST',
   );
 
-  # register jquery.imagetooltip plugin if jquery is isntalled
+  # register jquery.imagetooltip plugin if jquery is installed
   if ($Foswiki::cfg{Plugins}{JQueryPlugin}{Enabled}) {
     require Foswiki::Plugins::JQueryPlugin;
     Foswiki::Plugins::JQueryPlugin::registerPlugin("Image", 'Foswiki::Plugins::ImagePlugin::IMAGE');

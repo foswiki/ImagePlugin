@@ -4,17 +4,17 @@
 
 %TMPL:DEF{"image:href"}%$src%TMPL:END%
 
-%TMPL:DEF{"image:plain"}%<noautolink><img src='$src' id='$id' class='imagePlain imagePlain_$align$class' $data alt='$alt' title='$title' width='$width' height='$height' $mousein $mouseout style='$style' $lazyload /></noautolink>%TMPL:END%
+%TMPL:DEF{"image:plain"}%<noautolink><img $lazyload src='$src' id='$id' class='imagePlain imagePlain_$align$class' $data alt='$alt' title='$title' width='$width' height='$height' $mousein $mouseout style='$style' /></noautolink>%TMPL:END%
 
-%TMPL:DEF{"image:simple"}%<noautolink><a href='$href' title='$title' id='$id' class='imageHref imageSimple imageSimple_$align$class' style='$style' $data data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout $lazyload/>$caption</a></noautolink>%TMPL:END%
+%TMPL:DEF{"image:simple"}%<noautolink><a href='$href' title='$title' id='$id' class='imageHref imageSimple imageSimple_$align$class' style='$style' $data data-orig-width='$origwidth' data-orig-height='$origheight'><img $lazyload src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout />$caption</a></noautolink>%TMPL:END%
   
-%TMPL:DEF{"image:frame"}%<noautolink><div id='$id' class='imageFrame imageFrame_$align$class' style='width:$framewidthpx'><a href='$href' class='imageHref' title='$title' $data data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style' $lazyload/></a>$caption</div></noautolink>%TMPL:END%
+%TMPL:DEF{"image:frame"}%<noautolink><div id='$id' class='imageFrame imageFrame_$align$class' style='width:$framewidthpx'><a href='$href' class='imageHref' title='$title' $data data-orig-width='$origwidth' data-orig-height='$origheight'><img $lazyload src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style' /></a>$caption</div></noautolink>%TMPL:END%
 
-%TMPL:DEF{"image:float"}%<noautolink><div id='$id' class='imageFloat imageFloat_$align$class'><a href='$href' class='imageHref' title='$title' $data data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout  style='$style' $lazyload/></a>$caption</div></noautolink>%TMPL:END%
+%TMPL:DEF{"image:float"}%<noautolink><div id='$id' class='imageFloat imageFloat_$align$class'><a href='$href' class='imageHref' title='$title' $data data-orig-width='$origwidth' data-orig-height='$origheight'><img $lazyload src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout  style='$style' /></a>$caption</div></noautolink>%TMPL:END%
 
-%TMPL:DEF{"image:thumb"}%<noautolink><div id='$id' class='imageThumb imageThumb_$align$class' style='width:$framewidthpx'><a href='$href' class='imageHref' title='$title' $data data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style' $lazyload/></a>$caption</div></noautolink>%TMPL:END%
+%TMPL:DEF{"image:thumb"}%<noautolink><div id='$id' class='imageThumb imageThumb_$align$class' style='width:$framewidthpx'><a href='$href' class='imageHref' title='$title' $data data-orig-width='$origwidth' data-orig-height='$origheight'><img $lazyload src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style' /></a>$caption</div></noautolink>%TMPL:END%
 
-%TMPL:DEF{"image:photoswipe"}%<noautolink><span class='jqPhotoSwipe'><a href='$href' title='$title' id='$id' class='imageHref imageSimple imageSimple_$align$class' $data data-orig-width='$origwidth' data-orig-height='$origheight'><img src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style' $lazyload/>$caption</a></span>%JQREQUIRE{"photoswipe" warn="off"}%</noautolink>%TMPL:END%
+%TMPL:DEF{"image:photoswipe"}%<noautolink><span class='jqPhotoSwipe'><a href='$href' title='$title' id='$id' class='imageHref imageSimple imageSimple_$align$class' $data data-orig-width='$origwidth' data-orig-height='$origheight'><img $lazyload src='$src' alt='$alt' width='$width' height='$height' $mousein $mouseout style='$style' />$caption</a></span>%JQREQUIRE{"photoswipe" warn="off"}%</noautolink>%TMPL:END%
 
 %{ helper snippets }%
 

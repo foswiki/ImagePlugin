@@ -4,3 +4,10 @@
 
 %:
 	dh  $@
+
+override_dh_install:
+	mkdir -p debian/tmp 
+	tar xzf ../%tar_pkg% -C debian/tmp 
+	dh_install
+
+.PHONY: override_dh_install

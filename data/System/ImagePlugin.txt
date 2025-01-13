@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1573559340" format="1.1" version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1736756647" format="1.1" version="1"}%
 ---+!! <nop>%TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -81,7 +81,7 @@ The image name is mandatory.  Further arguments are optional.
 | =format= | image layout format string | set by type argument |
 | =frame= | extract a specific frame or layer from the source file; this comes in handy when rendering a thumbnail for a video clip | |
 | =layer= | alias for =frame= | |
-| =lazyload= | boolean switch to enable/disable loading images lazy (if supported by the browser) | off |
+| =lazyload= | boolean switch to enable/disable loading images lazy (if supported by the browser) | on |
 | =header= | text to be prepended to the html output | empty |
 | =height= | integer value | image width |
 | =output= | image format to convert the input source to | same as source image, except tiff and svg being converted to png |
@@ -328,6 +328,10 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  13 Jan 2025 | use imagemagick's Ping to read geometry of an image even though it doesn't respect auto-orientation; \
+                 remove dependency on jquery.metadata; \
+                 improve debian control files; \
+                 lazyload defaults to on now |
 |  19 Jan 2024 | added =quality= parameter; properly integrate js and css into Foswiki's javascript framework; \
                  prevent autolinking within image formats; \
                  improved api documentation; \
@@ -441,10 +445,10 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 %META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ImagePlugin"}%
-%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, &copy; 2006-2024 Michael Daum"}%
+%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, &copy; 2006-2025 Michael Daum"}%
 %META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%
 %META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/%25TOPIC%25"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/%25TOPIC%25"}%
-%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1573559340" size="107728" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1573559340" size="8558" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1573559340" size="737387" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1736756647" size="107728" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1736756647" size="8558" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1736756647" size="737387" user="ProjectContributor" version="1"}%

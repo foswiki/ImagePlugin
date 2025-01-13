@@ -7,6 +7,7 @@ lib/Foswiki/Plugins/ImagePlugin/DEPENDENCIES 0644
 lib/Foswiki/Plugins/ImagePlugin/Filter.pm 0644
 lib/Foswiki/Plugins/ImagePlugin/IMAGE.pm 0644
 lib/Foswiki/Plugins/ImagePlugin/IMAGETOOLTIP.pm 0644
+lib/Foswiki/Plugins/ImagePlugin/MANIFEST 0644
 lib/Foswiki/Plugins/ImagePlugin.pm 0644
 pub/Sandbox/ImagePluginTest/STS-32_crew.jpg 0644
 pub/Sandbox/ImagePluginTest/Tst.png 0644

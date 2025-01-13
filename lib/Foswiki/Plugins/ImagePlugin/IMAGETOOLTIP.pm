@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 # 
-# Copyright (C) 2010-2024 Michael Daum, http://michaeldaumconsulting.com
+# Copyright (C) 2010-2025 Michael Daum, http://michaeldaumconsulting.com
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -51,7 +51,7 @@ sub new {
     puburl => '%PUBURLPATH%/%SYSTEMWEB%/ImagePlugin',
     documentation => "$Foswiki::cfg{SystemWebName}.ImagePlugin",
     javascript => ['jquery.imagetooltip.js'],
-    dependencies => ['metadata', 'ui', 'image'], 
+    dependencies => ['ui', 'image'], 
   ), $class);
 
   return $this;

@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2024 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2025 Michael Daum http://michaeldaumconsulting.com
 #
 # Early version Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -348,7 +348,7 @@ sub handleIMAGE {
   $params->{tooltipwidth} ||= '300';
   $params->{tooltipheight} ||= '300';
   $params->{quality} ||= '';
-  $params->{lazyload} = Foswiki::Func::isTrue($params->{lazyload}, 0);
+  $params->{lazyload} = Foswiki::Func::isTrue($params->{lazyload}, 1);
 
   $params->{class} =~ s/'/"/g;
 
@@ -761,7 +761,7 @@ sub ping {
     #print STDERR "ping image ... found in cache: width=$width, height=$height\n";
   } else {
 
-    if (1) {
+    if (0) {
       $this->mage->Read($imgPath);
       $this->mage->AutoOrient();
       ($width, $height) = $this->mage->Get('width', 'height');
@@ -1811,14 +1811,13 @@ sub _plainify {
   return '' unless $text;
 
   $text =~ s/<!--.*?-->//gs;    # remove all HTML comments
-  $text =~ s/\&[a-z]+;/ /g;     # remove entities
   $text =~ s/\[\[([^\]]*\]\[)(.*?)\]\]/$2/g;
   $text =~ s/<[^>]*>//g;        # remove all HTML tags
-  $text =~ s/[\[\]\*\|=_\&\<\>]/ /g;    # remove Wiki formatting chars
+  $text =~ s/[\[\]\*\|=_\<\>]/ /g;    # remove Wiki formatting chars
   $text =~ s/^\-\-\-+\+*\s*\!*/ /gm;    # remove heading formatting and hbar
-  $text =~ s/^\s+//o;                   # remove leading whitespace
-  $text =~ s/\s+$//o;                   # remove trailing whitespace
-  $text =~ s/"/ /o;
+  $text =~ s/^\s+//;                   # remove leading whitespace
+  $text =~ s/\s+$//;                   # remove trailing whitespace
+  $text =~ s/"/ /;
 
   return $text;
 }
