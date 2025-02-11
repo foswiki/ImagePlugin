@@ -72,6 +72,7 @@ sub new {
       thumbSize => $Foswiki::cfg{ImagePlugin}{DefaultThumbnailSize} || 180,
       autoAttachExternalImages => $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} || 0,
       autoAttachInlineImages => $Foswiki::cfg{ImagePlugin}{AutoAttachInlineImages} || 0,
+      autoOrient => $Foswiki::cfg{ImagePlugin}{AutoOrient} || 0,
       inlineImageTemplate => $Foswiki::cfg{ImagePlugin}{InlineImageTemplate} || "<img %BEFORE% src='%PUBURLPATH%/%WEB%/%TOPIC%/%ATTACHMENT%' %AFTER% />",
       @_
     },
@@ -761,7 +762,7 @@ sub ping {
     #print STDERR "ping image ... found in cache: width=$width, height=$height\n";
   } else {
 
-    if (0) {
+    if ($this->{autoOrient}) {
       $this->mage->Read($imgPath);
       $this->mage->AutoOrient();
       ($width, $height) = $this->mage->Get('width', 'height');

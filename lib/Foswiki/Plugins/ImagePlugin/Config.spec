@@ -40,4 +40,8 @@ $Foswiki::cfg{ImagePlugin}{InlineImageTemplate} = "<img %BEFORE% src='%PUBURLPAT
 # handled by the core engine the standard way instead.
 $Foswiki::cfg{ImagePlugin}{Exclude} = 'http://www.google.com';
 
+# **BOOLEAN LABEL="Auto-Orient"**
+# automatically detect image orientation when querying its geometry. Caution: this could come with an extra performance penalty.
+$Foswiki::cfg{ImagePlugin}{AutoOrient} = 0;
+
 1;

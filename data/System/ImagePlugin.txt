@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1736756647" format="1.1" version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1739282671" format="1.1" version="1"}%
 ---+!! <nop>%TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -328,6 +328,7 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  29 Jan 2025 | new config setting =AutoOrient= to detect orientation of an image automatically |
 |  13 Jan 2025 | use imagemagick's Ping to read geometry of an image even though it doesn't respect auto-orientation; \
                  remove dependency on jquery.metadata; \
                  improve debian control files; \
@@ -449,6 +450,6 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 %META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%
 %META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/%25TOPIC%25"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/%25TOPIC%25"}%
-%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1736756647" size="107728" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1736756647" size="8558" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1736756647" size="737387" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1739282671" size="107728" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1739282671" size="8558" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1739282671" size="737387" user="ProjectContributor" version="1"}%
