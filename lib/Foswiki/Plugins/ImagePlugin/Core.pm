@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2025 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2026 Michael Daum http://michaeldaumconsulting.com
 #
 # Early version Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -66,12 +66,18 @@ sub new {
 
   my $this = bless({
       session => $session || $Foswiki::Plugins::SESSION,
-      magnifyIcon => $Foswiki::cfg{ImagePlugin}{MagnifyIcon} || '%PUBURLPATH%/%SYSTEMWEB%/ImagePlugin/magnify-clip.png',
+      magnifyIcon => $Foswiki::cfg{ImagePlugin}{MagnifyIcon} || '%PUBURLPATH%/%SYSTEMWEB%/ImagePlugin/assets/magnify-clip.png',
       magnifyWidth => $Foswiki::cfg{ImagePlugin}{MagnifyIconWidth} || 15,
       magnifyHeight => $Foswiki::cfg{ImagePlugin}{MagnifyIconHeight} || 11,
       thumbSize => $Foswiki::cfg{ImagePlugin}{DefaultThumbnailSize} || 180,
+
+      downloadExternalImages => $Foswiki::cfg{ImagePlugin}{DownloadExternalImages} || 0,
+      renderExternalImageLinks => $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks} || 0,
       autoAttachExternalImages => $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} || 0,
       autoAttachInlineImages => $Foswiki::cfg{ImagePlugin}{AutoAttachInlineImages} || 0,
+      includeRegex => $Foswiki::cfg{ImagePlugin}{Include} // 'none',
+      excludeRegex => $Foswiki::cfg{ImagePlugin}{Exclude} || '',
+
       autoOrient => $Foswiki::cfg{ImagePlugin}{AutoOrient} || 0,
       inlineImageTemplate => $Foswiki::cfg{ImagePlugin}{InlineImageTemplate} || "<img %BEFORE% src='%PUBURLPATH%/%WEB%/%TOPIC%/%ATTACHMENT%' %AFTER% />",
       @_
@@ -140,6 +146,7 @@ sub formatHtml5Data {
   } else {
     $val = Foswiki::entityEncode($val);
   }
+
   return "data-$key='$val'";
 }
 
@@ -232,6 +239,7 @@ impements the =process= REST handler. available url parameters:
    * refresh
    * size
    * zoom
+   * ratio
    * width
    * height
    * filter
@@ -272,6 +280,7 @@ sub handleREST {
     $imgWeb, $imgTopic, $imgFile, {
       size => ($query->param('size') || ''),
       zoom => ($query->param('zoom') || 'off'),
+      ratio => ($query->param('ratio') || 'on'),
       crop => ($query->param('crop') || ''),
       width => ($query->param('width') || ''),
       height => ($query->param('height') || ''),
@@ -284,8 +293,9 @@ sub handleREST {
     },
     $refresh
   );
+
   unless ($imgInfo) {
-    $imgInfo->{file} = 'pixel.gif';
+    $imgInfo->{file} = 'assets/pixel.gif';
     $imgWeb = $Foswiki::cfg{SystemWebName};
     $imgTopic = 'ImagePlugin';
   }
@@ -311,10 +321,6 @@ sub handleIMAGE {
   my ($this, $params, $theTopic, $theWeb) = @_;
 
   _writeDebug("called handleIMAGE(params, $theTopic, $theWeb)");
-
-  if ($params->{_DEFAULT} && $params->{_DEFAULT} =~ m/^(?:clr|clear)$/io) {
-    return $this->getTemplate('clear');
-  }
 
   $params->{type} ||= '';
 
@@ -359,7 +365,7 @@ sub handleIMAGE {
   $params->{size} ||= '';
 
   unless ($params->{type}) {
-    if ($params->{href} || $params->{width} || $params->{height} || $params->{size} || $params->{caption}) {
+    if ($params->{href} || $params->{width} || $params->{height} || $params->{size} || $params->{caption} || $origFile =~ /\.pdf$/i) {
       $params->{type} = 'simple';
     } else {
       $params->{type} = 'plain';
@@ -379,6 +385,7 @@ sub handleIMAGE {
   $params->{height} =~ s/px$//;
   $params->{width} =~ s/px$//;
 
+  my $useDefaultImage = Foswiki::Func::isTrue($params->{defaultimage}, Foswiki::Func::getContext()->{ImagePluginDefaultImage});
   my $imgWeb = $params->{web} || $theWeb;
   my $imgTopic;
   my $imgPath;
@@ -390,18 +397,20 @@ sub handleIMAGE {
   my $query = Foswiki::Func::getRequestObject();
   my $doRefresh = $query->param('refresh') || 0;
   $doRefresh = ($doRefresh =~ /^(on|1|yes|img)$/g) ? 1 : 0;
+  my @html5Data =();
 
   $this->cache->clear() if $doRefresh;
 
   # strip off prefix pointing to self
   my $selfUrl = $Foswiki::cfg{DefaultUrlHost} . $Foswiki::cfg{PubUrlPath};
-  $selfUrl =~ s/^https?:\/\///;
-  $origFile =~ s/^https?:\/\/$selfUrl\/?//;
+  $selfUrl =~ s/^(https?:)?\/\///;
+  $origFile =~ s/^(https?:)?\/\/$selfUrl\/?//;
   $origFile =~ s/^$Foswiki::cfg{PubUrlPath}//;
-  $origFile =~ s/^\///;
+  $origFile =~ s/^\/([^\/])/$1/;
 
   # search image
-  if ($origFile =~ /^https?:\/\/.*/) {
+  if ($origFile =~ /^(https?:)?\/\/.*/) {
+
     my $url = URI->new($origFile);
     $origFile = $url->path();
     $origFile =~ s/^.*[\\\/](.*?\.[a-zA-Z]+)/$1/;
@@ -410,12 +419,14 @@ sub handleIMAGE {
       $origFile = $1;
       $suffix = $2;
     }
-    my $mimeType = $this->suffixToMimeType($suffix);
-    $suffix = "png" unless $mimeType =~ /^image\//; # SMELL: guessing png
+    my $mimeType = $this->suffixToMimeType($suffix) || '';
+    $suffix = "webp" unless $mimeType =~ /^image\//; # SMELL: guessing webp
     $origFile .= ".$suffix";
 
     # sanitize downloaded filename
     $origFile = _sanitizeAttachmentName($origFile);
+
+    return $this->inlineError($params, "invalid image name") unless _isValidAttachmentName($origFile);
 
     _writeDebug("sanizized to $origFile");
 
@@ -427,10 +438,20 @@ sub handleIMAGE {
     mkdir($imgPath) unless -d $imgPath;
     $imgPath .= '/' . $origFile;
 
-    #_writeDebug("imgPath=$imgPath, url=$url");
-    unless ($this->mirrorImage($imgWeb, $imgTopic, $url, $imgPath, $doRefresh)) {
-      return $this->inlineError($params);
+    unless (-e $imgPath) {
+      # test url
+      if (!$this->{downloadExternalImages} ||
+          ($this->{includeRegex} && $url !~ /$this->{includeRegex}/) ||
+          ($this->{excludeRegex} && $url =~ /$this->{excludeRegex}/)) {
+        return $this->inlineError($params, "external image not allowed");
+      }
+
+      #_writeDebug("imgPath=$imgPath, url=$url");
+      unless ($this->mirrorImage($imgWeb, $imgTopic, $url, $imgPath, $doRefresh)) {
+        return $this->inlineError($params);
+      }
     }
+
   } elsif ($origFile =~ /(?:pub\/)?(?:(.+?)\/)?([^\/]+)\/([^\/]+?)$/) {
     $imgWeb = $1 || $theWeb;
     $imgTopic = $2;
@@ -444,8 +465,18 @@ sub handleIMAGE {
     # you said so but it still is not there
     unless (-e $imgPath) {
       _writeDebug(" ... not found");
-      $this->{errorMsg} = "(1) can't find <nop>$origFile at <nop>$imgWeb.$imgTopic";
-      return $this->inlineError($params);
+      if ($useDefaultImage) {
+        push @html5Data, $this->formatHtml5Data("orig-web", $imgWeb);
+        push @html5Data, $this->formatHtml5Data("orig-topic", $imgTopic);
+        push @html5Data, $this->formatHtml5Data("orig-file", $origFile);
+        push @html5Data, $this->formatHtml5Data("orig-type", $params->{type});
+        $imgWeb = $Foswiki::cfg{SystemWebName};
+        $imgTopic = "ImagePlugin";
+        $origFile = "image-not-found.jpg";
+        $imgPath = "$Foswiki::cfg{PubDir}/$Foswiki::cfg{SystemWebName}/ImagePlugin/assets/image-not-found.jpg";
+      } else {
+        return $this->inlineError($params, "image not found");
+      }
     }
   } else {
     my $testWeb;
@@ -459,12 +490,15 @@ sub handleIMAGE {
 
       # you said so but it still is not there
       unless (-e $imgPath) {
-        $this->{errorMsg} = "(2) can't find <nop>$origFile at <nop>$testWeb.$testTopic";
-        return $this->inlineError($params);
+        if ($useDefaultImage) {
+          $testWeb = $Foswiki::cfg{SystemWebName};
+          $testTopic = "ImagePlugin";
+          $origFile = "image-not-found.jpg";
+          $imgPath = "$Foswiki::cfg{PubDir}/$Foswiki::cfg{SystemWebName}/ImagePlugin/assets/image-not-found.jpg";
+        } else {
+          return $this->inlineError($params, "image not found");
+        }
       }
-      # found at given web-topic
-      $imgWeb = $testWeb;
-      $imgTopic = $testTopic;
     } else {
       # check current topic and then the album topic
       ($testWeb, $testTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $theTopic);
@@ -473,29 +507,33 @@ sub handleIMAGE {
       unless (-e $imgPath) {
         # no, then look in the album
         $albumTopic = Foswiki::Func::getPreferencesValue('IMAGEALBUM', ($testWeb eq $theWeb) ? undef : $testWeb);
-        unless ($albumTopic) {
-          # not found, and no album
-          $this->{errorMsg} = "(3) can't find <nop>$origFile in <nop>$imgWeb";
-          return $this->inlineError($params);
-        }
-        $albumTopic = Foswiki::Func::expandCommonVariables($albumTopic, $testTopic, $testWeb) if $albumTopic =~ /%/;
-        ($testWeb, $testTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $albumTopic);
-        $imgPath = $pubDir . '/' . $testWeb . '/' . $testTopic . '/' . $origFile;
+        if ($albumTopic) {
+          $albumTopic = Foswiki::Func::expandCommonVariables($albumTopic, $testTopic, $testWeb) if $albumTopic =~ /%/;
+          ($testWeb, $testTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $albumTopic);
+          $imgPath = $pubDir . '/' . $testWeb . '/' . $testTopic . '/' . $origFile;
+        } 
 
         # not found in album
         unless (-e $imgPath) {
-          $this->{errorMsg} = "(4) can't find <nop>$origFile in <nop>$testWeb.$testTopic";
-          return $this->inlineError($params);
+          if ($useDefaultImage) {
+            push @html5Data, $this->formatHtml5Data("orig-web", $testWeb);
+            push @html5Data, $this->formatHtml5Data("orig-topic", $testTopic);
+            push @html5Data, $this->formatHtml5Data("orig-file", $origFile);
+            push @html5Data, $this->formatHtml5Data("orig-type", $params->{type});
+            $testWeb = $Foswiki::cfg{SystemWebName};
+            $testTopic = "ImagePlugin";
+            $origFile = "image-not-found.jpg";
+            $imgPath = "$Foswiki::cfg{PubDir}/$Foswiki::cfg{SystemWebName}/ImagePlugin/assets/image-not-found.jpg";
+          } else {
+            return $this->inlineError($params, "image not found");
+          }
         }
-        # found in album
-        $imgWeb = $testWeb;
-        $imgTopic = $testTopic;
-      } else {
-        # found at current topic
-        $imgWeb = $testWeb;
-        $imgTopic = $testTopic;
-      }
+      } 
     }
+
+    # found 
+    $imgWeb = $testWeb;
+    $imgTopic = $testTopic;
   }
 
   #_writeDebug("origFile=$origFile, imgWeb=$imgWeb, imgTopic=$imgTopic, imgPath=$imgPath");
@@ -510,7 +548,7 @@ sub handleIMAGE {
     file => $origFile,
     filter => $params->{filter},
     refresh => $doRefresh?"img":"",
-  ) if defined $params->{filter};
+  ) if defined $params->{filter} || (!_isWebby($origFile) && $origFile !~ /\.pdf$/i);
   $params->{href} ||= $origFileUrl;
 
   #_writeDebug("type=$params->{type}, align=$params->{align}");
@@ -553,7 +591,6 @@ sub handleIMAGE {
   }
 
   my $context = Foswiki::Func::getContext();
-  my @html5Data =();
   if ($context->{JQueryPluginEnabled} && $params->{tooltip} eq 'on') {
     Foswiki::Plugins::JQueryPlugin::createPlugin("imagetooltip");
     $params->{class} .= " jqImageTooltip";
@@ -568,7 +605,7 @@ sub handleIMAGE {
   foreach my $key (keys %$params) {
     next unless $key =~ /^data_(.*)$/;
     my $val = $params->{$key};
-    push @html5Data, $this->formatHtml5Data("data-$1", $params->{$key}) if $val ne "";
+    push @html5Data, $this->formatHtml5Data($1, $params->{$key}) if $val ne "";
   }
 
   my $thumbFileUrl = $pubUrl . '/' . $imgWeb . '/' . $imgTopic . '/' . $imgInfo->{file};
@@ -582,28 +619,44 @@ sub handleIMAGE {
     $thumbFileUrl = $this->{session}{urlHost} . $thumbFileUrl unless $thumbFileUrl =~ /^[a-z]+:/;
   }
 
-  my $html5Data = join(" ", @html5Data);
-  $result =~ s/\$data\b/$html5Data/g;
-  $result =~ s/\$class\b/ $params->{class}/g;
-  $result =~ s/\$href\b/$params->{href}/g;
+  my $restSrc = Foswiki::Func::getScriptUrlPath("ImagePlugin", "process", "rest", 
+    topic => "$imgWeb.$imgTopic",
+    file => $origFile,
+  );
+
+  my $html5Data = @html5Data ? join(" ", @html5Data). " ": "";
+  $result =~ s/\$data\s+/$html5Data/g;
   $result =~ s/\$src\b/$thumbFileUrl/g;
   $result =~ s/\$thumbfile\b/$imgInfo->{file}/g;
+  $result =~ s/\$file\b/$origFile/g;
   $result =~ s/\$width\b/($this->pingImage($imgInfo))[0]/ge;
   $result =~ s/\$height\b/($this->pingImage($imgInfo))[1]/ge;
   $result =~ s/\$type\b/($this->pingImage($imgInfo))[3]/ge;
   $result =~ s/\$framewidth\b/($this->pingImage($imgInfo))[0]-1/ge;
   $result =~ s/\$origsrc\b/$origFileUrl/g;
+  $result =~ s/\$restsrc\b/$restSrc/g;
   $result =~ s/\$origwidth\b/($this->pingOrigImage($imgInfo))[0]/ge;
   $result =~ s/\$origheight\b/($this->pingOrigImage($imgInfo))[1]/ge;
   $result =~ s/\$text\b/$origFile/g;
-  $result =~ s/\$id\b/$params->{id}/g;
-  $result =~ s/\$style\b/$params->{style}/g;
-  $result =~ s/\$align\b/$params->{align}/g;
+  $result =~ s/\$base64\b/_encodeBase64($imgInfo)/ge;
+  $result =~ s/\$isframe\b/_isFramish($origFile)/ge;
+
   $result =~ s/\$alt\b/_plainify($params->{alt})/ge;
   $result =~ s/\$title\b/_plainify($params->{title})/ge;
   $result =~ s/\$desc\b/_plainify($params->{desc})/ge;
   $result =~ s/\$lazyload\b/$params->{lazyload}?"loading='lazy' ":""/ge;
-  $result =~ s/\$base64\b/_encodeBase64($imgInfo)/ge;
+  
+  if (!$params->{ratio} && $params->{size} =~ /!/)  {
+    $params->{ratio} = "off";
+  }
+  if (!$params->{zoom} && $params->{size} =~ />/)  {
+    $params->{zoom} = "on";
+  }
+
+  foreach my $key (qw(class size filter zoom ratio crop href id style align output)) {
+    my $val = $params->{$key} // '';
+    $result =~ s/\$$key\b/$val/g;
+  }
 
   $result =~ s/\$perce?nt/\%/g;
   $result =~ s/\$nop//g;
@@ -611,7 +664,7 @@ sub handleIMAGE {
   $result =~ s/\$dollar/\$/g;
 
   # clean up empty 
-  $result =~ s/(style|width|height|class|alt|id)=(''|"")//g;
+  $result =~ s/\s*(style|width|height|class|alt|id)=(''|"")\s*/ /g;
 
   # recursive call for delayed TML expansion
   return $result;
@@ -693,11 +746,10 @@ results are cached in
 sub pingImage {
   my ($this, $imgInfo) = @_;
 
+
   unless (defined $imgInfo->{width}) {
     _writeDebug("pinging $imgInfo->{imgPath}");
     ($imgInfo->{width}, $imgInfo->{height}) = $this->ping($imgInfo->{imgPath});
-    $imgInfo->{width} ||= 0;
-    $imgInfo->{height} ||= 0;
   }
 
   return ($imgInfo->{width}, $imgInfo->{height});
@@ -742,8 +794,7 @@ sub pingOrigImage {
 
 ---++ ObjectMethod ping($path) -> ($width, $height)
 
-reads image information for a file at =$path=. Note that other than the two above
-methods =pingImage()= and =pingOrigImage()= results are _not_ cached whatsoever.
+reads image information for a file at =$path=. 
 
 =cut
 
@@ -809,6 +860,7 @@ The =$params= hash may contain the following properties:
    * type
    * width
    * zoom
+   * ratio
 
 Note that any =filter= parameter will be delegated to the Filter service at 
 Foswiki::Plugins::ImagePlugin::Filter
@@ -827,6 +879,7 @@ sub processImage {
   my $transparent = $params->{transparent} || '';
   my $width = $params->{width} || '';
   my $zoom = $params->{zoom} || 'off';
+  my $ratio = $params->{ratio} || 'on';
 
   _writeDebug("called processImage(web=$imgWeb, topic=$imgTopic, file=$imgFile, size=$size, crop=$crop, width=$width, height=$height, rotate=$rotate, refresh=$doRefresh, output=$output, transparent=$transparent)");
 
@@ -859,15 +912,33 @@ sub processImage {
     $frame = '';
   }
 
+  # Don't process svgs as that's producing garbage most of the time
+  if ($imgFile =~ /\.svgz?$/i && !$output) { 
+    if ($size =~ /^(\d+)$/) {
+      $imgInfo{width} = $1;
+    } elsif ($size =~ /^(?:(\d+)(?:px)?)?x(\d+)?(?:px)?/) {
+      $imgInfo{width} = $1;
+      $imgInfo{height} = $2;
+    } 
+    $imgInfo{width} ||= $width || ''; 
+    $imgInfo{height} ||= $height || '';
+    $imgInfo{file} = $imgInfo{origFile};
+    $imgInfo{imgPath} = $imgInfo{origImgPath};
+
+    return \%imgInfo;
+  } 
+
   if ($size || ($crop && $crop ne 'off') || $width || $height || $rotate || $doRefresh || !_isWebby($imgFile) || $output || $filter || ($frame && $frame ne '') || $transparent || $params->{quality}) {
     if (!$size) {
       if ($width || $height) {
         $size = $width . 'x' . $height;
       }
     }
-    if ($size && $size !~ /[<>^]$/) {
+    if ($size && $size !~ /[<>^!]$/) {
       if ($zoom eq 'on') {
         $size .= '<';
+      } elsif ($ratio eq 'off') {
+        $size .= '!';
       } else {
         $size .= '>';
       }
@@ -882,6 +953,7 @@ sub processImage {
         size => $size, 
         zoom => $zoom, 
         crop => $crop, 
+        ratio => $ratio, 
         rotate => $rotate, 
         frame => $frame, 
         output => $output, 
@@ -889,7 +961,7 @@ sub processImage {
       }
     );
     unless ($imgInfo{file}) {
-      $this->{errorMsg} = "(5) can't find <nop>$imgFile at <nop>$imgWeb.$imgTopic";
+      $this->{errorMsg} = "image not found";
       return;
     }
     $imgInfo{imgPath} = $Foswiki::cfg{PubDir} . '/' . $imgWeb . '/' . $imgTopic . '/' . $imgInfo{file};
@@ -921,17 +993,6 @@ sub processImage {
       if ($error =~ /(\d+)/) {
         $this->{errorMsg} = $error;
         return if $1 >= 400;
-      }
-
-      # set density in case we have an svg
-      if ($imgFile =~ /\.svgz?/i) {
-        _writeDebug("upping the density to 200");
-        $error = $this->mage->Set(density => 200);
-        if ($error =~ /(\d+)/) {
-          $this->{errorMsg} = $error;
-          _writeDebug("Error: $error");
-          return if $1 >= 400;
-        }
       }
 
       # merge layers
@@ -1192,7 +1253,7 @@ sub extractInlineImages {
       filesize => $size,
       minor => 1,
       dontlog => 1,
-      comment => 'Auto-attached by <nop>ImagePlugin',
+      comment => 'Auto-attached by ImagePlugin',
     );
 
     my $image = $this->{inlineImageTemplate};
@@ -1359,121 +1420,27 @@ sub clearMatchingThumbs {
 
 =begin TML
 
----++ ObjectMethod takeOutSVG($text)
+---++ ObjectMethod processInlineSVG($text)
 
 takes out all inline SVG files. Note that =$text= is modified in place.
 
 =cut
 
-sub takeOutSVG {
+sub processInlineSVG {
   my $this = shift;
   #my $text = $_[0];
 
-  $_[0] =~ s/(<svg.*?<\/svg>)/$this->processInlineSvg($1)/geims;
+  $_[0] =~ s/(<svg.*?<\/svg>)/_secureInlineSVG($1)/geims;
 }
 
-=begin TML
+sub _secureInlineSVG {
+  my $data = shift;
 
----++ ObjectMethod processInlineSvg($data) -> $markup
+  # filter script, foreignObject and use for security reasons
+  $data =~ s/<(script|foreignObject|use)/<!-- $1 disabled for security reasons /gi;
+  $data =~ s/<\/(script|foreignObject|use>)>/$1 -->/gi;
 
-processes any SVG file encoded in =$data= found by =takeOutSVG()=, attaches them to the current topic
-and returns appropriate markup to render it otherwise.
-
-=cut
-
-sub processInlineSvg {
-  my ($this, $data) = @_;
-
-  my $imgWeb = $this->{session}{webName};
-  my $imgTopic = $this->{session}{topicName};
-  my $topicPath = $Foswiki::cfg{PubDir} . '/' . $imgWeb . '/' . $imgTopic;
-
-  my $digest = Digest::MD5::md5_hex($data);
-  my $svgFile = $digest.'.svg';
-  my $svgPath = $topicPath . '/' . $svgFile;
-
-  unless (-e $svgPath) {
-    mkdir($topicPath) unless -d $topicPath;
-    Foswiki::Func::saveFile($svgPath, $data);
-  }
-
-  my $imgFile = $this->getImageFile(
-    $imgWeb, $imgTopic, $svgFile, {
-      zoom => 'off', 
-      crop => 'off', 
-      rotate => '', 
-      frame => '', 
-    }
-  );
-
-  my $imgPath = $topicPath . '/' . $imgFile;
-
-  my ($topicDate) = Foswiki::Func::getRevisionInfo($imgWeb, $imgTopic);
-  my $imgDate = -e $imgPath ? _getModificationTime($imgPath) : 0;
-
-  my $imgInfo;
-
-  #print STDERR "svgPath=$svgPath, imgPath=$imgPath, imgFile=$imgFile\n";
-
-  if ($topicDate > $imgDate) {
-    #print STDERR "generating fresh png from svg\n";
-
-
-    $imgInfo = $this->processImage(
-      $imgWeb, $imgTopic, $svgFile, {
-        size => '',
-        zoom => 'off',
-        crop => 'off',
-        width => '',
-        height => '',
-      },
-      1
-    );
-
-    return $this->inlineError unless $imgInfo;
-
-  } else {
-    #print STDERR "png is up-to-date\n";
-    $imgInfo = {
-      file => $imgFile,
-      imgPath => $imgPath,
-    };
-  }
-
-  my $pubUrlPath = Foswiki::Func::getPubUrlPath();
-  my $urlHost = Foswiki::Func::getUrlHost();
-  my $pubUrl = URI->new($pubUrlPath, $urlHost);
-  my $thumbFileUrl = $pubUrl . '/' . $imgWeb . '/' . $imgTopic . '/' . $imgInfo->{file};
-  $thumbFileUrl = _urlEncode($thumbFileUrl);
-
-  my $result = $this->getTemplate("plain");
-
-  $result =~ s/\$src/$thumbFileUrl/g;
-  $result =~ s/\$width/($this->pingImage($imgInfo))[0]/ge;
-  $result =~ s/\$height/($this->pingImage($imgInfo))[1]/ge;
-  $result =~ s/\$framewidth/($this->pingImage($$imgInfo))[0]-1/ge;
-  $result =~ s/\$class//g;
-  $result =~ s/\$data//g;
-  $result =~ s/\$id//g;
-  $result =~ s/\$style//g;
-  $result =~ s/\$align/none/g;
-  $result =~ s/\$alt//g;
-  $result =~ s/\$title/auto-converted from inline svg/g;
-  $result =~ s/\$desc//g;
-  $result =~ s/\$mousein//g;
-  $result =~ s/\$mouseout//g;
-
-  $result =~ s/\$perce?nt/\%/g;
-  $result =~ s/\$nop//g;
-  $result =~ s/\$n/\n/g;
-  $result =~ s/\$dollar/\$/g;
-
-  # clean up empty 
-  $result =~ s/(style|width|height|class|alt|id)=''//g;
-
-  unlink ($svgPath);
-
-  return $result;
+  return $data;
 }
 
 =begin TML
@@ -1487,11 +1454,15 @@ switched off.
 =cut
 
 sub inlineError {
-  my ($this, $params) = @_;
+  my ($this, $params, $msg) = @_;
 
   return '' if $params && $params->{warn} eq 'off';
-  return "<span class='foswikiAlert'>Error: $this->{errorMsg}</span>"
+
+  $msg //= $this->{errorMsg};
+
+  return "<span class='foswikiAlert'>Error: $msg</span>"
     if !$params || $params->{warn} eq 'on' || $params->{warn} eq '';
+
   return $params ? $params->{warn} : 'undefined warning';
 }
 
@@ -1507,6 +1478,8 @@ on success. On false the =errorMsg= property is set.
 sub mirrorImage {
   my ($this, $web, $topic, $url, $fileName, $force) = @_;
 
+  $url = 'https:'.$url if $url =~ /^\/\//;
+
   _writeDebug("called mirrorImage($url, $fileName, $force)");
   return 1 if !$force && -e "$fileName";
 
@@ -1514,8 +1487,9 @@ sub mirrorImage {
 
   my $downloadFileName;
 
+  my $tempImgFile;
   if ($this->{autoAttachExternalImages}) {
-    my $tempImgFile = new File::Temp();
+    $tempImgFile = new File::Temp();
     $downloadFileName = $tempImgFile->filename;
   } else {
 
@@ -1589,6 +1563,12 @@ sub mirrorImage {
   return 1;
 }
 
+sub getError {
+  my $this;
+
+  return $this->{errorMsg};
+}
+
 =begin TML
 
 ---++ ObjectMethod getImageFile($web, $topic, $topic, $params) -> $fileName
@@ -1607,7 +1587,6 @@ sub getImageFile {
   my $fileSize = -s $imgPath;
   return unless defined $fileSize;    # not found
 
-
   my $digest = Digest::MD5->new();
   foreach my $key (sort keys %$params) {
     next if $key =~ /^(web|topic|output)$/;
@@ -1618,7 +1597,7 @@ sub getImageFile {
   $digest = $digest->hexdigest;
 
   # force conversion of some non-webby image formats
-  $file =~ s/\.(.*?)$/\.png/g unless _isWebby($file);
+  $file =~ s/\.(.*?)$/\.webp/g unless _isWebby($file);
 
   # switch manually specified output format
   if ($params->{output} && $file =~ /^(.+)\.([^\.]+)$/) {
@@ -1627,9 +1606,9 @@ sub getImageFile {
 
   if ($file =~ /^(.*)\/(.+?)$/) {
     return $1 . "/igp_" . $digest . "_" . _sanitizeAttachmentName($2);
-  } else {
-    return "igp_" . $digest . "_" . _sanitizeAttachmentName($file);
-  }
+  } 
+
+  return "igp_" . $digest . "_" . _sanitizeAttachmentName($file);
 }
 
 =begin TML
@@ -1653,7 +1632,7 @@ sub updateAttachment {
   $baseFilename =~ s/^(.*)[\/\\](.*?)$/$2/;
 
   my $args = {
-    comment => 'Auto-attached by <nop>ImagePlugin',
+    comment => 'Auto-attached by ImagePlugin',
     dontlog => 1,
     filedate => time(),
     #hide=>1,
@@ -1784,7 +1763,7 @@ sub suffixToMimeType {
 sub _isWebby {
   my $file = shift;
 
-  return 1 if $file =~ /\.(png|jpe?g|gif|bmp|webp|svgz?)$/i;
+  return 1 if $file =~ /\.(png|jpe?g|gif|bmp|webp|avif|svgz?)$/i;
   return 0;
 }
 
@@ -1793,7 +1772,7 @@ sub _isWebby {
 sub _isFramish {
   my $file = shift;
 
-  return 1 if _isVideo($file) || $file =~ /\.(tiff?|pdf|ps|psd|pptx?|docx?|odt|xlsx?)$/i;
+  return 1 if _isVideo($file) || $file =~ /\.(pdf|ps|psd|pptx?|docx?|odt|xlsx?|webp)$/i;
   return 0;
 }
 
@@ -1801,7 +1780,7 @@ sub _isFramish {
 sub _isVideo {
   my $file = shift;
 
-  return 1 if $file =~ /\.(mp4|mpe?g|mpe|m4v|ogv|qt|mov|flv|asf|asx|avi|wmv|wm|wmx|wvx|movie|swf|webm)$/;
+  return 1 if $file =~ /\.(mp4|mpe?g|mpe|m4v|ogv|qt|mov|flv|asf|asx|avi|mkv|wmv|wm|wmx|wvx|movie|swf|webm)$/;
   return 0;
 }
 
@@ -1867,6 +1846,12 @@ sub _sanitizeAttachmentName {
   $fileName =~ s/[{},\(\)]+/_/g;    # some more
 
   return Foswiki::Sandbox::untaintUnchecked($fileName);
+}
+
+sub _isValidAttachmentName {
+  my $fileName = shift;
+
+  return $fileName =~ /$Foswiki::cfg{UploadFilter}/i ? 0 : 1;
 }
 
 sub _encodeBase64 {

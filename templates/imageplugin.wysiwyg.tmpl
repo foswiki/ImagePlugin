@@ -7,5 +7,5 @@
 %TMPL:DEF{"image:float"}%%TMPL:P{"image:wysiwyg" type="float" class="imageFloat imageFloat_$align"}%%TMPL:END%
 %TMPL:DEF{"image:thumb"}%%TMPL:P{"image:wysiwyg" type="thumb" class="imageThumb imageThumb_$align"}%%TMPL:END%
 
-%TMPL:DEF{"image:wysiwyg"}%<noautolink><img src='$origsrc' class='%class%$class' data-type='%type%' data-caption='$caption' width='$width' height='$height' align='$align' alt='$alt' title='$title' id='$id'/></noautolink>%TMPL:END%
+%TMPL:DEF{"image:wysiwyg"}%<img src="%IF{"$isframe or '$filter'!='' or '$file'=~'\.(heic|HEIC)$'" then="$src" else="$origsrc"}%" $data class="%class%$class" data-file="$file" data-topic="$web.$topic" data-type="%type%" data-href="%IF{"'%IF{"$isframe or '$filter'!='' or '$file'=~'\.(heic|HEIC)$'" then="$href" else="$origsrc"}%'!='$href'" then="$href"}%" data-caption="$caption" data-size="$size" data-zoom="$zoom" data-output="$output" data-ratio="$ratio" data-crop="$crop" data-filter="$filter" data-orig-width="$origwidth" data-orig-height="$origheight" width="$width" height="$height" align="$align" alt="$alt" title="$title" id="$id"/>%TMPL:END%
 %TMPL:DEF{"image:caption"}%$caption%TMPL:END%

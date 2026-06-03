@@ -1,0 +1,14 @@
+{
+  "name": "image-editor",
+  "version": "1.0.0",
+  "description": "",
+  "license": "GPL-3.0-or-later",
+  "author": "Michael Daum",
+  "main": "imageEditor.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cropperjs": "^2.1.0"
+  }
+}

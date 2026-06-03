@@ -1,0 +1,87 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: templates/imageplugin.editor.tmpl:101 templates/imageplugin.editor.tmpl:66
+#: templates/imageplugin.editor.tmpl:67
+msgid "Cancel"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:88
+msgid "Close"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:97
+msgid "Comment"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:4 templates/imageplugin.editor.tmpl:5
+#: templates/imageplugin.editor.tmpl:8
+msgid "Edit Image"
+msgstr ""
+
+#: templates/imageplugin.tmpl:23
+msgid "Enlarge"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:33
+msgid "Flip Horizontal"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:34
+msgid "Flip Vertical"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:93
+msgid "Name"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:55 templates/imageplugin.editor.tmpl:56
+msgid "Preview"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:86
+msgid "Preview Image"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:74
+msgid "Reset"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:31
+msgid "Rotate Left"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:32
+msgid "Rotate Right"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:100 templates/imageplugin.editor.tmpl:48
+msgid "Save"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:91
+msgid "Save Image"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:29
+msgid "Zoom In"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:30
+msgid "Zoom Out"
+msgstr ""

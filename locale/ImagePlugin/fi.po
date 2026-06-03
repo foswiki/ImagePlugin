@@ -1,0 +1,94 @@
+# Foswiki translation for finnish
+# Translators:
+#   Heikki Toivonen <heikki@osafoundation.org>
+#   Tapio Salonsaari <take@nerd.fi> 2009
+msgid ""
+msgstr ""
+"Project-Id-Version: Foswiki $Id\n"
+"Report-Msgid-Bugs-To: foswiki-svn@lists.sourceforge.net\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2010-07-15 14:07+0200\n"
+"Last-Translator: ghfg <sdfsd@gmail.com>\n"
+"Language-Team: FINNISH <heikki@osafoundation.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Finnish\n"
+
+#: templates/imageplugin.editor.tmpl:101 templates/imageplugin.editor.tmpl:66
+#: templates/imageplugin.editor.tmpl:67
+msgid "Cancel"
+msgstr "Peru"
+
+#: templates/imageplugin.editor.tmpl:88
+msgid "Close"
+msgstr "Sulje"
+
+#: templates/imageplugin.editor.tmpl:97
+msgid "Comment"
+msgstr "Kommentti"
+
+#: templates/imageplugin.editor.tmpl:4 templates/imageplugin.editor.tmpl:5
+#: templates/imageplugin.editor.tmpl:8
+#, fuzzy
+msgid "Edit Image"
+msgstr "Muokkaa taulukkoa"
+
+#: templates/imageplugin.tmpl:23
+#, fuzzy
+msgid "Enlarge"
+msgstr "Suurenna muokkauslaatikkoa"
+
+#: templates/imageplugin.editor.tmpl:33
+msgid "Flip Horizontal"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:34
+msgid "Flip Vertical"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:93
+#, fuzzy
+msgid "Name"
+msgstr "Aiheen nimi"
+
+#: templates/imageplugin.editor.tmpl:55 templates/imageplugin.editor.tmpl:56
+#, fuzzy
+msgid "Preview"
+msgstr "esikatselu"
+
+#: templates/imageplugin.editor.tmpl:86
+#, fuzzy
+msgid "Preview Image"
+msgstr "esikatselu"
+
+#: templates/imageplugin.editor.tmpl:74
+msgid "Reset"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:31
+msgid "Rotate Left"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:32
+msgid "Rotate Right"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:100 templates/imageplugin.editor.tmpl:48
+#, fuzzy
+msgid "Save"
+msgstr "Tallennettu:"
+
+#: templates/imageplugin.editor.tmpl:91
+#, fuzzy
+msgid "Save Image"
+msgstr "Tallenna taulu"
+
+#: templates/imageplugin.editor.tmpl:29
+msgid "Zoom In"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:30
+msgid "Zoom Out"
+msgstr ""

@@ -1,0 +1,99 @@
+# Foswiki translation for Russian
+# Translators:
+#   Foswiki:Main/SergejZnamenskij, 2006
+#   Foswiki:Main/AndreyTkachenko, 2006 (Coordinator)
+#   Foswiki:Main/SergeyJSinx, 2006
+#   Foswiki:Main/AlexTananaev, 2007
+#   Foswiki:Main/AndrewPantyukhin, 2009
+msgid ""
+msgstr ""
+"Project-Id-Version: ru $Id\n"
+"Report-Msgid-Bugs-To: foswiki-svn@lists.sourceforge.net\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2010-09-05 10:53+0000\n"
+"Last-Translator: Ivan Pesin <sp_ipesin@n-ix.com.ua>\n"
+"Language-Team: Russian Team <svz@latex.pereslavl.ru, falko-mail@inbox.ru, "
+"jsinx@front.ru, alex@amibel.ru, infofarmer@FreeBSD.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Pootle 1.1.0\n"
+
+#: templates/imageplugin.editor.tmpl:101 templates/imageplugin.editor.tmpl:66
+#: templates/imageplugin.editor.tmpl:67
+msgid "Cancel"
+msgstr "Отменить"
+
+#: templates/imageplugin.editor.tmpl:88
+msgid "Close"
+msgstr "Закрыть"
+
+#: templates/imageplugin.editor.tmpl:97
+msgid "Comment"
+msgstr "Комментарий"
+
+#: templates/imageplugin.editor.tmpl:4 templates/imageplugin.editor.tmpl:5
+#: templates/imageplugin.editor.tmpl:8
+#, fuzzy
+msgid "Edit Image"
+msgstr "Редактировать таблицу"
+
+#: templates/imageplugin.tmpl:23
+#, fuzzy
+msgid "Enlarge"
+msgstr "Расширить область редактирования"
+
+#: templates/imageplugin.editor.tmpl:33
+msgid "Flip Horizontal"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:34
+msgid "Flip Vertical"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:93
+#, fuzzy
+msgid "Name"
+msgstr "Название темы"
+
+#: templates/imageplugin.editor.tmpl:55 templates/imageplugin.editor.tmpl:56
+#, fuzzy
+msgid "Preview"
+msgstr "предпросмотр"
+
+#: templates/imageplugin.editor.tmpl:86
+#, fuzzy
+msgid "Preview Image"
+msgstr "предпросмотр"
+
+#: templates/imageplugin.editor.tmpl:74
+msgid "Reset"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:31
+msgid "Rotate Left"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:32
+msgid "Rotate Right"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:100 templates/imageplugin.editor.tmpl:48
+msgid "Save"
+msgstr "Сохранить"
+
+#: templates/imageplugin.editor.tmpl:91
+#, fuzzy
+msgid "Save Image"
+msgstr "Сохранить таблицу"
+
+#: templates/imageplugin.editor.tmpl:29
+msgid "Zoom In"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:30
+msgid "Zoom Out"
+msgstr ""

@@ -1,0 +1,103 @@
+%TMPL:INCLUDE{"view"}%
+
+
+%TMPL:DEF{"titleaction"}%%MAKETEXT{"Edit Image"}%%TMPL:END%
+%TMPL:DEF{"heading"}%<h1 >%MAKETEXT{"Edit Image"}%
+<span class='foswikiGrayText'>%URLPARAM{"filename"}%</span>
+</h1>%TMPL:END%
+%TMPL:DEF{"breadcrumbs::tail"}%%TMPL:P{"sep"}%<a href="%SCRIPTURLPATH{"view" topic="%BASEWEB%.%BASETOPIC%"}%?%QUERYSTRING%">%MAKETEXT{"Edit Image"}%</a>%TMPL:END%
+
+%TMPL:DEF{"content"}%<form class="imageEditor" action="%SCRIPTURLPATH{"upload"}%/%WEB%/%TOPIC%" method="post" enctype="multipart/form-data" id="imageEditor" %TMPL:P{"imageEditor::params"}%>
+<input type="hidden" name="topic" value="%WEB%.%TOPIC%" />
+<input type="hidden" name="hidefile" value="%IF{"attachments[name='%URLPARAM{"filename"}%'].attr=~'h'" then="on"}%" />
+%TMPL:P{"heading"}%%{}%
+%TMPL:P{"imageEditor::toolbar"}%
+%TMPL:P{"imageEditor::container"}%
+%TMPL:P{"imageEditor::buttons"}%
+</form>%TMPL:P{"imageEditor::dialogs"}%%TMPL:P{"imageEditor::js"}%%TMPL:END%
+
+%TMPL:DEF{"imageEditor::toolbar"}%<div class="imageEditorToolbar clearfix">
+%TMPL:P{"imageEditor::toolbar::zoomin"}%
+%TMPL:P{"imageEditor::toolbar::zoomout"}%
+%TMPL:P{"imageEditor::toolbar::rotateleft"}%
+%TMPL:P{"imageEditor::toolbar::rotateright"}%
+%TMPL:P{"imageEditor::toolbar::fliphorizontal"}%
+%TMPL:P{"imageEditor::toolbar::flipvertical"}%
+%TMPL:P{"imageEditor::formfields"}%
+</div>%TMPL:END%
+
+%TMPL:DEF{"imageEditor::toolbar::zoomin"}%%BUTTON{"%MAKETEXT{"Zoom In"}%" icon="fa-search-plus" class="imageEditorButton" data_action="zoom-in" data_image_editor="#imageEditor"}%%TMPL:END%
+%TMPL:DEF{"imageEditor::toolbar::zoomout"}%%BUTTON{"%MAKETEXT{"Zoom Out"}%" icon="fa-search-minus" class="imageEditorButton" data_action="zoom-out" data_image_editor="#imageEditor"}%%TMPL:END%
+%TMPL:DEF{"imageEditor::toolbar::rotateleft"}%%BUTTON{"%MAKETEXT{"Rotate Left"}%" icon="fa-rotate-left" class="imageEditorButton" data_action="rotate-left" data_image_editor="#imageEditor"}%%TMPL:END%
+%TMPL:DEF{"imageEditor::toolbar::rotateright"}%%BUTTON{"%MAKETEXT{"Rotate Right"}%" icon="fa-rotate-right" class="imageEditorButton" data_action="rotate-right" data_image_editor="#imageEditor"}%%TMPL:END%
+%TMPL:DEF{"imageEditor::toolbar::fliphorizontal"}%%BUTTON{"%MAKETEXT{"Flip Horizontal"}%" icon="fa-arrows-h" class="imageEditorButton" data_action="flip-horizontal" data_image_editor="#imageEditor"}%%TMPL:END%
+%TMPL:DEF{"imageEditor::toolbar::flipvertical"}%%BUTTON{"%MAKETEXT{"Flip Vertical"}%" icon="fa-arrows-v" class="imageEditorButton" data_action="flip-vertical" data_image_editor="#imageEditor"}%%TMPL:END%
+%TMPL:DEF{"imageEditor::formfields"}%<table class="foswikiLayoutTable foswikiRight">
+<tr>
+   <th>Width:</th>
+   <td><input type="text" name="width" id="cropperWidth" size="10"> </td>
+   <th>Height:</th>
+   <td><input type="text" name="height" id="cropperHeight" size="10"></td>
+</tr>
+</table>%TMPL:END%
+
+%TMPL:DEF{"imageEditor::params"}%data-container=".imageEditorContainer" data-src="%ATTACHURLPATH%/%URLPARAM{"filename" encode="entity"}%" data-cropper-width-input="#cropperWidth" data-cropper-height-input="#cropperHeight" data-init-center="none"%TMPL:END%
+
+%TMPL:DEF{"imageEditor::buttons"}%<div class="imageEditorButtons cleafix">%TMPL:P{"imageEditor::save"}%%TMPL:P{"imageEditor::preview"}%%TMPL:P{"imageEditor::reset"}%%TMPL:P{"imageEditor::cancel"}%</div>%TMPL:END%
+
+%TMPL:DEF{"imageEditor::save"}%%BUTTON{"%MAKETEXT{"Save"}%" 
+  icon="fa-save" 
+  class="jqUIDialogLink" 
+  href="#saveImage"
+  accesskey="s" 
+}%%TMPL:END%
+%TMPL:DEF{"imageEditor::preview"}%%BUTTON{
+  "%MAKETEXT{"Preview"}%"
+  tile="%MAKETEXT{"Preview"}%"
+  class="jqUIDialogLink imageEditorButton"
+  icon="fa-eye" 
+  href="#previewImage"
+  data_action="preview"
+  data_display="#imageEditorPreview" 
+  data_image_editor="#imageEditor" 
+  accesskey="p" 
+}%%TMPL:END%
+%TMPL:DEF{"imageEditor::cancel"}%%BUTTON{
+  "%MAKETEXT{"Cancel"}%" 
+  title="%MAKETEXT{"Cancel"}%" 
+  icon="fa-times" 
+  class="imageEditorCancel"
+  href="%SCRIPTURLPATH{"view" topic="%URLPARAM{"origin" default="%BASEWEB%.%BASETOPIC%"}%"}%"
+  accesskey="c" 
+}%%TMPL:END%
+%TMPL:DEF{"imageEditor::reset"}%%BUTTON{
+  "%MAKETEXT{"Reset"}%" 
+  icon="fa-undo" 
+  class="imageEditorButton" 
+  data_action="reset" 
+  data_image_editor="#imageEditor"
+}%%TMPL:END%
+
+%TMPL:DEF{"imageEditor::js"}%%JQREQUIRE{"ImageEditor"}%%TMPL:END%
+%TMPL:DEF{"imageEditor::container"}%<div class="imageEditorContainer" > </div>%TMPL:END%
+
+%TMPL:DEF{"imageEditor::dialogs"}%%TMPL:P{"imageEditor::saveDialog"}%%TMPL:P{"imageEditor::previewDialog"}%%TMPL:END%
+
+%TMPL:DEF{"imageEditor::previewDialog"}%<div class="jqUIDialog imageEditorPreviewDialog foswikiFlex foswikiFlexColumn" data-resizable="true" data-draggable="true" data-modal="true" data-width="600" data-height="600" id="previewImage" title="%MAKETEXT{"Preview Image"}%">
+  <div id="imageEditorPreview"></div>
+  <a class="jqUIDialogButton jqUIDialogClose" data-icon="ui-icon-cancel">%MAKETEXT{"Close"}%</a>
+</div>%TMPL:END%
+
+%TMPL:DEF{"imageEditor::saveDialog"}%<div class="jqUIDialog imageEditorSaveDialog foswikiFormSteps foswikiFlexColumn foswikiFlex" data-image-editor="#imageEditor" data-resizable="false" data-draggable='false' data-modal='true' data-width='400' id="saveImage" title="%MAKETEXT{"Save Image"}%" > 
+<div class="foswikiFormStep">
+  <h3>%MAKETEXT{"Name"}%:</h3>
+  <input type="text" size="80" name="filename" class="foswikiInputField" value="%URLPARAM{"filename" encode="entity"}%"  />
+</div>
+<div class="foswikiFormStep">
+  <h3>%MAKETEXT{"Comment"}%:</h3>
+  <input type="text" size="80" name="filecomment" class="foswikiInputField" value="%ENCODE{"%QUERY{"attachments[name='%URLPARAM{"filename"}%'].comment"}%" type="entity"}%"  />
+</div>
+  <a class="jqUIDialogButton jqUIDialogClose imageEditorSaveButton" data-icon="ui-icon-trash">%MAKETEXT{"Save"}%</a> 
+  <a class="jqUIDialogButton jqUIDialogClose" data-icon="ui-icon-cancel">%MAKETEXT{"Cancel"}%</a>
+</div>%TMPL:END%
+

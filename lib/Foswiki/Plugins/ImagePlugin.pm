@@ -1,7 +1,7 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2006 Craig Meyer, meyercr@gmail.com
-# Copyright (C) 2006-2025 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2026 Michael Daum http://michaeldaumconsulting.com
 #
 # Based on ImgPlugin
 # Copyright (C) 2006 Meredith Lesly, msnomer@spamcop.net
@@ -40,11 +40,12 @@ use Foswiki::Plugins ();
 use Foswiki::Plugins::JQueryPlugin ();
 use Foswiki::Plugins::ImagePlugin::Core ();
 
-our $VERSION = '11.50';
+our $VERSION = '11.99';
 our $RELEASE = '%$RELEASE%';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Image and thumbnail services to display and alignment images using an easy syntax';
 our $LICENSECODE = '%$LICENSECODE%';
+
 our $core;
 
 =begin TML
@@ -90,14 +91,11 @@ sub initPlugin {
     http_allow => 'GET,POST',
   );
 
-  # register jquery.imagetooltip plugin if jquery is installed
-  if ($Foswiki::cfg{Plugins}{JQueryPlugin}{Enabled}) {
-    require Foswiki::Plugins::JQueryPlugin;
-    Foswiki::Plugins::JQueryPlugin::registerPlugin("Image", 'Foswiki::Plugins::ImagePlugin::IMAGE');
-    Foswiki::Plugins::JQueryPlugin::registerPlugin("ImageTooltip", 'Foswiki::Plugins::ImagePlugin::IMAGETOOLTIP');
-  }
+  Foswiki::Plugins::JQueryPlugin::registerPlugin("Image", "Foswiki::Plugins::ImagePlugin::IMAGE");
+  Foswiki::Plugins::JQueryPlugin::registerPlugin("ImageTooltip", "Foswiki::Plugins::ImagePlugin::IMAGETOOLTIP");
+  Foswiki::Plugins::JQueryPlugin::registerPlugin("ImageEditor", "Foswiki::Plugins::ImagePlugin::IMAGEEDITOR");
+  Foswiki::Func::getContext()->{ImageEditorEnabled} = 1;
 
-  # Plugin correctly initialized
   return 1;
 }
 
@@ -164,7 +162,10 @@ sub afterSaveHandler {
 sub commonTagsHandler {
 
   return unless Foswiki::Func::getContext()->{view};
-  return unless $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks} || $Foswiki::cfg{ImagePlugin}{RenderLocalImages} || $Foswiki::cfg{ImagePlugin}{ConvertInlineSVG};
+  return unless 
+    ($Foswiki::cfg{ImagePlugin}{DownloadExternalImages} && $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks}) || 
+    $Foswiki::cfg{ImagePlugin}{RenderLocalImages} || 
+    $Foswiki::cfg{ImagePlugin}{SecureInlineSVGs};
 
   my ($text, $topic, $web) = @_;
 
@@ -173,7 +174,7 @@ sub commonTagsHandler {
   $text = takeOutBlocks($text, 'literal', $removed);
 
 
-  if ($Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks}) {
+  if ($Foswiki::cfg{ImagePlugin}{DownloadExternalImages} && $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks}) {
     $text =~ s/(^|(?<!url)[-*\s(|])
 		 (https?:
 		     ([^\s<>"]+[^\s*.,!?;:)<|][^\s]*\.(?:gif|jpe?g|png|bmp|svg)(?:\?.*)?(?=[^\w\-])))/
@@ -185,12 +186,12 @@ sub commonTagsHandler {
     $text =~ s/(<img ([^>]+)?\/>)/renderLocalImage($web, $topic, $1)/ge;
   }
 
-  if ($Foswiki::cfg{ImagePlugin}{ConvertInlineSVG}) {
-    getCore->takeOutSVG($text);
-  }
-
   putBackBlocks(\$text, 'literal', $removed);
   putBackBlocks(\$text, 'noautolink', $removed);
+
+  if ($Foswiki::cfg{ImagePlugin}{SecureInlineSVGs}) {
+    getCore->processInlineSVG($text);
+  }
 
   # restore the text
   $_[0] = $text;
@@ -302,12 +303,15 @@ sub renderExternalImage {
   my $href = '';
   my $title = $url;
 
+  # filter external link" 
+  my $exclude = $Foswiki::cfg{ImagePlugin}{Exclude};
+  my $include = $Foswiki::cfg{ImagePlugin}{Include};
   my $pubUrl = getPubUrl();
 
-  # skip "external links" to self and to any other excluded url
-  my $excludePattern = $Foswiki::cfg{ImagePlugin}{Exclude};
-  if ($url !~ /^$pubUrl/ && 
-      (!$excludePattern || $url !~ /^$excludePattern/)) { 
+  if ($url !~ /^$pubUrl/ && # exclude links to self
+      (!$exclude || $url !~ /$exclude/) &&
+      (!$include || $url =~ /$include/)
+    ) { 
 
     # untaint url, check above
     $url = Foswiki::Sandbox::untaintUnchecked($url);

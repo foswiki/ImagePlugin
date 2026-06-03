@@ -12,3 +12,6 @@ pub/System/ImagePlugin/jquery.imagetooltip.js
 /ImagePlugin.zip
 /ImagePlugin_installer
 /ImagePlugin_installer.pl
+pub/**/node_modules
+pub/**/package-lock.json
+locale/**/*~

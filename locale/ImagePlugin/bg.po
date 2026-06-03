@@ -1,0 +1,97 @@
+# Foswiki translation for Bulgarian  (Български)
+# Translators:
+#   Foswiki:Main/KrassimirBerov <k.berov@gmail.com>, 2006, 2007, 2008, 2009
+msgid ""
+msgstr ""
+"Project-Id-Version: bg\n"
+"Report-Msgid-Bugs-To: foswiki-svn@lists.sourceforge.net\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2009-06-24 15:32+0200\n"
+"Last-Translator: Krassimir Berov <k.berov@gmail.com>\n"
+"Language-Team: Bulgarian <k.berov@gmail.com>\n"
+"Language: bg\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 1.2.1\n"
+"X-Poedit-Language: Bulgarian\n"
+"X-Poedit-Country: Bulgaria\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: templates/imageplugin.editor.tmpl:101 templates/imageplugin.editor.tmpl:66
+#: templates/imageplugin.editor.tmpl:67
+msgid "Cancel"
+msgstr "Отказ"
+
+#: templates/imageplugin.editor.tmpl:88
+msgid "Close"
+msgstr "Затваряне"
+
+#: templates/imageplugin.editor.tmpl:97
+msgid "Comment"
+msgstr "Коментар"
+
+#: templates/imageplugin.editor.tmpl:4 templates/imageplugin.editor.tmpl:5
+#: templates/imageplugin.editor.tmpl:8
+#, fuzzy
+msgid "Edit Image"
+msgstr "Редактиране на таблица"
+
+#: templates/imageplugin.tmpl:23
+#, fuzzy
+msgid "Enlarge"
+msgstr "Уголеми кутията за редактиране"
+
+#: templates/imageplugin.editor.tmpl:33
+msgid "Flip Horizontal"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:34
+msgid "Flip Vertical"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:93
+#, fuzzy
+msgid "Name"
+msgstr "Име на страницата"
+
+#: templates/imageplugin.editor.tmpl:55 templates/imageplugin.editor.tmpl:56
+#, fuzzy
+msgid "Preview"
+msgstr "преглед"
+
+#: templates/imageplugin.editor.tmpl:86
+#, fuzzy
+msgid "Preview Image"
+msgstr "преглед"
+
+#: templates/imageplugin.editor.tmpl:74
+msgid "Reset"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:31
+msgid "Rotate Left"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:32
+msgid "Rotate Right"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:100 templates/imageplugin.editor.tmpl:48
+#, fuzzy
+msgid "Save"
+msgstr "Записано в:"
+
+#: templates/imageplugin.editor.tmpl:91
+#, fuzzy
+msgid "Save Image"
+msgstr "Запис на таблица"
+
+#: templates/imageplugin.editor.tmpl:29
+msgid "Zoom In"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:30
+msgid "Zoom Out"
+msgstr ""

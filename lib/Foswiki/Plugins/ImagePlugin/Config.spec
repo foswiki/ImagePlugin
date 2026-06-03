@@ -2,24 +2,36 @@
 # ---++ ImagePlugin
 # This is the configuration used by the <b>ImagePlugin</b>.
 
-# **BOOLEAN LABEL="Render External Image Links" **
+# **BOOLEAN LABEL="Download External Images" **
 # Turn on/off downloading and mirroring of links to external images, e.g. http://some.external.site/avatar.jpg
+$Foswiki::cfg{ImagePlugin}{DownloadExternalImages} = 0;
+
+# **BOOLEAN LABEL="Render External Image Links" DISPLAY_IF="{ImagePlugin}{DownloadExternalImages}" **
+# Display external image links such as http://some.external.site/avatar.jpg 
 $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks} = 0;
 
-# **BOOLEAN LABEL="Render Local Images"**
-# Activate this flag to process HTML <code>img</code> markup to local images
-$Foswiki::cfg{ImagePlugin}{RenderLocalImages} = 0;
-
-# **BOOLEAN LABEL="Convert Inline SVG"**
-# Activate this flag to convert inline-svg to png
-$Foswiki::cfg{ImagePlugin}{ConvertInlineSVG} = 0;
-
-# **BOOLEAN LABEL="AutoAttach External Images"**
+# **BOOLEAN LABEL="AutoAttach External Images" DISPLAY_IF="{ImagePlugin}{DownloadExternalImages}"**
 # Turn on/off attaching a mirrored image to the current topic. If switched on 
 # an attachment-record is generated for this image in addition to
 # downloading the image. Attachments will be marked as hidden. Note, that any
 # auto-attached image will update the topic and with it its timestamp.
 $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
+
+# **STRING LABEL="Include In Mirror" DISPLAY_IF="{ImagePlugin}{DownloadExternalImages}" CHECK="undefok emptyok"**
+# regular expession whitelist of image urls allowed to be downloaded
+$Foswiki::cfg{ImagePlugin}{Include} = '^none$';
+
+# **STRING LABEL="Exclude From Mirror" DISPLAY_IF="{ImagePlugin}{DownloadExternalImages}" CHECK="undefok emptyok"**
+# regular expession blacklist of forbidden image urls 
+$Foswiki::cfg{ImagePlugin}{Exclude} = '^https?://(www\.google\.com)';
+
+# **BOOLEAN LABEL="Render Local Images"**
+# Activate this flag to process HTML <code>img</code> markup to local images
+$Foswiki::cfg{ImagePlugin}{RenderLocalImages} = 0;
+
+# **BOOLEAN LABEL="Secure Inline SVGs"**
+# filters inline SVG images and disables any active elements for security reasons
+$Foswiki::cfg{ImagePlugin}{SecureInlineSVGs} = 1;
 
 # **BOOLEAN LABEL="AutoAttach Inline Images"**
 # Turn on/off automatic extraction of inline image from a topic while being saved and 
@@ -31,14 +43,9 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 # consideration when disabling this flag.
 $Foswiki::cfg{ImagePlugin}{AutoAttachInlineImages} = 1;
 
-# **STRING LABEL="Inline Image Template"**
+# **STRING LABEL="Inline Image Template" DISPLAY_IF="{ImagePlugin}{AutoAttachInlineImages}"**
 # Template to be used when automatically extracting inline images. See {AutoAttachInlineImages}.
 $Foswiki::cfg{ImagePlugin}{InlineImageTemplate} = "<img %BEFORE% src='%PUBURLPATH%/%WEB%/%TOPIC%/%ATTACHMENT%' %AFTER% />";
-
-# **STRING LABEL="Exclude From Mirror"**
-# specifies a regular expession matching those urls that shall not be mirrored. They are
-# handled by the core engine the standard way instead.
-$Foswiki::cfg{ImagePlugin}{Exclude} = 'http://www.google.com';
 
 # **BOOLEAN LABEL="Auto-Orient"**
 # automatically detect image orientation when querying its geometry. Caution: this could come with an extra performance penalty.

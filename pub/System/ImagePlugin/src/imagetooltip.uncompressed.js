@@ -1,7 +1,7 @@
 /*
- * jQuery image tooltip - helper to display an image preview in a tooltip
+ * image tooltip - helper to display an image preview in a tooltip
  *
- * Copyright (c) 2018-2025 Michael Daum http://michaeldaumconsulting.com
+ * Copyright (c) 2018-2026 Michael Daum http://michaeldaumconsulting.com
  *
  * Licensed under the GPL license http://www.gnu.org/licenses/gpl.html
  *
@@ -47,7 +47,7 @@ jQuery(function($) {
           };
 
           if (/\.svgz?$/.test(opts.image)) {
-            params.output = "png";
+            params.output = "webp";
           }
 
           src = foswiki.getScriptUrlPath("rest", "ImagePlugin", "process", params);

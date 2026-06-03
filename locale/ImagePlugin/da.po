@@ -1,0 +1,96 @@
+# Foswiki translation for Danish
+# Translators:
+#   Foswiki:Main/SteffenPoulsen, 2007.
+#   Foswiki:Main/KennethLavrsen, 2008.
+msgid ""
+msgstr ""
+"Project-Id-Version: da\n"
+"Report-Msgid-Bugs-To: foswiki-developers@lists.foswiki.org\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2018-01-22 22:06+0200\n"
+"Last-Translator: Martin Dahlem <martin@dahlem.dk>\n"
+"Language-Team: Danish <http://translate.foswiki.org/projects/foswiki/"
+"distribution-master/da/>\n"
+"Language: da\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.4\n"
+
+#: templates/imageplugin.editor.tmpl:101 templates/imageplugin.editor.tmpl:66
+#: templates/imageplugin.editor.tmpl:67
+msgid "Cancel"
+msgstr "Fortryd"
+
+#: templates/imageplugin.editor.tmpl:88
+msgid "Close"
+msgstr "Luk"
+
+#: templates/imageplugin.editor.tmpl:97
+msgid "Comment"
+msgstr "Kommentar"
+
+#: templates/imageplugin.editor.tmpl:4 templates/imageplugin.editor.tmpl:5
+#: templates/imageplugin.editor.tmpl:8
+#, fuzzy
+msgid "Edit Image"
+msgstr "Billede"
+
+#: templates/imageplugin.tmpl:23
+#, fuzzy
+msgid "Enlarge"
+msgstr "Forstør edit-boks"
+
+#: templates/imageplugin.editor.tmpl:33
+#, fuzzy
+msgid "Flip Horizontal"
+msgstr "Lodret lineal"
+
+#: templates/imageplugin.editor.tmpl:34
+msgid "Flip Vertical"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:93
+#, fuzzy
+msgid "Name"
+msgstr "Navn:"
+
+#: templates/imageplugin.editor.tmpl:55 templates/imageplugin.editor.tmpl:56
+msgid "Preview"
+msgstr "Forhåndsvisning"
+
+#: templates/imageplugin.editor.tmpl:86
+#, fuzzy
+msgid "Preview Image"
+msgstr "Forhåndsvisning"
+
+#: templates/imageplugin.editor.tmpl:74
+msgid "Reset"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:31
+msgid "Rotate Left"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:32
+msgid "Rotate Right"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:100 templates/imageplugin.editor.tmpl:48
+msgid "Save"
+msgstr "Gem"
+
+#: templates/imageplugin.editor.tmpl:91
+#, fuzzy
+msgid "Save Image"
+msgstr "Gem tabel"
+
+#: templates/imageplugin.editor.tmpl:29
+msgid "Zoom In"
+msgstr ""
+
+#: templates/imageplugin.editor.tmpl:30
+#, fuzzy
+msgid "Zoom Out"
+msgstr "Log ud"

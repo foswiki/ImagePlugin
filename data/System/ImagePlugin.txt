@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1739282671" format="1.1" version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1780479064" format="1.1" version="1"}%
 ---+!! <nop>%TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -64,7 +64,8 @@ there is a free-form =format= parameter to specify any other possible html
 layout.  The Wikipedia format is also supported. See
 Wikipedia:Wikipedia:Extended_image_syntax.
 
-=%<nop>IMAGE{"clear"}%= will create a proper clear for floats elements.
+=%<nop>IMAGE{"clear"}%= was formerly used to create a clear for floats elements. Please
+use =%<nop>CLEAR%= instead.
 
 ---+++ Arguments
 The image name is mandatory.  Further arguments are optional.
@@ -101,11 +102,12 @@ The image name is mandatory.  Further arguments are optional.
 | =topic= | valid topic name | topic part of IMGALBUM value or current topic |
 | =transparent= | color to be converted to transparent | |
 | =quality= | compression level for JPEG/MIFF/PNG images | |
-| =type=  | simple, plain, link, thumb[nail], frame, float or src | plain  |
+| =type=  | simple, plain, link, thumb[nail], frame, float, src or photoswipe (requires [[https://foswiki.org/Extensions/JQPhotoSwipeContrib][JQPhotoSwipeContrib]]) | plain  |
 | =warn= | on/off, surpress error warnings | on |
 | =web= | valid web name | web part of IMGALBUM value or current topic |
 | =width= | integer value | image width |
 | =zoom=  | on/off to scale images, if set to "on" scaling up images is allowed, otherwise it downscales only | off |
+| =ratio=  | set to off not to keep aspect ratio of the image | on |
 | =filter= | one or more image filters to be applied to the image; see below | |
 
 ---+++ Image geometry
@@ -240,6 +242,7 @@ pseudo variables:
 | =$height= | image height |
 | =$href= | hyperlink url when clicking on an image |
 | =$id= | value of =id= argumet |
+| =$isframe= | boolean (0, 1) indicating if the image holds frames or not (pdf, ps, videos, tiff, psd, office documents are all made up of frames or pages) |
 | =$magnifyIcon= | enlage-icon |
 | =$mousein= | value of =mousein= argument |
 | =$mouseout= | value of =mouseout= argument |
@@ -248,7 +251,9 @@ pseudo variables:
 | =$origheight= | image height of the original image|
 | =$origsrc= | url of the original image (not the resized one) |
 | =$origwidth= | image width of the original image |
+| =$origfile= | filename of the image |
 | =$percnt= | replaced with percent sign (%) |
+| =$restsrc= | rest handler to process the file |
 | =$src= | image source url |
 | =$thumbfile= | thumbnail image file name |
 | =$style= | value of =style= argumet |
@@ -297,23 +302,37 @@ Arguments to the =process= handlers are:
    * Resize to %<nop>THUMBNAIL_SIZE% size, and center image
      <verbatim>%IMAGE{"Westminstpalace.jpg" type="thumb" align="center"}%</verbatim>
 
----++ Configuration
+---++ External images
 
----+++ Links to external images
-You can turn on downloading and mirroring of images that link to external sites, 
-Example: http://www.google.com/intl/en_ALL/images/logo.gif
+External images are images not hosted on the same domain as the wiki server.
+They can be referenced either directly by their link or as part of the
+=%IMAGE= macro.  Images need to be downloaded to be processed further. This is
+activated using:
+
+<verbatim>
+$Foswiki::cfg{ImagePlugin}{DownloadExternalImages} = 1;
+</verbatim>
+
+Note that this comes at a certain security risk as the wiki server itself downloads the image on behalf
+of the user. As such it might be used in server side request forge attacks sending internal informations
+to the requested link. It is therefore mandatory to control the allowed links using the following parameters,
+both a regular expression:
+
+<verbatim>
+$Foswiki::cfg{ImagePlugin}{Include} = '^https?://www\.trusted\-domain\.com';
+$Foswiki::cfg{ImagePlugin}{Exclude} = '^https?://(www\.google\.com)';
+</verbatim>
+
+Any external link must pass both filters.  To render the pure _link_ to an external image - without using the =%IMAGE= macro - use:
 
 <verbatim>
 $Foswiki::cfg{ImagePlugin}{RenderExternalImageLinks} = 1;
 </verbatim>
 
-This will download the image and mirror it on the local site. Use the =refresh= url parameter
-to check if the external images has updated.
+This will download the image and mirror it on the local site. 
 
-If you also turn on attaching a mirrored image to the current topic,
-an additional attachment-record is generated for the downloaded external image.
-Attachments will be marked as hidden. Note, that any
-auto-attached image will update the topic and with it its timestamp.
+If you also turn on attaching a mirrored image to the current topic, an
+additional attachment-record is generated for the downloaded image.  
 
 <verbatim>
 $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
@@ -328,6 +347,14 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  03 Jun 2026 | new image editor based on cropper.js; \
+                 removed examples from Sandbox; \
+                 stricter control of downloading external images; \
+                 improved way of handling inline svg images; \
+                 new =ratio= parameter to disable keeping aspect ratio of images while resizing them; \
+                 validating image names before attaching them; \
+                 improved support for upcoming new !NatEditPlugin |
+|  06 Jun 2025 | removed =%<nop>IMAGE{"clear"}%= |
 |  29 Jan 2025 | new config setting =AutoOrient= to detect orientation of an image automatically |
 |  13 Jan 2025 | use imagemagick's Ping to read geometry of an image even though it doesn't respect auto-orientation; \
                  remove dependency on jquery.metadata; \
@@ -441,15 +468,14 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 |  10 May 2006: | Initial version by forking <nop>ImgPlugin |
 
 %META:FORM{name="PackageForm"}%
-%META:FIELD{name="Author" title="Author" value="Craig Meyer, Michael Daum"}%
+%META:FIELD{name="Author" title="Author" value="Michael Daum, Craig Meyer"}%
 %META:FIELD{name="Version" title="Version" value="%25$VERSION%25"}%
 %META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ImagePlugin"}%
-%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, &copy; 2006-2025 Michael Daum"}%
+%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2006, Craig Meyer, &copy; 2006-2026 Michael Daum"}%
 %META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%
 %META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/%25TOPIC%25"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/%25TOPIC%25"}%
-%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1739282671" size="107728" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="logo.gif" attachment="logo.gif" attr="h" date="1739282671" size="8558" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1739282671" size="737387" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1780479064" size="107728" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1780479064" size="737387" user="ProjectContributor" version="1"}%
