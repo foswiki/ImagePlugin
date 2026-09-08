@@ -45,7 +45,7 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachInlineImages} = 1;
 
 # **STRING LABEL="Inline Image Template" DISPLAY_IF="{ImagePlugin}{AutoAttachInlineImages}"**
 # Template to be used when automatically extracting inline images. See {AutoAttachInlineImages}.
-$Foswiki::cfg{ImagePlugin}{InlineImageTemplate} = "<img %BEFORE% src='%PUBURLPATH%/%WEB%/%TOPIC%/%ATTACHMENT%' %AFTER% />";
+$Foswiki::cfg{ImagePlugin}{InlineImageTemplate} = '%IMAGE{"%ATTACHMENT%" topic="%WEB%.%TOPIC%" %BEFORE% %AFTER%}%';
 
 # **BOOLEAN LABEL="Auto-Orient"**
 # automatically detect image orientation when querying its geometry. Caution: this could come with an extra performance penalty.

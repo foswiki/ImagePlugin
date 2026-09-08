@@ -49,6 +49,7 @@ use Encode ();
 use Image::Magick ();
 use Foswiki::Plugins::JQueryPlugin ();
 use Foswiki::Contrib::CacheContrib ();
+use POSIX;
 
 use constant TRACE => 0;    # toggle me
 
@@ -263,6 +264,8 @@ sub handleREST {
   my $refresh = $query->param('refresh') || '';
   $refresh = ($refresh =~ /^(on|1|yes|img|image)$/g) ? 1 : 0;
 
+  return "" unless $imgFile;
+
   $this->cache->clear() if $refresh;
 
   $imgFile = _urlDecode($imgFile);
@@ -335,6 +338,7 @@ sub handleIMAGE {
 
   _writeDebug("origFile=$origFile");
 
+
   # default and fix parameters
   $params->{warn} ||= '';
   $params->{width} ||= '';
@@ -389,6 +393,8 @@ sub handleIMAGE {
   my $imgWeb = $params->{web} || $theWeb;
   my $imgTopic;
   my $imgPath;
+  my $origFileUrl;
+  my $thumbFileUrl;
   my $pubDir = $Foswiki::cfg{PubDir};
   my $pubUrlPath = Foswiki::Func::getPubUrlPath();
   my $urlHost = Foswiki::Func::getUrlHost();
@@ -456,31 +462,18 @@ sub handleIMAGE {
     $imgWeb = $1 || $theWeb;
     $imgTopic = $2;
     $origFile = $3;
+    $origFile =~ s/\?.*$//;
 
     ($imgWeb, $imgTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $imgTopic);
     $imgPath = $pubDir . '/' . $imgWeb . '/' . $imgTopic . '/' . $origFile;
 
     _writeDebug("looking for an image file at $imgPath");
 
-    # you said so but it still is not there
-    unless (-e $imgPath) {
-      _writeDebug(" ... not found");
-      if ($useDefaultImage) {
-        push @html5Data, $this->formatHtml5Data("orig-web", $imgWeb);
-        push @html5Data, $this->formatHtml5Data("orig-topic", $imgTopic);
-        push @html5Data, $this->formatHtml5Data("orig-file", $origFile);
-        push @html5Data, $this->formatHtml5Data("orig-type", $params->{type});
-        $imgWeb = $Foswiki::cfg{SystemWebName};
-        $imgTopic = "ImagePlugin";
-        $origFile = "image-not-found.jpg";
-        $imgPath = "$Foswiki::cfg{PubDir}/$Foswiki::cfg{SystemWebName}/ImagePlugin/assets/image-not-found.jpg";
-      } else {
-        return $this->inlineError($params, "image not found");
-      }
-    }
   } else {
     my $testWeb;
     my $testTopic;
+
+    $origFile =~ s/\?.*$//;
 
     if ($params->{topic}) {
       # topic parameter is known
@@ -488,17 +481,6 @@ sub handleIMAGE {
       ($testWeb, $testTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $imgTopic);
       $imgPath = $pubDir . '/' . $testWeb . '/' . $testTopic . '/' . $origFile;
 
-      # you said so but it still is not there
-      unless (-e $imgPath) {
-        if ($useDefaultImage) {
-          $testWeb = $Foswiki::cfg{SystemWebName};
-          $testTopic = "ImagePlugin";
-          $origFile = "image-not-found.jpg";
-          $imgPath = "$Foswiki::cfg{PubDir}/$Foswiki::cfg{SystemWebName}/ImagePlugin/assets/image-not-found.jpg";
-        } else {
-          return $this->inlineError($params, "image not found");
-        }
-      }
     } else {
       # check current topic and then the album topic
       ($testWeb, $testTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $theTopic);
@@ -512,23 +494,8 @@ sub handleIMAGE {
           ($testWeb, $testTopic) = Foswiki::Func::normalizeWebTopicName($imgWeb, $albumTopic);
           $imgPath = $pubDir . '/' . $testWeb . '/' . $testTopic . '/' . $origFile;
         } 
-
-        # not found in album
-        unless (-e $imgPath) {
-          if ($useDefaultImage) {
-            push @html5Data, $this->formatHtml5Data("orig-web", $testWeb);
-            push @html5Data, $this->formatHtml5Data("orig-topic", $testTopic);
-            push @html5Data, $this->formatHtml5Data("orig-file", $origFile);
-            push @html5Data, $this->formatHtml5Data("orig-type", $params->{type});
-            $testWeb = $Foswiki::cfg{SystemWebName};
-            $testTopic = "ImagePlugin";
-            $origFile = "image-not-found.jpg";
-            $imgPath = "$Foswiki::cfg{PubDir}/$Foswiki::cfg{SystemWebName}/ImagePlugin/assets/image-not-found.jpg";
-          } else {
-            return $this->inlineError($params, "image not found");
-          }
-        }
       } 
+
     }
 
     # found 
@@ -536,9 +503,52 @@ sub handleIMAGE {
     $imgTopic = $testTopic;
   }
 
+  my $imgInfo;
+
+  # not found
+  my $found = 1;
+  unless (-e $imgPath) {
+    $found = 0;
+    if ($useDefaultImage) {
+      push @html5Data, $this->formatHtml5Data("orig-web", $imgWeb);
+      push @html5Data, $this->formatHtml5Data("orig-topic", $imgTopic);
+      push @html5Data, $this->formatHtml5Data("orig-file", $origFile);
+      push @html5Data, $this->formatHtml5Data("orig-type", $params->{type});
+
+      $imgWeb = $Foswiki::cfg{SystemWebName};
+      $imgTopic = "ImagePlugin";
+      $origFile = "image-not-found.jpg";
+      $imgPath = "$Foswiki::cfg{PubDir}/$Foswiki::cfg{SystemWebName}/ImagePlugin/assets/$origFile";
+      $origFileUrl = "$Foswiki::cfg{PubUrlPath}/$Foswiki::cfg{SystemWebName}/ImagePlugin/assets/$origFile";
+      $thumbFileUrl = $origFileUrl;
+      $imgInfo = {
+        file => $origFile,
+        imgPath => $imgPath,
+        origImgPath => $imgPath,
+      };
+      $this->pingOrigImage($imgInfo);
+
+      my $width = $params->{width};
+      my $height = $params->{height};
+      my $ratio = $imgInfo->{origWidth} / $imgInfo->{origHeight};
+      $height = floor($width / $ratio + 0.5) if $width && !$height;
+      $width = floor($height * $ratio + 0.5) if $height && !$width;
+      if (!$width && !$height) {
+        $width = $imgInfo->{origWidth};
+        $height = $imgInfo->{origHeight};
+      }
+      $imgInfo->{width} = $width;
+      $imgInfo->{height} = $height;
+
+    } else {
+      return $this->inlineError($params, "image not found");
+    }
+  }
+
   #_writeDebug("origFile=$origFile, imgWeb=$imgWeb, imgTopic=$imgTopic, imgPath=$imgPath");
 
-  my $origFileUrl = $pubUrl . '/' . $imgWeb . '/' . $imgTopic . '/' . $origFile;
+  $origFileUrl //= $pubUrl . '/' . $imgWeb . '/' . $imgTopic . '/' . $origFile;
+  $origFileUrl = _urlEncode($origFileUrl);
 
   $params->{alt} ||= $origFile unless defined $params->{alt};
   $params->{title} ||= $params->{caption} || $origFile unless defined $params->{title};
@@ -555,12 +565,9 @@ sub handleIMAGE {
   #_writeDebug("size=$params->{size}, width=$params->{width}, height=$params->{height}");
 
   # compute image
-  my $imgInfo = $this->processImage($imgWeb, $imgTopic, $origFile, $params, $doRefresh);
-
-  unless ($imgInfo) {
-    #Foswiki::Func::writeWarning("ImagePlugin - $this->{errorMsg}");
-    return $this->inlineError($params);
-  }
+  $imgInfo = $this->processImage($imgWeb, $imgTopic, $origFile, $params, $doRefresh) if $found;
+  return $this->inlineError($params) unless $imgInfo;
+  
 
   # format result
   my $result = $params->{format};
@@ -608,7 +615,7 @@ sub handleIMAGE {
     push @html5Data, $this->formatHtml5Data($1, $params->{$key}) if $val ne "";
   }
 
-  my $thumbFileUrl = $pubUrl . '/' . $imgWeb . '/' . $imgTopic . '/' . $imgInfo->{file};
+  $thumbFileUrl //= $pubUrl . '/' . $imgWeb . '/' . $imgTopic . '/' . $imgInfo->{file};
   $thumbFileUrl = _urlEncode($thumbFileUrl);
 
   my $baseTopic = $this->{session}{topicName};
@@ -829,8 +836,10 @@ sub ping {
 
     #print STDERR "ping image ... computed: width=$width, height=$height\n";
     
-    $entry = $width.'::'.$height;
-    $this->cache->set($imgPath, $entry);
+    if (defined $height && defined $width) {
+      $entry = $width.'::'.$height;
+      $this->cache->set($imgPath, $entry);
+    }
   }
 
   return ($width, $height);
@@ -1001,6 +1010,15 @@ sub processImage {
         $this->{mage} = $this->mage->Layers(method => 'merge');
       }
 
+      # auto orient
+      _writeDebug("auto orient");
+      $error = $this->mage->AutoOrient();
+      if ($error =~ /(\d+)/) {
+        $this->{errorMsg} = $error;
+        _writeDebug("Error: $error");
+        return if $1 >= 400;
+      }
+
       # scale
       if ($size) {
         _writeDebug("scale");
@@ -1049,15 +1067,6 @@ sub processImage {
         }
         # SMELL: is repaging needed?
         #$this->mage->Set(page => "0x0+0+0"); 
-      }
-
-      # auto orient
-      _writeDebug("auto orient");
-      $error = $this->mage->AutoOrient();
-      if ($error =~ /(\d+)/) {
-        $this->{errorMsg} = $error;
-        _writeDebug("Error: $error");
-        return if $1 >= 400;
       }
 
       # strip of profiles and comments
@@ -1844,8 +1853,9 @@ sub _sanitizeAttachmentName {
   $fileName =~ s!^.*[\\/]!!;    # Get rid of leading directory components
   $fileName =~ s/$filter+//g;
   $fileName =~ s/[{},\(\)]+/_/g;    # some more
+  $fileName =~ s/\?.*$//;
 
-  return Foswiki::Sandbox::untaintUnchecked($fileName);
+  return $fileName;
 }
 
 sub _isValidAttachmentName {

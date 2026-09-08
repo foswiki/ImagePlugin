@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1780479064" format="1.1" version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1788866875" format="1.1" version="1"}%
 ---+!! <nop>%TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -104,6 +104,7 @@ The image name is mandatory.  Further arguments are optional.
 | =quality= | compression level for JPEG/MIFF/PNG images | |
 | =type=  | simple, plain, link, thumb[nail], frame, float, src or photoswipe (requires [[https://foswiki.org/Extensions/JQPhotoSwipeContrib][JQPhotoSwipeContrib]]) | plain  |
 | =warn= | on/off, surpress error warnings | on |
+| =defaultimage= | on/off, display a default image if the original one couldn't be found | off |
 | =web= | valid web name | web part of IMGALBUM value or current topic |
 | =width= | integer value | image width |
 | =zoom=  | on/off to scale images, if set to "on" scaling up images is allowed, otherwise it downscales only | off |
@@ -347,6 +348,8 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  08 Sep 2026 | added defaultimage parameter |
+|  15 Jun 2026 | fixed wrong order of resizing and rotating images  |
 |  03 Jun 2026 | new image editor based on cropper.js; \
                  removed examples from Sandbox; \
                  stricter control of downloading external images; \
@@ -405,27 +408,27 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
                  fix orientation of thumbnail as specified in the EXIF metadata; \
                  fully specify REST security flags; \
                  new parameter =output= |
-|  28 May 2014: | fixed thumbnail handling in afterRenameHandler |
-|  16 Apr 2014: | brought back =thumb= image type |
-|  04 Apr 2014: | flag rest handlers that don't require authentication |
-|  18 Mar 2014: | support blanks in image names |
-|   3 Aug 2013: | rework image tooltip code to use jquery-ui instead of deprecated jquery.tooltip |
-|   8 May 2013: | return a 1x1 pixel when calling the image rest handler for a non-existing image |
-|  24 May 2013: | update thumbnails whenever a new image of the same name was uploaded |
-|   6 May 2013: | some more svg fixes; cleaning up thumbnails now when images are renamed or moved |
-|   9 Oct 2012: | added svg support |
-|   6 Aug 2012: | respect noautolink tags when rendering external image links |
-|  25 Jun 2012: | fixed attaching external images to the right topic; \
+|  28 May 2014 | fixed thumbnail handling in afterRenameHandler |
+|  16 Apr 2014 | brought back =thumb= image type |
+|  04 Apr 2014 | flag rest handlers that don't require authentication |
+|  18 Mar 2014 | support blanks in image names |
+|   3 Aug 2013 | rework image tooltip code to use jquery-ui instead of deprecated jquery.tooltip |
+|   8 May 2013 | return a 1x1 pixel when calling the image rest handler for a non-existing image |
+|  24 May 2013 | update thumbnails whenever a new image of the same name was uploaded |
+|   6 May 2013 | some more svg fixes; cleaning up thumbnails now when images are renamed or moved |
+|   9 Oct 2012 | added svg support |
+|   6 Aug 2012 | respect noautolink tags when rendering external image links |
+|  25 Jun 2012 | fixed attaching external images to the right topic; \
                   removed unused option =AutoAttachThumbnails=; \
                   fixed processing of non-attached external images; \
                   fixed downloading of urls that look like image links but return a different content type |
-|  09 Jan 2012: | added new option 'thumbfile' to format string (Foswiki:Main/JoenioCosta);\
+|  09 Jan 2012 | added new option 'thumbfile' to format string (Foswiki:Main/JoenioCosta);\
                   speed improvement by not "ping-ing" each image on display; \
                   rendering thumbnails using newer method available in image::magick 6.5.x, the old method faild resizing and cropping on some platforms;\
                   removing =longdesc= from default image templates; \
                   now also caching urls to external images that include url params |
-|  29 Jun 2011: | fixed detection of image links to the own wiki not to try an external download+mirror |
-|  10 Jan 2011: | fixed parsing of mediawiki like params; \
+|  29 Jun 2011 | fixed detection of image links to the own wiki not to try an external download+mirror |
+|  10 Jan 2011 | fixed parsing of mediawiki like params; \
                   fixed jquery interface to foswiki preferences; \
                   fixed dependency on !ZonePlugin to only be required for old foswiki versions; \
                   make result of resize REST service cacheable, i.e. don't use a redirect; \
@@ -434,19 +437,19 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
                   added data parameter to interface with jquery code; \
                   using md5 now to properly cache thumbnails; \
                   mirroring external images now obeys the ATTACHFILESIZELIMIT preference; |
-|  12 Feb 2010: | made imagetooltip a proper jQuery plugin; using Foswiki:Extensions/ZonePlugin for faster page loads |
-|  17 Nov 2009: | added =zoom= parameter; fixed manual refresh via url params |
-|  24 Sep 2009: | updated =imageplugin.template= to help XHTML validation (stop rendering empty id attribute) |
-|  14 Sep 2009: | using Foswiki's proxy settings instead of ENV; disabled tooltip previews for Internet Explorers |
-|  18 Aug 2009: | removed bonus =%= in template (Foswiki:Main.AndreLichtsteiner, Foswiki:Main.WillNorris) |
-|  24 Apr 2009: | converted to foswiki plugin; \
+|  12 Feb 2010 | made imagetooltip a proper jQuery plugin; using Foswiki:Extensions/ZonePlugin for faster page loads |
+|  17 Nov 2009 | added =zoom= parameter; fixed manual refresh via url params |
+|  24 Sep 2009 | updated =imageplugin.template= to help XHTML validation (stop rendering empty id attribute) |
+|  14 Sep 2009 | using Foswiki's proxy settings instead of ENV; disabled tooltip previews for Internet Explorers |
+|  18 Aug 2009 | removed bonus =%= in template (Foswiki:Main.AndreLichtsteiner, Foswiki:Main.WillNorris) |
+|  24 Apr 2009 | converted to foswiki plugin; \
                   added thumbnail REST handler; \
                   added tooltip preview using jquery; \
                   added mirroring of external images; \
                   moved image type definitions into a template |
-|  11 Feb 2009: | updated documentation examples (Foswiki:Main.WillNorris) |
-|  07 Jan 2009: | certified for foswiki/compat |
-|  03 Jul 2008: | fixed parsing the type parameter; \
+|  11 Feb 2009 | updated documentation examples (Foswiki:Main.WillNorris) |
+|  07 Jan 2009 | certified for foswiki/compat |
+|  03 Jul 2008 | fixed parsing the type parameter; \
                   fixing docu about the default THUMBNAIL_SIZE; \
                   added new default format =plain=; \
                   plainify text to be used in a html attribute position, e.g. titles; \
@@ -455,17 +458,17 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
                   using LWP::UserAgent instead of LWP::Simple to mirror images; \
                   using =Resize= instead of =Scale= for higher quality thumbnails; \
                   don't encrypt the href param |
-|  03 Mar 2008: | make implementation of image mage configurable, \
+|  03 Mar 2008 | make implementation of image mage configurable, \
                  defaulting to Graphics::Magick as Image::Magick has got issues \
                  using perl accellerators like mod_perl, speedy-cgi |
-|  03 Jan 2008: | added processing of remote images |
-|  18 Dec 2006: | fixed image lookup order; fixed html formats; added <nop>I18N workaround |
-|  18 Aug 2006: | fixed html errors; \
+|  03 Jan 2008 | added processing of remote images |
+|  18 Dec 2006 | fixed image lookup order; fixed html formats; added <nop>I18N workaround |
+|  18 Aug 2006 | fixed html errors; \
                   removed references to <nop>ImgPlugin thus not showing the magnify-clip; \
 		  some html and css fixes to resemble closer to the <nop>MediaWiki examples |
-|  17 Aug 2006: | width and height arguments had no effect; floating images not clearing proberly on IE |
-|  16 June 2006: | released into the public |
-|  10 May 2006: | Initial version by forking <nop>ImgPlugin |
+|  17 Aug 2006 | width and height arguments had no effect; floating images not clearing proberly on IE |
+|  16 Jun 2006 | released into the public |
+|  10 May 2006 | Initial version by forking <nop>ImgPlugin |
 
 %META:FORM{name="PackageForm"}%
 %META:FIELD{name="Author" title="Author" value="Michael Daum, Craig Meyer"}%
@@ -477,5 +480,5 @@ $Foswiki::cfg{ImagePlugin}{AutoAttachExternalImages} = 1;
 %META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%
 %META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/%25TOPIC%25"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/%25TOPIC%25"}%
-%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1780479064" size="107728" user="ProjectContributor" version="1"}%
-%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1780479064" size="737387" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="WestminstpalaceSample.png" attr="h" comment="" date="1788866875" size="107728" user="ProjectContributor" version="1"}%
+%META:FILEATTACHMENT{name="InstagramExamples.jpeg" attachment="InstagramExamples.jpeg" attr="h" comment="" date="1788866875" size="737387" user="ProjectContributor" version="1"}%

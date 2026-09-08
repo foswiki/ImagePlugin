@@ -78,6 +78,19 @@ a:hover.imageHref {
 .imageFrame_center {
   margin:1em auto;
 }
+
+.imageFrame_center {
+  background:transparent;
+  border:0;
+  display:flex;
+  justify-content:center;
+}
+.imageFrame_center a.imageHref {
+  padding: 3px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+}
+
 .imageThumb_none,
 .imageFrame_none {
   margin:1em;
